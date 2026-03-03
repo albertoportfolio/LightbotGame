@@ -51,7 +51,7 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
       {...listeners}
       className={`
         relative flex flex-col items-center justify-center
-        w-16 h-16 rounded-xl cursor-grab select-none
+        w-14 h-14 rounded-xl cursor-grab select-none
         border-2 transition-all text-white text-xl font-bold
         ${isActive ? 'border-yellow-400 scale-105 shadow-lg shadow-yellow-400/30' : 'border-white/20'}
         hover:border-white/50 hover:scale-105
@@ -82,6 +82,7 @@ function CommandPalette() {
   const isFull = queue.length >= maxCommands
 
   return (
+
     <div className="mb-4">
       <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos Disponibles</p>
       <div className="flex flex-wrap gap-2">
@@ -95,7 +96,7 @@ function CommandPalette() {
               style={{ backgroundColor: meta.bgColor }}
               className={`
                 flex flex-col items-center justify-center
-                w-16 h-16 rounded-xl text-white border-2 border-white/20
+                w-14 h-14 rounded-xl text-white border-2 border-white/20
                 transition-all hover:border-white/50 hover:scale-105
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
               `}
@@ -156,7 +157,7 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
         {emptySlots.map((_, i) => (
           <div
             key={`empty-${i}`}
-            className="w-16 h-16 rounded-xl border-2 border-dashed border-white/10 opacity-30"
+            className="w-14 h-14 rounded-xl border-2 border-dashed border-white/10 opacity-30"
           />
         ))}
         {slots.length === 0 && (
@@ -282,8 +283,12 @@ export function InstructionPanel({
 
   // ─── Run / Reset ──────────────────────────────────────────────────────────
 
+  const { attempts, maxAttempts, incrementAttempts } = useGameStore()  // ← añade al destructuring existente
+  const isGameOver = attempts >= maxAttempts
+
   const handleRun = () => {
-    if (queue.length === 0 || isRunning) return
+    if (queue.length === 0 || isRunning || isGameOver) return
+    incrementAttempts()
     setIsRunning(true)
     setActiveCommandIndex(-1)
     onRun()
@@ -314,6 +319,18 @@ export function InstructionPanel({
         />
 
         {/* Control buttons */}
+        <div className="flex items-center justify-between text-sm mb-2">
+          <span className="text-white/50">Intentos</span>
+          <span className={attempts >= maxAttempts - 1 ? 'text-red-400 font-bold' : 'text-white/70'}>
+            {attempts} / {maxAttempts}
+          </span>
+        </div>
+
+        {isGameOver && (
+          <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700 mb-2">
+            💀 GAME OVER — Pulsa Resetear
+          </div>
+        )}
         <div className="flex gap-2 mt-auto">
           <button
             disabled={queue.length === 0 || isRunning || showNextLevel}
@@ -346,12 +363,16 @@ export function InstructionPanel({
         {draggingCommand ? (
           <div
             style={{ backgroundColor: COMMAND_META[draggingCommand].bgColor }}
-            className="w-16 h-16 rounded-xl border-2 border-white/50 flex flex-col items-center justify-center text-white opacity-90 shadow-xl"
+            className="w-14 h-14 rounded-xl border-2 border-white/50 flex flex-col items-center justify-center text-white opacity-90 shadow-xl"
           >
             <span className="text-2xl">{COMMAND_META[draggingCommand].icon}</span>
           </div>
         ) : null}
       </DragOverlay>
     </DndContext>
+
+
   )
+
+
 }

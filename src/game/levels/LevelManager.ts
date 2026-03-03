@@ -18,6 +18,7 @@ export class LevelManager {
     if (index < 0 || index >= LEVELS.length)
       throw new Error(`Level index ${index} out of range (0–${LEVELS.length - 1})`);
     this._currentIndex = index;
+    
     return LEVELS[index];
   }
 

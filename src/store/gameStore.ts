@@ -15,6 +15,13 @@ interface GameStore {
   // Level name
   levelName: string
 
+  attempts: number
+maxAttempts: number
+setAttempts: (n: number) => void
+setMaxAttempts: (n: number) => void
+incrementAttempts: () => void
+resetAttempts: () => void
+
   // Actions
   setQueue: (queue: Command[]) => void
   addCommand: (cmd: Command) => void
@@ -34,6 +41,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isRunning: false,
   activeCommandIndex: -1,
   levelName: '',
+  attempts: 0,
+maxAttempts: 5,
+setAttempts: (n) => set({ attempts: n }),
+setMaxAttempts: (n) => set({ maxAttempts: n }),
+incrementAttempts: () => set(s => ({ attempts: s.attempts + 1 })),
+resetAttempts: () => set({ attempts: 0 }),
+  
 
   setQueue: (queue) => set({ queue }),
 

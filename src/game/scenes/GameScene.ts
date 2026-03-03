@@ -99,6 +99,7 @@ private handleStartMusic = () => { this.sfx.startMusic() }
 this.bridge.on('toggle-mute',  this.handleToggleMute)
 this.bridge.on('set-volume',   this.handleSetVolume)
 this.bridge.on('start-music', this.handleStartMusic)
+
   }
 
   shutdown() {
@@ -317,6 +318,7 @@ this.bridge.off('start-music', this.handleStartMusic)
   this.bridge.emit('level-loaded', {
     levelId: def.id,
     maxCommands: def.maxCommands,
+    maxAttempts: def.maxAttempts,
     name: def.name,
   })
 }

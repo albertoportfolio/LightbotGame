@@ -4,6 +4,7 @@ const level4: LevelDef = {
   id: 4,
   name: 'Zigzag',
   maxCommands: 9,
+  maxAttempts: 1,
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
   grid: [
     ['floor', 'floor', 'floor', 'light', 'empty', 'empty', 'empty'],

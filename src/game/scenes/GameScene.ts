@@ -4,6 +4,7 @@ import { GAME_CONFIG } from '../constants/gameConfig'
 import { Robot } from '../entities/Robot'
 import { LevelManager } from '../levels/LevelManager'
 import { CommandExecutor } from '../logic/CommandExecutor'
+import { SoundManager } from '../audio/SoundManager'
 
 function drawStar(
   g: Phaser.GameObjects.Graphics,
@@ -74,6 +75,12 @@ export class GameScene extends Phaser.Scene {
   private decorGraphics!: Phaser.GameObjects.Graphics
   private gridGraphics!:  Phaser.GameObjects.Graphics
   private wonThisLevel = false
+  private sfx = new SoundManager()
+  private handleStopMusic  = () => { this.sfx.stopMusic() }
+private handleToggleMute = () => { this.sfx.toggleMute() }
+private handleSetVolume  = (v: number) => { this.sfx.setVolume(v) }
+private handleStartMusic = () => { this.sfx.startMusic() }
+  
 
   constructor() { super({ key: 'GameScene' }) }
 
@@ -88,13 +95,22 @@ export class GameScene extends Phaser.Scene {
     this.bridge.on('run-commands', this.handleRunCommands, this)
     this.bridge.on('reset-level',  this.handleReset,       this)
     this.bridge.on('load-level',   this.handleLoadLevel,   this)
+    this.bridge.on('stop-music',   this.handleStopMusic)
+this.bridge.on('toggle-mute',  this.handleToggleMute)
+this.bridge.on('set-volume',   this.handleSetVolume)
+this.bridge.on('start-music', this.handleStartMusic)
   }
 
   shutdown() {
     this.bridge.off('run-commands', this.handleRunCommands, this)
+    this.sfx.stopMusic()
     this.bridge.off('reset-level',  this.handleReset,       this)
     this.bridge.off('load-level',   this.handleLoadLevel,   this)
     this.robot?.destroy()
+   this.bridge.off('stop-music',  this.handleStopMusic)
+this.bridge.off('toggle-mute', this.handleToggleMute)
+this.bridge.off('set-volume',  this.handleSetVolume)
+this.bridge.off('start-music', this.handleStartMusic)
   }
 
   private drawBackground() {
@@ -290,18 +306,20 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadLevel(index: number) {
-    this.wonThisLevel = false
-    const def = this.levelManager.loadLevel(index)
-    this.levelState = this.levelManager.buildState(def)
-    this.robot?.destroy()
-    this.robot = new Robot(this, def.robotStart)
-    this.renderGrid()
-    this.bridge.emit('level-loaded', {
-      levelId: def.id,
-      maxCommands: def.maxCommands,
-      name: def.name,
-    })
-  }
+  this.wonThisLevel = false
+  const def = this.levelManager.loadLevel(index)
+  this.levelState = this.levelManager.buildState(def)
+  this.robot?.destroy()
+  this.robot = new Robot(this, def.robotStart)
+  this.renderGrid()
+  this.sfx.levelStart()
+  if (!this.sfx.isMuted()) this.sfx.startMusic() // ← startMusic tiene guard interno, solo arranca si no está ya sonando
+  this.bridge.emit('level-loaded', {
+    levelId: def.id,
+    maxCommands: def.maxCommands,
+    name: def.name,
+  })
+}
 
   private handleRunCommands = (commands: Command[]) => {
   if (this.executor.running) return
@@ -314,6 +332,7 @@ export class GameScene extends Phaser.Scene {
       if (onPlant && !this.wonThisLevel) {
         this.wonThisLevel = true
         const def = this.levelManager.current
+        this.sfx.levelComplete()
         this.time.delayedCall(300, () => {
           this.bridge.emit('level-complete', { levelId: def.id })
         })
@@ -334,6 +353,7 @@ export class GameScene extends Phaser.Scene {
       this.wonThisLevel = true
       this.executor.stop()  // para la ejecución inmediatamente
       const def = this.levelManager.current
+      this.sfx.plantReached()
       this.time.delayedCall(300, () => {
         this.bridge.emit('level-complete', { levelId: def.id })
       })
@@ -361,15 +381,30 @@ export class GameScene extends Phaser.Scene {
   private handleLoadLevel = (index: number) => {
     this.executor.stop()
     this.loadLevel(index)
+    this.sfx.levelStart()
   }
 
   private applyCommand(cmd: Command): boolean {
-    switch (cmd) {
-      case Command.MOVE_FORWARD:  return this.robot.moveForward(this.levelState)
-      case Command.TURN_LEFT:     return this.robot.turnLeft()
-      case Command.TURN_RIGHT:    return this.robot.turnRight()
-      case Command.LIGHT_TOGGLE:  return this.robot.toggleLight(this.levelState)
-      default: return false
+  switch (cmd) {
+    case Command.MOVE_FORWARD: {
+      const ok = this.robot.moveForward(this.levelState)
+      ok ? this.sfx.move() : this.sfx.error()
+      return ok
     }
+    case Command.TURN_LEFT:
+      this.robot.turnLeft()
+      this.sfx.turn()
+      return true
+    case Command.TURN_RIGHT:
+      this.robot.turnRight()
+      this.sfx.turn()
+      return true
+    case Command.LIGHT_TOGGLE: {
+      const ok = this.robot.toggleLight(this.levelState)
+      ok ? this.sfx.lightOn() : this.sfx.lightOff()
+      return ok
+    }
+    default: return false
   }
+}
 }

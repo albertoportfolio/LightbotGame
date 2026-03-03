@@ -4,79 +4,56 @@ import { InstructionPanel } from './components/Game/InstructionPanel'
 import { LevelHUD } from './components/Game/LevelHUD'
 import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
+import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 
-const TOTAL_LEVELS = 4  // ACTUALIZA ESTE NÚMERO SI AÑADES MÁS NIVELES EN LevelManager
+const TOTAL_LEVELS = 4
 
-// ─── Floating star decoration ─────────────────────────────────────────────────
+type Screen = 'start' | 'game' | 'settings'
+
 function Star({ style }: { style: React.CSSProperties }) {
   return <div className="absolute text-2xl pointer-events-none select-none animate-bounce" style={style}>⭐</div>
 }
 
-// ─── Start / splash screen ────────────────────────────────────────────────────
 function StartScreen({ onStart }: { onStart: () => void }) {
   const [pressed, setPressed] = useState(false)
-
-  const handleClick = () => {
-    setPressed(true)
-    setTimeout(onStart, 300)
-  }
-
+  const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       style={{ background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
-
-      {/* Twinkling stars background */}
       {[...Array(20)].map((_, i) => (
         <div key={i} className="absolute rounded-full bg-white"
           style={{
-            width: Math.random() * 3 + 1,
-            height: Math.random() * 3 + 1,
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
+            width: Math.random() * 3 + 1, height: Math.random() * 3 + 1,
+            top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`,
             opacity: Math.random() * 0.7 + 0.3,
             animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
             animationDelay: `${Math.random() * 3}s`,
           }} />
       ))}
-
-      {/* Floating decorations */}
-      <Star style={{ top: '8%',  left: '6%',  animationDuration: '2.1s' }} />
-      <Star style={{ top: '12%', right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
+      <Star style={{ top: '8%',     left: '6%',  animationDuration: '2.1s' }} />
+      <Star style={{ top: '12%',    right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
       <Star style={{ bottom: '18%', left: '10%', animationDuration: '2.4s', animationDelay: '1s' }} />
       <Star style={{ bottom: '12%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
       <div className="absolute top-16 left-1/4 text-4xl animate-spin" style={{ animationDuration: '8s' }}>🪐</div>
       <div className="absolute bottom-20 right-1/4 text-3xl animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}>🌙</div>
-
-      {/* Main card */}
       <div className="relative z-10 flex flex-col items-center gap-8 px-8 py-12 rounded-3xl"
         style={{
-          background: 'rgba(255,255,255,0.06)',
-          backdropFilter: 'blur(12px)',
+          background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
           border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)',
-          maxWidth: 480,
-          width: '90%',
+          boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)', maxWidth: 480, width: '90%',
         }}>
-
-        {/* Robot illustration */}
         <div className="text-8xl" style={{ filter: 'drop-shadow(0 0 20px #63b3ed)' }}>🤖</div>
-
-        {/* Title */}
         <div className="text-center">
           <h1 className="font-black tracking-tight leading-none"
             style={{
               fontSize: 'clamp(1.5rem, 4vw, 2rem)',
               background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: 'none',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: 'none',
             }}>
             ENCIENDE LAS LUCES
           </h1>
           <p className="text-white/70 text-lg mt-1 font-medium">¡Programa al robot y enciende las luces!</p>
         </div>
-
-        {/* Feature pills */}
         <div className="flex flex-wrap gap-2 justify-center">
           {['🧩 Puzles', '💡 Luces', '🎮 Comandos', '🏆 Niveles'].map(tag => (
             <span key={tag} className="px-3 py-1 rounded-full text-sm font-semibold text-white/80"
@@ -85,32 +62,19 @@ function StartScreen({ onStart }: { onStart: () => void }) {
             </span>
           ))}
         </div>
-
-        {/* START button */}
-        <button
-          onClick={handleClick}
+        <button onClick={handleClick}
           style={{
-            background: pressed
-              ? 'linear-gradient(135deg, #2b6cb0, #276749)'
-              : 'linear-gradient(135deg, #63b3ed, #48bb78)',
-            boxShadow: pressed
-              ? '0 2px 0 #1a365d, 0 0 20px rgba(99,179,237,0.4)'
-              : '0 6px 0 #1a365d, 0 0 30px rgba(99,179,237,0.5)',
-            transform: pressed ? 'translateY(4px)' : 'translateY(0)',
-            transition: 'all 0.1s ease',
+            background: pressed ? 'linear-gradient(135deg, #2b6cb0, #276749)' : 'linear-gradient(135deg, #63b3ed, #48bb78)',
+            boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 20px rgba(99,179,237,0.4)' : '0 6px 0 #1a365d, 0 0 30px rgba(99,179,237,0.5)',
+            transform: pressed ? 'translateY(4px)' : 'translateY(0)', transition: 'all 0.1s ease',
           }}
-          className="px-12 py-4 rounded-2xl font-black text-white text-2xl tracking-wide w-full"
-        >
+          className="px-12 py-4 rounded-2xl font-black text-white text-2xl tracking-wide w-full">
           {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
         </button>
-
-        {/* Tip */}
         <p className="text-white/40 text-xs text-center">
           Arrastra los comandos a la cola y pulsa Ejecutar para resolver el nivel. ¡Enciende todas las luces!
         </p>
       </div>
-
-      {/* How to play strip */}
       <div className="relative z-10 mt-8 flex gap-6 flex-wrap justify-center px-4">
         {[
           { icon: '☝️', text: 'Añade comandos' },
@@ -128,16 +92,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-// ─── Level Complete modal ─────────────────────────────────────────────────────
-function LevelCompleteModal({
-  hasNext,
-  onNext,
-  onReplay,
-}: {
-  hasNext: boolean
-  onNext: () => void
-  onReplay: () => void
-}) {
+function LevelCompleteModal({ hasNext, onNext, onReplay }: { hasNext: boolean; onNext: () => void; onReplay: () => void }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
@@ -145,36 +100,25 @@ function LevelCompleteModal({
         style={{
           background: 'linear-gradient(145deg, #1a2a4a, #0d1b2e)',
           border: '2px solid rgba(246,224,94,0.4)',
-          boxShadow: '0 0 60px rgba(246,224,94,0.2)',
-          maxWidth: 380,
-          width: '90%',
+          boxShadow: '0 0 60px rgba(246,224,94,0.2)', maxWidth: 380, width: '90%',
         }}>
-        {/* Stars burst */}
         <div className="text-5xl">🏆</div>
         <div className="flex gap-1 text-3xl">{'⭐'.repeat(3)}</div>
-
         <h2 className="font-black text-3xl"
-          style={{
-            background: 'linear-gradient(135deg, #f6e05e, #fc8181)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-          }}>
+          style={{ background: 'linear-gradient(135deg, #f6e05e, #fc8181)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {hasNext ? '¡Nivel Superado!' : '¡Lo lograste todo!'}
         </h2>
         <p className="text-white/60 text-sm">
           {hasNext ? '¿Preparado para el siguiente desafío?' : 'Has completado todos los niveles 🎉'}
         </p>
-
         <div className="flex gap-3 w-full">
           {hasNext && (
-            <button onClick={onNext}
-              className="flex-1 py-3 rounded-xl font-black text-lg text-black"
+            <button onClick={onNext} className="flex-1 py-3 rounded-xl font-black text-lg text-black"
               style={{ background: 'linear-gradient(135deg, #f6e05e, #f6ad55)' }}>
               Siguiente →
             </button>
           )}
-          <button onClick={onReplay}
-            className="flex-1 py-3 rounded-xl font-bold text-white"
+          <button onClick={onReplay} className="flex-1 py-3 rounded-xl font-bold text-white"
             style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>
             Repetir
           </button>
@@ -184,21 +128,61 @@ function LevelCompleteModal({
   )
 }
 
-// ─── Game screen ──────────────────────────────────────────────────────────────
-function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
-  const { emitter, runCommands, resetLevel, loadLevel } = useGameBridge()
-  const { queue, currentLevel, clearQueue } = useGameStore()
+// ─── GameScreen ───────────────────────────────────────────────────────────────
+interface GameScreenProps {
+  onBackToMenu:   () => void
+  onOpenSettings: () => void
+  muted:          boolean
+  volume:         number
+  onToggleMute:   () => void
+  isActive:       boolean // prop para indicar si el GameScreen está activo (game o settings)
+}
+
+function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute, isActive }: GameScreenProps) {
+  const { emitter, runCommands, resetLevel, loadLevel, toggleMute, setVolume } = useGameBridge()
+  const { queue, clearQueue } = useGameStore()
 
   const [levelComplete, setLevelComplete] = useState(false)
   const [hasNext, setHasNext] = useState(false)
   const [nextLevelIndex, setNextLevelIndex] = useState(0)
-  const isTransitioning = useRef(false)  // ← AÑADE ESTE REF
+  const isTransitioning = useRef(false)
+  const prevActive = useRef(false)
+  
+  useEffect(() => {
+    if (isActive && !prevActive.current && !muted) {
+      emitter.emit('start-music')
+    }
+    prevActive.current = isActive
+  }, [isActive, muted])
+
+  const handleBackToMenu = () => {
+  console.log('emitiendo stop-music')
+  emitter.emit('stop-music')
+  onBackToMenu()
+}
+
+  // Sincronizar mute con Phaser cuando cambia el prop
+  const prevMuted = useRef(muted)
+  useEffect(() => {
+    if (prevMuted.current !== muted) {
+      toggleMute()
+      prevMuted.current = muted
+    }
+  }, [muted])
+
+  // Sincronizar volumen con Phaser cuando cambia el prop
+  const prevVolume = useRef(volume)
+  useEffect(() => {
+    if (prevVolume.current !== volume) {
+      setVolume(volume)
+      prevVolume.current = volume
+    }
+  }, [volume])
 
   useEffect(() => {
     const handler = (data: { levelId: number }) => {
-       if (isTransitioning.current) return
-      // levelId es 1-based → el siguiente nivel en Phaser es índice levelId (no levelId-1)
-      const next = data.levelId // nivel 1 completo → siguiente índice = 1
+      if (isTransitioning.current) return
+      const next = data.levelId
       setNextLevelIndex(next)
       setHasNext(next < TOTAL_LEVELS)
       setLevelComplete(true)
@@ -214,22 +198,20 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
   }
 
   const handleNextLevel = () => {
-     if (isTransitioning.current) return
-     isTransitioning.current = true
+    if (isTransitioning.current) return
+    isTransitioning.current = true
     setLevelComplete(false)
     clearQueue()
     loadLevel(nextLevelIndex)
-     setTimeout(() => { isTransitioning.current = false }, 1000)
+    setTimeout(() => { isTransitioning.current = false }, 1000)
   }
 
   return (
     <div className="min-h-screen flex flex-col"
       style={{ background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)' }}>
-
-      {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <header className="flex items-center justify-between px-6 py-3"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <button onClick={onBackToMenu}
+        <button onClick={handleBackToMenu}
           className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
           ← Menú
         </button>
@@ -237,33 +219,31 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
           <span className="text-xl">🤖</span>
           <span className="font-black text-white tracking-wide text-lg">ENCIENDE LAS LUCES</span>
         </div>
-        <div className="w-16" /> {/* spacer */}
+        <div className="flex items-center gap-1">
+          <button onClick={onToggleMute}
+            className="text-2xl w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            title={muted ? 'Activar sonido' : 'Silenciar'}>
+            {muted ? '🔇' : '🔊'}
+          </button>
+          <button onClick={onOpenSettings}
+            className="text-white/50 hover:text-white text-xl w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            title="Opciones">
+            ⚙️
+          </button>
+        </div>
       </header>
-
-      {/* ── Main game area ──────────────────────────────────────────────── */}
       <main className="flex-1 flex items-center justify-center p-4 md:p-6">
         <div className="flex gap-5 items-start flex-wrap justify-center w-full" style={{ maxWidth: 960 }}>
-
-          {/* Canvas */}
           <div className="flex-shrink-0">
             <div className="rounded-2xl overflow-hidden"
-              style={{
-                boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 20px 60px rgba(0,0,0,0.5)',
-              }}>
+              style={{ boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 20px 60px rgba(0,0,0,0.5)' }}>
               <GameWrapper bridge={emitter} />
             </div>
           </div>
-
-          {/* Side panel */}
           <div className="flex-1 flex flex-col gap-3" style={{ minWidth: 270, maxWidth: 320 }}>
             <LevelHUD bridge={emitter} />
-
             <div className="rounded-2xl p-4 flex flex-col"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.09)',
-                minHeight: 460,
-              }}>
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', minHeight: 460 }}>
               <InstructionPanel
                 bridge={emitter}
                 onRun={() => runCommands(queue)}
@@ -275,19 +255,18 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
           </div>
         </div>
       </main>
-
-      {levelComplete && (
-        <LevelCompleteModal hasNext={hasNext} onNext={handleNextLevel} onReplay={handleReset} />
-      )}
+      {levelComplete && <LevelCompleteModal hasNext={hasNext} onNext={handleNextLevel} onReplay={handleReset} />}
     </div>
   )
 }
 
 // ─── App root ─────────────────────────────────────────────────────────────────
-type Screen = 'start' | 'game'
-
 export default function App() {
-  const [screen, setScreen] = useState<Screen>('start')
+  const [screen,   setScreen]   = useState<Screen>('start')
+  const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
+
+  const handleToggleMute   = () => setSettings(s => ({ ...s, muted: !s.muted }))
+  const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
 
   return (
     <>
@@ -298,10 +277,31 @@ export default function App() {
         }
       `}</style>
 
-      {screen === 'start'
-        ? <StartScreen onStart={() => setScreen('game')} />
-        : <GameScreen  onBackToMenu={() => setScreen('start')} />
-      }
+      {screen === 'start' && <StartScreen onStart={() => setScreen('game')} />}
+
+      {/* GameScreen siempre montado cuando estamos en game o settings
+          para que el bridge de Phaser no se destruya */}
+      <div style={{ display: (screen === 'game' || screen === 'settings') ? 'block' : 'none' }}>
+        <GameScreen
+          onBackToMenu={()    => setScreen('start')}
+          onOpenSettings={() => setScreen('settings')}
+          muted={settings.muted}
+          volume={settings.volume}
+          onToggleMute={handleToggleMute}
+          isActive={screen === 'game' || screen === 'settings'}
+        />
+      </div>
+
+      {screen === 'settings' && (
+        <div className="fixed inset-0 z-50">
+          <SettingsScreen
+            settings={settings}
+            onToggleMute={handleToggleMute}
+            onVolumeChange={handleVolumeChange}
+            onBack={() => setScreen('game')}
+          />
+        </div>
+      )}
     </>
   )
 }

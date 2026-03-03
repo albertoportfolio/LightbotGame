@@ -3,8 +3,9 @@ import level1 from './level1';
 import level2 from './level2';
 import level3 from './level3';
 import level4 from './level4';
+import level5 from './level5';
 
-const LEVELS: LevelDef[] = [level1, level2, level3, level4];
+const LEVELS: LevelDef[] = [level1, level2, level3, level4, level5];
 
 export class LevelManager {
   private _currentIndex = 0;
@@ -18,7 +19,7 @@ export class LevelManager {
     if (index < 0 || index >= LEVELS.length)
       throw new Error(`Level index ${index} out of range (0–${LEVELS.length - 1})`);
     this._currentIndex = index;
-    
+
     return LEVELS[index];
   }
 

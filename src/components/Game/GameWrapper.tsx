@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import Phaser from 'phaser'
 import { createPhaserGame } from '../../game/PhaserGame'
 import { useGameStore } from '../../store/gameStore'
+import { GAME_CONFIG } from '../../game/constants/gameConfig'
 
 interface GameWrapperProps {
   bridge: Phaser.Events.EventEmitter
@@ -39,7 +40,7 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
     <div
       ref={containerRef}
       className="rounded-xl overflow-hidden shadow-2xl border border-white/10"
-      style={{ width: 640, height: 520 }}
+      style={{ width: GAME_CONFIG.WIDTH, height: GAME_CONFIG.HEIGHT }}
     />
   )
 }

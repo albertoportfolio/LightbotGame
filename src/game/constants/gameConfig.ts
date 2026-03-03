@@ -1,7 +1,7 @@
 export const GAME_CONFIG = {
   // ─── Canvas ──────────────────────────────────────────────────────────────
-  WIDTH:  640,   // used by PhaserGame.ts
-  HEIGHT: 520,
+  WIDTH:  680,   // used by PhaserGame.ts
+  HEIGHT: 560,
 
   // ─── Grid layout ─────────────────────────────────────────────────────────
   CELL_SIZE:    64,

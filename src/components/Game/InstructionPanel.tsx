@@ -248,6 +248,7 @@ export function InstructionPanel({
     if (activeCommandIndex === queue.length - 1) {
       const t = setTimeout(() => {
         setIsRunning(false)
+        clearQueue()
         setActiveCommandIndex(-1)
       }, 500)
       return () => clearTimeout(t)

@@ -38,7 +38,7 @@ export const COMMAND_META: Record<Command, CommandMeta> = {
     description: 'Enciende/apaga la luz de la celda actual',
   },
   [Command.LOOP_UNTIL_PLANT]: {
-    label: 'Bucle 🌿',
+    label: 'Bucle',
     icon: '🔁',
     color: '#fff',
     bgColor: '#065f46',

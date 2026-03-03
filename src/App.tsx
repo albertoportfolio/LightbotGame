@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { GameWrapper } from './components/Game/GameWrapper'
 import { InstructionPanel } from './components/Game/InstructionPanel'
 import { LevelHUD } from './components/Game/LevelHUD'
@@ -192,9 +192,11 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
   const [levelComplete, setLevelComplete] = useState(false)
   const [hasNext, setHasNext] = useState(false)
   const [nextLevelIndex, setNextLevelIndex] = useState(0)
+  const isTransitioning = useRef(false)  // ← AÑADE ESTE REF
 
   useEffect(() => {
     const handler = (data: { levelId: number }) => {
+       if (isTransitioning.current) return
       // levelId es 1-based → el siguiente nivel en Phaser es índice levelId (no levelId-1)
       const next = data.levelId // nivel 1 completo → siguiente índice = 1
       setNextLevelIndex(next)
@@ -206,14 +208,18 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
   }, [emitter])
 
   const handleReset = () => {
+    isTransitioning.current = false
     setLevelComplete(false)
     resetLevel()
   }
 
   const handleNextLevel = () => {
+     if (isTransitioning.current) return
+     isTransitioning.current = true
     setLevelComplete(false)
     clearQueue()
     loadLevel(nextLevelIndex)
+     setTimeout(() => { isTransitioning.current = false }, 1000)
   }
 
   return (

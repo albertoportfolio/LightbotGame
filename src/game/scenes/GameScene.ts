@@ -5,7 +5,6 @@ import { Robot } from '../entities/Robot'
 import { LevelManager } from '../levels/LevelManager'
 import { CommandExecutor } from '../logic/CommandExecutor'
 
-// ─── Helper: estrella ────────────────────────────────────────────────────────
 function drawStar(
   g: Phaser.GameObjects.Graphics,
   cx: number, cy: number,
@@ -21,14 +20,13 @@ function drawStar(
   g.fillPoints(verts, true)
 }
 
-// ─── Helper: nube caricaturesca ───────────────────────────────────────────────
 function drawCloud(g: Phaser.GameObjects.Graphics, cx: number, cy: number, scale: number) {
   g.fillStyle(0xffffff, 0.18)
-  g.fillCircle(cx,            cy,      18 * scale)
-  g.fillCircle(cx - 18 * scale, cy + 6 * scale,  14 * scale)
-  g.fillCircle(cx + 18 * scale, cy + 6 * scale,  14 * scale)
-  g.fillCircle(cx - 8  * scale, cy - 10 * scale, 14 * scale)
-  g.fillCircle(cx + 8  * scale, cy - 8  * scale, 12 * scale)
+  g.fillCircle(cx,               cy,             18 * scale)
+  g.fillCircle(cx - 18 * scale,  cy + 6 * scale, 14 * scale)
+  g.fillCircle(cx + 18 * scale,  cy + 6 * scale, 14 * scale)
+  g.fillCircle(cx - 8  * scale,  cy - 10 * scale,14 * scale)
+  g.fillCircle(cx + 8  * scale,  cy - 8  * scale,12 * scale)
 }
 
 export class GameScene extends Phaser.Scene {
@@ -40,7 +38,7 @@ export class GameScene extends Phaser.Scene {
   private bgGraphics!:    Phaser.GameObjects.Graphics
   private decorGraphics!: Phaser.GameObjects.Graphics
   private gridGraphics!:  Phaser.GameObjects.Graphics
-   private wonThisLevel = false 
+  private wonThisLevel = false
 
   constructor() {
     super({ key: 'GameScene' })
@@ -48,16 +46,12 @@ export class GameScene extends Phaser.Scene {
 
   create() {
     this.bridge = this.registry.get('bridge') as Phaser.Events.EventEmitter
-
     this.bgGraphics    = this.add.graphics()
     this.decorGraphics = this.add.graphics()
     this.gridGraphics  = this.add.graphics()
-
     this.executor = new CommandExecutor(this, this.bridge)
-
     this.drawBackground()
     this.loadLevel(0)
-
     this.bridge.on('run-commands', this.handleRunCommands, this)
     this.bridge.on('reset-level',  this.handleReset,       this)
     this.bridge.on('load-level',   this.handleLoadLevel,   this)
@@ -70,19 +64,19 @@ export class GameScene extends Phaser.Scene {
     this.robot?.destroy()
   }
 
-  // ─── Fondo estático ────────────────────────────────────────────────────────
+  // ─── Fondo ────────────────────────────────────────────────────────────────
 
   private drawBackground() {
     const W = GAME_CONFIG.WIDTH
     const H = GAME_CONFIG.HEIGHT
     const g = this.bgGraphics
 
-    // Cielo — degradado de 4 bandas de azul violáceo a azul medianoche
+    // Cielo — azul muy oscuro casi negro para máximo contraste
     const bands = [
-      { color: 0x2d1b69, y: 0 },
-      { color: 0x1a237e, y: H * 0.25 },
-      { color: 0x0d1b5e, y: H * 0.50 },
-      { color: 0x080f3a, y: H * 0.72 },
+      { color: 0x0f0c29, y: 0 },
+      { color: 0x0a0a2e, y: H * 0.3 },
+      { color: 0x060618, y: H * 0.6 },
+      { color: 0x030310, y: H * 0.8 },
     ]
     bands.forEach((b, i) => {
       const nextY = i < bands.length - 1 ? bands[i + 1].y : H
@@ -90,77 +84,66 @@ export class GameScene extends Phaser.Scene {
       g.fillRect(0, b.y, W, nextY - b.y + 1)
     })
 
-    // Estrellas — tamaños variados con brillo aleatorio (semilla fija)
+    // Estrellas blancas y amarillas
     const rand = (() => {
       let s = 137
       return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646 }
     })()
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 60; i++) {
       const x = rand() * W
-      const y = rand() * H * 0.65
+      const y = rand() * H * 0.7
       const r = rand() * 2 + 0.5
-      const a = rand() * 0.6 + 0.4
-      g.fillStyle(0xffffff, a)
+      g.fillStyle(0xffffff, rand() * 0.5 + 0.5)
       g.fillCircle(x, y, r)
     }
-    // Unas estrellas más grandes y amarillas
-    for (let i = 0; i < 8; i++) {
-      const x = rand() * W
-      const y = rand() * H * 0.5
-      g.fillStyle(0xfef08a, rand() * 0.5 + 0.5)
-      g.fillCircle(x, y, 2.5)
+    for (let i = 0; i < 10; i++) {
+      g.fillStyle(0xfef08a, rand() * 0.4 + 0.6)
+      g.fillCircle(rand() * W, rand() * H * 0.5, 2)
     }
 
-    // Luna llena con halo
-    const moonX = W - 70
-    const moonY = 55
-    g.fillStyle(0xfde68a, 0.12)
-    g.fillCircle(moonX, moonY, 38)
-    g.fillStyle(0xfef9c3, 0.85)
+    // Luna
+    const moonX = W - 70, moonY = 52
+    g.fillStyle(0xfde68a, 0.15)
+    g.fillCircle(moonX, moonY, 40)
+    g.fillStyle(0xfef9c3, 0.9)
     g.fillCircle(moonX, moonY, 26)
     g.fillStyle(0xfef3c7, 1)
     g.fillCircle(moonX, moonY, 22)
-    // Cráteres
-    g.fillStyle(0xfde68a, 0.4)
+    g.fillStyle(0xfde68a, 0.35)
     g.fillCircle(moonX - 7, moonY - 4, 5)
     g.fillCircle(moonX + 8, moonY + 6, 3)
     g.fillCircle(moonX + 2, moonY - 10, 3)
 
-    // Colinas traseras — silueta violácea
-    g.fillStyle(0x3730a3, 0.5)
-    g.fillEllipse(W * 0.1,  H * 0.78, 300, 130)
-    g.fillEllipse(W * 0.65, H * 0.76, 340, 120)
+    // Colinas silueta violeta
+    g.fillStyle(0x1e1b4b, 1)
+    g.fillEllipse(W * 0.1,  H * 0.8,  320, 140)
+    g.fillEllipse(W * 0.65, H * 0.78, 360, 130)
+    g.fillEllipse(W * 0.35, H * 0.82, 260, 110)
 
-    // Colinas delanteras — verde oscuro
+    // Suelo oscuro
+    g.fillStyle(0x052e16, 1)
+    g.fillRect(0, H * 0.86, W, H * 0.14)
+
+    // Franja hierba
     g.fillStyle(0x14532d, 1)
-    g.fillEllipse(W * 0.0,  H * 0.92, 280, 100)
-    g.fillEllipse(W * 0.45, H * 0.94, 320, 100)
-    g.fillEllipse(W * 0.95, H * 0.91, 260, 100)
+    g.fillRect(0, H * 0.86, W, 12)
 
-    // Franja de suelo
-    g.fillStyle(0x14532d, 1)
-    g.fillRect(0, H * 0.87, W, H * 0.13)
-
-    // Capa de hierba superior
-    g.fillStyle(0x15803d, 1)
-    g.fillRect(0, H * 0.87, W, 10)
-
-    // Puntitas de hierba
+    // Puntitas hierba
     for (let x = 2; x < W; x += 10) {
       const h = 5 + Math.sin(x * 0.5) * 3
       g.fillStyle(0x16a34a, 1)
-      g.fillTriangle(x, H * 0.87, x + 5, H * 0.87, x + 2, H * 0.87 - h)
-      g.fillStyle(0x4ade80, 0.4)
-      g.fillTriangle(x + 2, H * 0.87, x + 7, H * 0.87, x + 4, H * 0.87 - h + 2)
+      g.fillTriangle(x, H * 0.86, x + 5, H * 0.86, x + 2, H * 0.86 - h)
+      g.fillStyle(0x4ade80, 0.5)
+      g.fillTriangle(x + 2, H * 0.86, x + 6, H * 0.86, x + 4, H * 0.86 - h + 2)
     }
 
     // Nubes
-    drawCloud(g, 90,      35, 1.0)
-    drawCloud(g, W - 110, 28, 1.2)
-    drawCloud(g, W * 0.5, 50, 0.8)
+    drawCloud(g, 80,      32, 1.0)
+    drawCloud(g, W - 100, 25, 1.2)
+    drawCloud(g, W * 0.5, 48, 0.8)
   }
 
-  // ─── Decoraciones (se redibuja con el grid) ────────────────────────────────
+  // ─── Decoraciones ─────────────────────────────────────────────────────────
 
   private drawDecorations() {
     const g = this.decorGraphics
@@ -168,19 +151,17 @@ export class GameScene extends Phaser.Scene {
     const W = GAME_CONFIG.WIDTH
     const H = GAME_CONFIG.HEIGHT
 
-    // Arbolitos pixel art en los bordes
-    this.drawTree(g, 22,      H * 0.84)
-    this.drawTree(g, W - 22,  H * 0.83)
-    this.drawTree(g, 54,      H * 0.88)
-    this.drawTree(g, W - 54,  H * 0.87)
+    this.drawTree(g, 20,     H * 0.83)
+    this.drawTree(g, W - 20, H * 0.82)
+    this.drawTree(g, 50,     H * 0.87)
+    this.drawTree(g, W - 50, H * 0.86)
 
-    // Florecitas
     const flowers = [
-      { x: 14, y: H - 22, c: 0xf472b6 },
-      { x: 38, y: H - 18, c: 0xfbbf24 },
-      { x: W - 16, y: H - 24, c: 0x34d399 },
-      { x: W - 42, y: H - 18, c: 0xf87171 },
-      { x: W * 0.5 + 140, y: H - 20, c: 0xa78bfa },
+      { x: 12,           y: H - 20, c: 0xf472b6 },
+      { x: 36,           y: H - 16, c: 0xfbbf24 },
+      { x: W - 14,       y: H - 22, c: 0x34d399 },
+      { x: W - 40,       y: H - 16, c: 0xf87171 },
+      { x: W * 0.5 + 130,y: H - 18, c: 0xa78bfa },
     ]
     flowers.forEach(f => {
       g.fillStyle(0x15803d, 1)
@@ -196,25 +177,27 @@ export class GameScene extends Phaser.Scene {
   }
 
   private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number) {
-    // Tronco
     g.fillStyle(0x92400e, 1)
     g.fillRect(x - 3, y - 14, 6, 16)
-    // Sombra tronco
     g.fillStyle(0x78350f, 1)
-    g.fillRect(x + 1, y - 14, 2, 16)
-    // Copa 3 capas
+    g.fillRect(x + 1,  y - 14, 2, 16)
     g.fillStyle(0x15803d, 1)
     g.fillTriangle(x, y - 44, x - 14, y - 14, x + 14, y - 14)
     g.fillStyle(0x16a34a, 1)
     g.fillTriangle(x, y - 56, x - 11, y - 30, x + 11, y - 30)
     g.fillStyle(0x4ade80, 1)
     g.fillTriangle(x, y - 64, x - 8,  y - 46, x + 8,  y - 46)
-    // Brillito
     g.fillStyle(0xbbf7d0, 0.5)
     g.fillCircle(x + 3, y - 54, 3)
   }
 
   // ─── Grid ──────────────────────────────────────────────────────────────────
+  // Paleta por rol:
+  //   Fondo   → azul/negro muy oscuro
+  //   Floor   → verde vivo   (frío)
+  //   Luz OFF → morado oscuro (diferente a todo)
+  //   Luz ON  → cian/blanco  (frío+brillante, distinto al robot naranja)
+  //   Robot   → naranja/amarillo cálido  (ver BootScene)
 
   renderGrid() {
     this.gridGraphics.clear()
@@ -229,92 +212,91 @@ export class GameScene extends Phaser.Scene {
         const cell = grid[row][col]
         if (cell.type === 'empty') continue
 
-        const x = GRID_OFFSET_X + col * CELL_SIZE
-        const y = GRID_OFFSET_Y + row * CELL_SIZE
+        const x  = GRID_OFFSET_X + col * CELL_SIZE
+        const y  = GRID_OFFSET_Y + row * CELL_SIZE
         const cx = x + CELL_SIZE / 2
         const cy = y + CELL_SIZE / 2
 
         if (cell.type === 'wall') {
-          // Pared — gris azulado con efecto 3D
-          g.fillStyle(0x475569, 1)
+          // Pared — gris azulado 3D
+          g.fillStyle(0x334155, 1)
           g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 6)
-          g.fillStyle(0x64748b, 1)
+          g.fillStyle(0x475569, 1)
           g.fillRoundedRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6, 4)
-          // Sombra interior
-          g.fillStyle(0x000000, 0.2)
-          g.fillRect(x + 3, y + CELL_SIZE - 8, CELL_SIZE - 6, 5)
-          g.fillRect(x + CELL_SIZE - 8, y + 3, 5, CELL_SIZE - 8)
-          // Brillo
-          g.fillStyle(0xffffff, 0.15)
+          g.fillStyle(0xffffff, 0.12)
           g.fillRect(x + 3, y + 3, CELL_SIZE - 6, 4)
           g.fillRect(x + 3, y + 3, 4, CELL_SIZE - 6)
+          g.fillStyle(0x000000, 0.25)
+          g.fillRect(x + 3, y + CELL_SIZE - 8, CELL_SIZE - 6, 5)
 
         } else if (cell.type === 'light') {
+
           if (cell.lit) {
-            // ── LUZ ENCENDIDA — naranja/amarillo muy brillante ──────────────
-            // Glow exterior difuso
-            g.fillStyle(0xfde047, 0.2)
-            g.fillRoundedRect(x - 4, y - 4, CELL_SIZE + 8, CELL_SIZE + 8, 12)
-            // Base naranja
-            g.fillStyle(0xf59e0b, 1)
+            // ── LUZ ON: cian brillante ─────────────────────────────────────
+            // Aura exterior
+            g.fillStyle(0x67e8f9, 0.2)
+            g.fillRoundedRect(x - 5, y - 5, CELL_SIZE + 10, CELL_SIZE + 10, 14)
+            // Base cian oscuro
+            g.fillStyle(0x0e7490, 1)
             g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-            // Centro amarillo
-            g.fillStyle(0xfde047, 1)
+            // Interior cian claro
+            g.fillStyle(0x22d3ee, 1)
             g.fillRoundedRect(x + 5, y + 5, CELL_SIZE - 10, CELL_SIZE - 10, 6)
             // Núcleo blanco
-            g.fillStyle(0xffffff, 0.85)
-            g.fillCircle(cx, cy, 10)
-            // Rayitos
-            g.lineStyle(2, 0xfef9c3, 0.8)
+            g.fillStyle(0xffffff, 0.95)
+            g.fillCircle(cx, cy, 11)
+            // Rayitos cian
+            g.lineStyle(2, 0xa5f3fc, 0.9)
             for (let a = 0; a < 8; a++) {
               const angle = (a / 8) * Math.PI * 2
               g.lineBetween(
-                cx + Math.cos(angle) * 12, cy + Math.sin(angle) * 12,
-                cx + Math.cos(angle) * 20, cy + Math.sin(angle) * 20
+                cx + Math.cos(angle) * 13, cy + Math.sin(angle) * 13,
+                cx + Math.cos(angle) * 22, cy + Math.sin(angle) * 22
               )
             }
-            // Estrella encima
-            g.fillStyle(0xffffff, 0.9)
+            // Estrella blanca central
+            g.fillStyle(0xffffff, 0.85)
             drawStar(g, cx, cy, 5, 4, 9)
 
           } else {
-            // ── LUZ APAGADA — azul muy oscuro con estrella tenue ────────────
-            g.fillStyle(0x1e3a5f, 1)
+            // ── LUZ OFF: morado oscuro — diferente a floor verde y fondo negro
+            g.fillStyle(0x2e1065, 1)
             g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-            g.fillStyle(0x1d4ed8, 0.3)
+            g.fillStyle(0x4c1d95, 0.6)
             g.fillRoundedRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8, 6)
-            g.lineStyle(1.5, 0x3b82f6, 0.5)
+            g.lineStyle(1.5, 0x7c3aed, 0.7)
             g.strokeRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-            g.fillStyle(0x60a5fa, 0.25)
-            drawStar(g, cx, cy, 5, 5, 12)
+            // Estrellita morada tenue
+            g.fillStyle(0x8b5cf6, 0.35)
+            drawStar(g, cx, cy, 5, 5, 13)
           }
 
         } else {
-          // ── FLOOR — verde brillante muy contrastado con el fondo ────────────
-          // Sombra exterior para elevar la plataforma
-          g.fillStyle(0x000000, 0.35)
-          g.fillRoundedRect(x + 3, y + 5, CELL_SIZE - 4, CELL_SIZE - 4, 8)
-          // Base verde oscuro (borde inferior = sensación de volumen)
-          g.fillStyle(0x15803d, 1)
-          g.fillRoundedRect(x + 1, y + 4, CELL_SIZE - 2, CELL_SIZE - 2, 8)
+          // ── FLOOR: verde vivo elevado ──────────────────────────────────────
+          // Sombra para efecto de plataforma
+          g.fillStyle(0x000000, 0.4)
+          g.fillRoundedRect(x + 3, y + 6, CELL_SIZE - 4, CELL_SIZE - 4, 8)
+          // Borde inferior más oscuro (volumen)
+          g.fillStyle(0x14532d, 1)
+          g.fillRoundedRect(x + 1, y + 5, CELL_SIZE - 2, CELL_SIZE - 2, 8)
           // Superficie verde vivo
           g.fillStyle(0x22c55e, 1)
-          g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 4, 8)
-          // Textura: manchas de hierba
-          g.fillStyle(0x4ade80, 0.5)
-          g.fillCircle(x + 12, y + 14, 5)
-          g.fillCircle(x + CELL_SIZE - 13, y + 12, 4)
-          g.fillCircle(x + 18, y + CELL_SIZE - 16, 4)
-          g.fillCircle(x + CELL_SIZE - 16, y + CELL_SIZE - 14, 5)
+          g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 5, 8)
+          // Manchas textura hierba
+          g.fillStyle(0x4ade80, 0.55)
+          g.fillCircle(x + 13, y + 13, 5)
+          g.fillCircle(x + CELL_SIZE - 14, y + 11, 4)
+          g.fillCircle(x + 16, y + CELL_SIZE - 17, 4)
+          g.fillCircle(x + CELL_SIZE - 15, y + CELL_SIZE - 15, 5)
           // Brillo superior
-          g.fillStyle(0xbbf7d0, 0.45)
+          g.fillStyle(0xbbf7d0, 0.5)
           g.fillRoundedRect(x + 6, y + 4, CELL_SIZE - 12, 7, 4)
         }
       }
     }
   }
 
-  // ─── Level management ──────────────────────────────────────────────────────
+  // ─── Level management ─────────────────────────────────────────────────────
 
   private loadLevel(index: number) {
     this.wonThisLevel = false
@@ -330,7 +312,7 @@ export class GameScene extends Phaser.Scene {
     })
   }
 
-  // ─── Event handlers ────────────────────────────────────────────────────────
+  // ─── Event handlers ───────────────────────────────────────────────────────
 
   private handleRunCommands = (commands: Command[]) => {
     if (this.executor.running) return
@@ -340,13 +322,13 @@ export class GameScene extends Phaser.Scene {
       this.robot.draw()
       this.bridge.emit('robot-moved', this.robot.position)
       if (!this.wonThisLevel && this.levelManager.checkVictory(this.levelState)) {
-  this.wonThisLevel = true
-  this.levelState.isComplete = true
-  const def = this.levelManager.current
-  this.time.delayedCall(300, () => {
-    this.bridge.emit('level-complete', { levelId: def.id })
-  })
-}
+        this.wonThisLevel = true
+        this.levelState.isComplete = true
+        const def = this.levelManager.current
+        this.time.delayedCall(300, () => {
+          this.bridge.emit('level-complete', { levelId: def.id })
+        })
+      }
       return success
     })
   }

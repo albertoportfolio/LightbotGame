@@ -191,11 +191,15 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
 
   const [levelComplete, setLevelComplete] = useState(false)
   const [hasNext, setHasNext] = useState(false)
+  const [nextLevelIndex, setNextLevelIndex] = useState(0)
 
   useEffect(() => {
     const handler = (data: { levelId: number }) => {
+      // levelId es 1-based → el siguiente nivel en Phaser es índice levelId (no levelId-1)
+      const next = data.levelId // nivel 1 completo → siguiente índice = 1
+      setNextLevelIndex(next)
+      setHasNext(next < TOTAL_LEVELS)
       setLevelComplete(true)
-      setHasNext(data.levelId < TOTAL_LEVELS)
     }
     emitter.on('level-complete', handler)
     return () => { emitter.off('level-complete', handler) }
@@ -209,7 +213,7 @@ function GameScreen({ onBackToMenu }: { onBackToMenu: () => void }) {
   const handleNextLevel = () => {
     setLevelComplete(false)
     clearQueue()
-    loadLevel(currentLevel + 1)
+    loadLevel(nextLevelIndex)
   }
 
   return (

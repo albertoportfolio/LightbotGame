@@ -2,10 +2,6 @@ import Phaser from 'phaser'
 import { Direction, LevelState, RobotState } from '../../types/game.types'
 import { GAME_CONFIG } from '../constants/gameConfig'
 
-// ─── Direction helpers ────────────────────────────────────────────────────────
-// Direction is a string union ('UP'|'RIGHT'|'DOWN'|'LEFT'), NOT an enum,
-// so we use plain string keys here instead of Direction.UP etc.
-
 const DIRECTION_DELTAS: Record<Direction, { dRow: number; dCol: number }> = {
   UP:    { dRow: -1, dCol:  0 },
   DOWN:  { dRow:  1, dCol:  0 },
@@ -13,37 +9,32 @@ const DIRECTION_DELTAS: Record<Direction, { dRow: number; dCol: number }> = {
   RIGHT: { dRow:  0, dCol:  1 },
 }
 
-const DIRECTION_ANGLES: Record<Direction, number> = {
-  UP:    -90,
-  RIGHT:   0,
-  DOWN:   90,
-  LEFT:  180,
-}
-
 const DIRECTION_ORDER: Direction[] = ['UP', 'RIGHT', 'DOWN', 'LEFT']
 
-/**
- * Robot — Phaser entity that renders the player character and
- * mutates the LevelState in response to commands.
- * Returns true on success, false on failure.
- */
+const DIRECTION_FRAME: Record<Direction, number> = {
+  DOWN:  0,
+  UP:    1,
+  RIGHT: 2,
+  LEFT:  3,
+}
+
 export class Robot {
-  private graphics: Phaser.GameObjects.Graphics
+  private sprite: Phaser.GameObjects.Sprite
   private scene: Phaser.Scene
   private state: RobotState
 
   constructor(scene: Phaser.Scene, initialState: RobotState) {
     this.scene = scene
     this.state = { ...initialState }
-    this.graphics = scene.add.graphics()
-    this.draw()
+
+    const { x, y } = this.cellToWorld(initialState.row, initialState.col)
+    this.sprite = scene.add.sprite(x, y, 'robot', DIRECTION_FRAME[initialState.direction])
+    this.sprite.setDisplaySize(GAME_CONFIG.CELL_SIZE - 4, GAME_CONFIG.CELL_SIZE - 4)
   }
 
   get position(): RobotState {
     return { ...this.state }
   }
-
-  // ─── Commands ─────────────────────────────────────────────────────────────
 
   moveForward(levelState: LevelState): boolean {
     const { dRow, dCol } = DIRECTION_DELTAS[this.state.direction]
@@ -64,15 +55,15 @@ export class Robot {
 
   turnLeft(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
-    this.state.direction = DIRECTION_ORDER[(idx + 3) % 4] // -1 mod 4
-    this.draw()
+    this.state.direction = DIRECTION_ORDER[(idx + 3) % 4]
+    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
     return true
   }
 
   turnRight(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
     this.state.direction = DIRECTION_ORDER[(idx + 1) % 4]
-    this.draw()
+    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
     return true
   }
 
@@ -82,8 +73,6 @@ export class Robot {
     cell.lit = !cell.lit
     return true
   }
-
-  // ─── Rendering ────────────────────────────────────────────────────────────
 
   private cellToWorld(row: number, col: number): { x: number; y: number } {
     const { GRID_OFFSET_X, GRID_OFFSET_Y, CELL_SIZE } = GAME_CONFIG
@@ -95,53 +84,27 @@ export class Robot {
 
   private animateTo(row: number, col: number) {
     const { x, y } = this.cellToWorld(row, col)
-    const cur = this.cellToWorld(this.state.row, this.state.col) // already updated above
     this.scene.tweens.add({
-      targets: this.graphics,
-      // offset the graphics object from its current drawn position
-      x: x - cur.x,
-      y: y - cur.y,
+      targets: this.sprite,
+      x,
+      y,
       duration: GAME_CONFIG.MOVE_DURATION_MS,
       ease: 'Cubic.easeInOut',
-      onComplete: () => {
-        // Reset graphics offset and redraw at the new position
-        this.graphics.x = 0
-        this.graphics.y = 0
-        this.draw()
-      },
     })
   }
 
   draw() {
-    this.graphics.clear()
-    const { x, y } = this.cellToWorld(this.state.row, this.state.col)
-    const radius = GAME_CONFIG.CELL_SIZE / 2 - 8
-
-    // Body
-    this.graphics.fillStyle(GAME_CONFIG.COLORS.ROBOT, 1)
-    this.graphics.fillCircle(x, y, radius)
-
-    // Direction arrow (small filled triangle)
-    const angle = (DIRECTION_ANGLES[this.state.direction] * Math.PI) / 180
-    const tipX = x + Math.cos(angle) * (radius - 2)
-    const tipY = y + Math.sin(angle) * (radius - 2)
-
-    this.graphics.fillStyle(GAME_CONFIG.COLORS.ROBOT_DIRECTION, 1)
-    this.graphics.fillTriangle(
-      tipX,                               tipY,
-      x + Math.cos(angle + 2.4) * 10,    y + Math.sin(angle + 2.4) * 10,
-      x + Math.cos(angle - 2.4) * 10,    y + Math.sin(angle - 2.4) * 10,
-    )
+    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
   }
 
   reset(initialState: RobotState) {
-    this.graphics.x = 0
-    this.graphics.y = 0
     this.state = { ...initialState }
-    this.draw()
+    const { x, y } = this.cellToWorld(initialState.row, initialState.col)
+    this.sprite.setPosition(x, y)
+    this.sprite.setFrame(DIRECTION_FRAME[initialState.direction])
   }
 
   destroy() {
-    this.graphics.destroy()
+    this.sprite.destroy()
   }
 }

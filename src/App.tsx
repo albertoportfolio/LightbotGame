@@ -267,9 +267,15 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
 export default function App() {
   const [screen,   setScreen]   = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
+  const [hasStarted,  setHasStarted]  = useState(false)
 
   const handleToggleMute   = () => setSettings(s => ({ ...s, muted: !s.muted }))
   const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
+
+  const handleStart = () => {
+    setHasStarted(true)   // ← monta GameScreen la primera vez
+    setScreen('game')
+  }
 
   return (
     <>
@@ -280,20 +286,20 @@ export default function App() {
         }
       `}</style>
 
-      {screen === 'start' && <StartScreen onStart={() => setScreen('game')} />}
+      {screen === 'start' && <StartScreen onStart={handleStart} />}
 
-      {/* GameScreen siempre montado cuando estamos en game o settings
-          para que el bridge de Phaser no se destruya */}
-      <div style={{ display: (screen === 'game' || screen === 'settings') ? 'block' : 'none' }}>
-        <GameScreen
-          onBackToMenu={()    => setScreen('start')}
-          onOpenSettings={() => setScreen('settings')}
-          muted={settings.muted}
-          volume={settings.volume}
-          onToggleMute={handleToggleMute}
-          isActive={screen === 'game' || screen === 'settings'}
-        />
-      </div>
+      {hasStarted && (
+        <div style={{ display: (screen === 'game' || screen === 'settings') ? 'block' : 'none' }}>
+          <GameScreen
+            onBackToMenu={() => setScreen('start')}
+            onOpenSettings={() => setScreen('settings')}
+            muted={settings.muted}
+            volume={settings.volume}
+            onToggleMute={handleToggleMute}
+            isActive={screen === 'game' || screen === 'settings'}
+          />
+        </div>
+      )}
 
       {screen === 'settings' && (
         <div className="fixed inset-0 z-50">

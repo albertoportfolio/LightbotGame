@@ -38,7 +38,7 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
     <div
       ref={containerRef}
       className="rounded-xl overflow-hidden shadow-2xl border border-white/10"
-      style={{ width: 560, height: 480 }}
+      style={{ width: 640, height: 520 }}
     />
   )
 }

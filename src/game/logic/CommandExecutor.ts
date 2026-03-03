@@ -2,14 +2,8 @@ import Phaser from 'phaser'
 import { Command } from '../../types/game.types'
 import { GAME_CONFIG } from '../constants/gameConfig'
 
-/**
- * CommandExecutor — receives an ordered list of Commands and
- * executes them one-by-one with a configurable delay, delegating
- * the actual movement / state changes to the Robot entity.
- *
- * It emits events on the passed EventEmitter so that both
- * Phaser scenes and React components can react accordingly.
- */
+const MAX_LOOP_ITERATIONS = 20
+
 export class CommandExecutor {
   private emitter: Phaser.Events.EventEmitter
   private scene: Phaser.Scene
@@ -20,21 +14,28 @@ export class CommandExecutor {
     this.emitter = emitter
   }
 
-  get running() {
-    return this.isRunning
-  }
+  get running() { return this.isRunning }
 
   /**
-   * Execute an array of commands sequentially using Phaser's
-   * time events so we don't block the game loop.
+   * onCommandCallback devuelve:
+   *   true  → éxito / continúa
+   *   false → fallo → para ejecución
+   *
+   * Para LOOP_UNTIL_PLANT el callback devuelve true si el robot
+   * YA ESTÁ en una planta (= salir del bucle), false si no (= seguir).
    */
-  execute(commands: Command[], onCommandCallback: (cmd: Command, index: number) => boolean): void {
+  execute(
+    commands: Command[],
+    onCommandCallback: (cmd: Command, index: number) => boolean
+  ): void {
     if (this.isRunning) return
     this.isRunning = true
 
     let index = 0
+    let loopCount = 0
 
     const runNext = () => {
+      if (!this.isRunning) return
       if (index >= commands.length) {
         this.isRunning = false
         return
@@ -42,13 +43,40 @@ export class CommandExecutor {
 
       const cmd = commands[index]
 
-      // onCommandCallback returns false if the command failed
-      const success = onCommandCallback(cmd, index)
+      if (cmd === Command.LOOP_UNTIL_PLANT) {
+        // Comprobar si el robot ya está en una planta
+        const onPlant = onCommandCallback(cmd, index)
+        this.emitter.emit('command-executed', { command: cmd, index })
 
+        if (onPlant) {
+          // Robot en planta → fin del bucle
+          this.isRunning = false
+          return
+        }
+
+        loopCount++
+        if (loopCount >= MAX_LOOP_ITERATIONS) {
+          // Límite de seguridad: demasiadas iteraciones
+          this.emitter.emit('command-failed', {
+            command: cmd,
+            reason: `Bucle sin fin (máx ${MAX_LOOP_ITERATIONS} repeticiones)`,
+          })
+          this.isRunning = false
+          return
+        }
+
+        // Reiniciar desde el principio
+        index = 0
+        this.scene.time.delayedCall(GAME_CONFIG.COMMAND_DELAY_MS, runNext)
+        return
+      }
+
+      // Comando normal
+      const success = onCommandCallback(cmd, index)
       this.emitter.emit('command-executed', { command: cmd, index })
 
       if (!success) {
-        this.emitter.emit('command-failed', { command: cmd, reason: 'Invalid move' })
+        this.emitter.emit('command-failed', { command: cmd, reason: 'Movimiento inválido' })
         this.isRunning = false
         return
       }
@@ -57,11 +85,8 @@ export class CommandExecutor {
       this.scene.time.delayedCall(GAME_CONFIG.COMMAND_DELAY_MS, runNext)
     }
 
-    // Start with a small initial delay so the UI can update
     this.scene.time.delayedCall(100, runNext)
   }
 
-  stop() {
-    this.isRunning = false
-  }
+  stop() { this.isRunning = false }
 }

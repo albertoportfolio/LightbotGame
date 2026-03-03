@@ -3,8 +3,8 @@ import { Command } from '../../types/game.types';
 export interface CommandMeta {
   label: string;
   icon: string;
-  color: string;      // text / icon color (CSS string)
-  bgColor: string;    // chip background color (CSS string) — used by InstructionPanel
+  color: string;
+  bgColor: string;
   description: string;
 }
 
@@ -36,6 +36,13 @@ export const COMMAND_META: Record<Command, CommandMeta> = {
     color: '#1a202c',
     bgColor: '#b7791f',
     description: 'Enciende/apaga la luz de la celda actual',
+  },
+  [Command.LOOP_UNTIL_PLANT]: {
+    label: 'Bucle 🌿',
+    icon: '🔁',
+    color: '#fff',
+    bgColor: '#065f46',
+    description: 'Repite los comandos anteriores hasta llegar a una planta',
   },
 };
 

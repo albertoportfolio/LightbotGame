@@ -5,7 +5,7 @@ import { LevelHUD } from './components/Game/LevelHUD'
 import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 
-const TOTAL_LEVELS = 2
+const TOTAL_LEVELS = 4  // ACTUALIZA ESTE NÚMERO SI AÑADES MÁS NIVELES EN LevelManager
 
 // ─── Floating star decoration ─────────────────────────────────────────────────
 function Star({ style }: { style: React.CSSProperties }) {

@@ -12,7 +12,7 @@ interface GameWrapperProps {
 export function GameWrapper({ bridge }: GameWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
-  const { setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions, setAllowedCommands } = useGameStore()
+  const { setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions, setAllowedCommands, setTextMode } = useGameStore()
   
 
   useEffect(() => {
@@ -20,13 +20,14 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
 
     gameRef.current = createPhaserGame(containerRef.current, bridge)
 
-    const handleLevelLoaded = (data: { levelId: number; maxCommands: number; name: string, maxAttempts: number, instructions?: string, allowedCommands?: Command[] | null }) => {
+    const handleLevelLoaded = (data: { levelId: number; maxCommands: number; name: string, maxAttempts: number, instructions?: string, allowedCommands?: Command[] | null, textMode?: boolean }) => {
       setMaxCommands(data.maxCommands)
       setAllowedCommands(data.allowedCommands ?? null)
       setCurrentLevel(data.levelId - 1)
       setLevelName(data.name) 
       setMaxAttempts(data.maxAttempts)
       setInstructions(data.instructions ?? '') 
+      setTextMode(data.textMode ?? false)
     }
 
     bridge.on('level-loaded', handleLevelLoaded)

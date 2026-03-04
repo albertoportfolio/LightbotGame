@@ -42,6 +42,9 @@ export interface LevelDef {
   maxAttempts: number;
    varColors?: Record<string, VarColor>;
    victoryColors?: Record<string, VarColor>;
+   instructions?: string;
+   allowedCommands?: Command[]
+   textMode?: boolean
 }
 
 // ─── Runtime level state ──────────────────────────────────────────────────────

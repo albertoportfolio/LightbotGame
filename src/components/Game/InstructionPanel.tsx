@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Command } from '../../types/game.types'
 import { ALL_COMMANDS, COMMAND_META } from '../../game/logic/commands'
 import { useGameStore } from '../../store/gameStore'
+import { parseTextCommands } from '../../game/logic/textCommandParser'
 
 // ─── Individual command chip ─────────────────────────────────────────────────
 
@@ -171,6 +172,103 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
   )
 }
 
+//PANEL DE TEXTO
+
+
+function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, onReset: () => void }) {
+  const [input, setInput] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const { attempts, maxAttempts, incrementAttempts, isRunning } = useGameStore()
+  const isGameOver = attempts >= maxAttempts
+
+  const handleRun = () => {
+    if (isRunning || isGameOver) return
+    const { commands, error } = parseTextCommands(input)
+    if (error) { setError(error); return }
+    setError(null)
+    incrementAttempts()
+    onRun(commands)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleRun()
+  }
+
+  return (
+    <div className="flex flex-col gap-4 h-full">
+
+      {/* Referencia de comandos */}
+      <div className="bg-white/5 rounded-xl p-3 border border-white/10">
+        <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos disponibles</p>
+        <div className="grid grid-cols-2 gap-1 text-xs font-mono">
+          {[
+            ['AVANZA [n]', 'Avanza n pasos'],
+            ['IZQUIERDA',     'Girar izquierda'],
+            ['DERECHA',     'Girar derecha'],
+            ['LUZ',     'Enciende luz'],
+            ['COPIAR',     'Copiar variable'],
+            ['BUCLE',     'Bucle'],
+          ].map(([cmd, desc]) => (
+            <div key={cmd} className="flex gap-2">
+              <span className="text-yellow-400 w-14 shrink-0">{cmd}</span>
+              <span className="text-white/50">{desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Input */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs text-white/50 uppercase tracking-widest">Escribe tu programa</p>
+        <textarea
+          value={input}
+          onChange={e => { setInput(e.target.value); setError(null) }}
+          onKeyDown={handleKeyDown}
+          disabled={isRunning || isGameOver}
+          placeholder={'AVANZA 4, IZQUIERDA, LUZ, , IZQUIERDA, BUCLE'}
+          rows={4}
+          className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-white font-mono text-sm resize-none focus:outline-none focus:border-yellow-400/50 disabled:opacity-40"
+        />
+        {error && (
+          <p className="text-xs text-red-400 font-mono">⚠ {error}</p>
+        )}
+      </div>
+
+      {/* Intentos */}
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-white/50">Intentos</span>
+        <span className={attempts >= maxAttempts - 1 ? 'text-red-400 font-bold' : 'text-white/70'}>
+          {attempts} / {maxAttempts}
+        </span>
+      </div>
+
+      {isGameOver && (
+        <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700">
+          💀 GAME OVER — Pulsa Resetear
+        </div>
+      )}
+
+      {/* Botones */}
+      <div className="flex gap-2 mt-auto">
+        <button
+          disabled={isRunning || isGameOver}
+          onClick={handleRun}
+          className="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        >
+          <span>▶</span> Ejecutar
+        </button>
+        <button
+          disabled={isRunning}
+          onClick={onReset}
+          className="flex-1 py-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        >
+          <span>⏹</span> Resetear
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
 interface InstructionPanelProps {
@@ -285,7 +383,8 @@ export function InstructionPanel({
 
   // ─── Run / Reset ──────────────────────────────────────────────────────────
 
-  const { attempts, maxAttempts, incrementAttempts } = useGameStore()  // ← añade al destructuring existente
+  const { attempts, maxAttempts, incrementAttempts, textMode } = useGameStore()  // ← añade al destructuring existente
+  
   const isGameOver = attempts >= maxAttempts
 
   const handleRun = () => {
@@ -306,6 +405,18 @@ export function InstructionPanel({
   const draggingCommand = draggingId
     ? (slots.find(s => s.id === draggingId)?.command ?? null)
     : null
+
+
+
+// si es textMode, renderizamos el panel de texto en lugar del drag-and-drop
+if (textMode) {
+  return (
+    <TextModePanel
+      onRun={(cmds) => { bridge.emit('run-commands', cmds) }}
+      onReset={() => { clearQueue(); onReset() }}
+    />
+  )
+}
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>

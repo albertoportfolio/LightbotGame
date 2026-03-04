@@ -12,6 +12,7 @@ interface GameStore {
   attempts: number
   maxAttempts: number
   allowedCommands: Command[] | null  // ← tipo correcto, sin coma ni valor
+  textMode: boolean // ← estado para modo texto en la paleta de comandos
   setAttempts: (n: number) => void
   setMaxAttempts: (n: number) => void
   incrementAttempts: () => void
@@ -27,6 +28,7 @@ interface GameStore {
   setIsRunning: (v: boolean) => void
   setActiveCommandIndex: (i: number) => void
   setAllowedCommands: (cmds: Command[] | null) => void
+  setTextMode: (v: boolean) => void
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -39,6 +41,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   instructions: '',
   attempts: 0,
   maxAttempts: 5,
+  textMode: false,
   allowedCommands: null,  // ← valor null, no una expresión de tipo
 
   setAttempts: (n) => set({ attempts: n }),
@@ -65,4 +68,5 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setIsRunning: (v) => set({ isRunning: v }),
   setActiveCommandIndex: (i) => set({ activeCommandIndex: i }),
   setAllowedCommands: (cmds) => set({ allowedCommands: cmds }),
+  setTextMode: (v) => set({ textMode: v }),
 }))

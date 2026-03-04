@@ -264,21 +264,23 @@ startMusic() {
   }
 
   levelComplete() {
-    this.stopMusic()
-    const melody = [
-      { f: 523,  d: 0.15, t: 0.00 },
-      { f: 659,  d: 0.15, t: 0.15 },
-      { f: 784,  d: 0.15, t: 0.30 },
-      { f: 1047, d: 0.40, t: 0.45 },
-      { f: 523,  d: 0.40, t: 0.45 },
-      { f: 784,  d: 0.40, t: 0.45 },
-    ]
-    melody.forEach(n => this.playTone(n.f, n.d, 'sine', 0.35, n.t))
-    ;[1047, 1319, 1568].forEach((f, i) => {
-      this.playTone(f, 0.6, 'sine', 0.08, 0.45 + i * 0.05)
-    })
-    setTimeout(() => { if (!this.muted) this.startMusic() }, 1500)
-  }
+  // 1. Parar el loop de música (cancelar timeout) pero SIN bajar el gain todavía
+
+  // 3. Tocar melodía de victoria
+  const melody = [
+    { f: 523,  d: 0.15, t: 0.00 },
+    { f: 659,  d: 0.15, t: 0.15 },
+    { f: 784,  d: 0.15, t: 0.30 },
+    { f: 1047, d: 0.40, t: 0.45 },
+    { f: 523,  d: 0.40, t: 0.45 },
+    { f: 784,  d: 0.40, t: 0.45 },
+  ]
+  melody.forEach(n => this.playTone(n.f, n.d, 'sine', 0.35, n.t))
+  ;[1047, 1319, 1568].forEach((f, i) => {
+    this.playTone(f, 0.6, 'sine', 0.08, 0.45 + i * 0.05)
+  })
+
+}
 
   levelStart() {
     // Solo sonido de jingle, NO arranca música aquí

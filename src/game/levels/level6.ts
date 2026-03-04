@@ -3,7 +3,7 @@ import { LevelDef } from '../../types/game.types';
 // ─── Nivel 6: El Gran Intercambio ──────────────────────────────────────────
 //
 // Grid 3 filas × 5 columnas.
-// A=rojo (2,0), B=azul (2,4), C=vacío (0,2) — variable temporal.
+// A=rojo (0,2), B=azul (2,0), C=vacío (2,4) — variable temporal.
 //
 // El robot debe hacer un swap clásico con variable temporal:
 //   1. Ir a C → COPY_VAR       (C guarda "destino")
@@ -12,12 +12,6 @@ import { LevelDef } from '../../types/game.types';
 //   4. Ir a C → COPY_VAR       (B = C = rojo)  ← B queda rojo ✓
 //
 // Victoria: A=azul y B=rojo
-//
-// Solución:
-//   Navegar hasta C: MF MF (desde start) → COPY_VAR
-//   Navegar hasta A: ... → COPY_VAR   (C=rojo)
-//   Navegar hasta B: ... → COPY_VAR   (A=azul)
-//   Navegar hasta C: ... → COPY_VAR   (B=rojo)
 
 const level6: LevelDef = {
   id: 6,
@@ -26,8 +20,8 @@ const level6: LevelDef = {
   maxAttempts: 5,
   robotStart: { row: 1, col: 2, direction: 'UP' },
   victoryColors: {
-  '2,0': 'red',  // A debe terminar azul
-  '0,2': 'blue',   // B debe terminar rojo
+  '2,0': 'red',  // B debe terminar rojo
+  '0,2': 'blue',   // A debe terminar azul
 },
   grid: [
     // col: 0       1       2          3       4

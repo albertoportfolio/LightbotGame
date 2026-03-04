@@ -94,7 +94,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.gridGraphics = this.add.graphics()
     this.executor = new CommandExecutor(this, this.bridge)
     this.drawBackground()
-    this.loadLevel(5) // Carga el nivel 5 (índice 4) para pruebas rápidas
+    this.loadLevel(0) // Carga el nivel 5 (índice 4) para pruebas rápidas
     this.bridge.on('run-commands', this.handleRunCommands, this)
     this.bridge.on('reset-level', this.handleReset, this)
     this.bridge.on('load-level', this.handleLoadLevel, this)

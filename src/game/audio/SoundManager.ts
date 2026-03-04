@@ -264,7 +264,6 @@ startMusic() {
   }
 
   levelComplete() {
-  // 1. Parar el loop de música (cancelar timeout) pero SIN bajar el gain todavía
 
   // 3. Tocar melodía de victoria
   const melody = [

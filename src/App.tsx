@@ -6,7 +6,7 @@ import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 
-const TOTAL_LEVELS = 6
+const TOTAL_LEVELS = 7
 
 type Screen = 'start' | 'game' | 'settings'
 

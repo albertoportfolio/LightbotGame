@@ -1,4 +1,5 @@
 import { LevelDef } from '../../types/game.types';
+import { Command } from '../../types/game.types';
 
 // Legend: 'floor' | 'empty' | 'light' | 'wall'
 // Robot starts at (row=2, col=0) facing RIGHT
@@ -6,10 +7,11 @@ import { LevelDef } from '../../types/game.types';
 const level1: LevelDef = {
   id: 1,
   name: 'Primer Contacto',
-  maxCommands: 8,
+  maxCommands: 5,
   maxAttempts: 9,
   instructions: 'Enciende todas las luces',
   robotStart: { row: 2, col: 0, direction: 'RIGHT' },
+   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   grid: [
     ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'],
     ['empty', 'floor', 'light', 'floor', 'light', 'empty'],

@@ -11,6 +11,7 @@ interface GameStore {
   instructions: string
   attempts: number
   maxAttempts: number
+  allowedCommands: Command[] | null  // ← tipo correcto, sin coma ni valor
   setAttempts: (n: number) => void
   setMaxAttempts: (n: number) => void
   incrementAttempts: () => void
@@ -25,6 +26,7 @@ interface GameStore {
   setInstructions: (s: string) => void
   setIsRunning: (v: boolean) => void
   setActiveCommandIndex: (i: number) => void
+  setAllowedCommands: (cmds: Command[] | null) => void
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -34,9 +36,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isRunning: false,
   activeCommandIndex: -1,
   levelName: '',
-  instructions: '',        // ← valor inicial vacío
+  instructions: '',
   attempts: 0,
   maxAttempts: 5,
+  allowedCommands: null,  // ← valor null, no una expresión de tipo
 
   setAttempts: (n) => set({ attempts: n }),
   setMaxAttempts: (n) => set({ maxAttempts: n }),
@@ -45,8 +48,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setQueue: (queue) => set({ queue }),
   addCommand: (cmd) => {
-    const { queue, maxCommands } = get()
+    const { queue, maxCommands, allowedCommands } = get()
     if (queue.length >= maxCommands) return
+    if (allowedCommands && !allowedCommands.includes(cmd)) return  // ← seguridad extra
     set({ queue: [...queue, cmd] })
   },
   removeCommand: (index) => {
@@ -57,7 +61,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setMaxCommands: (n) => set({ maxCommands: n }),
   setCurrentLevel: (n) => set({ currentLevel: n }),
   setLevelName: (name) => set({ levelName: name }),
-  setInstructions: (s) => set({ instructions: s }),  // ← acción nueva
+  setInstructions: (s) => set({ instructions: s }),
   setIsRunning: (v) => set({ isRunning: v }),
   setActiveCommandIndex: (i) => set({ activeCommandIndex: i }),
+  setAllowedCommands: (cmds) => set({ allowedCommands: cmds }),
 }))

@@ -3,6 +3,7 @@ import Phaser from 'phaser'
 import { createPhaserGame } from '../../game/PhaserGame'
 import { useGameStore } from '../../store/gameStore'
 import { GAME_CONFIG } from '../../game/constants/gameConfig'
+import { Command } from '../../types/game.types'
 
 interface GameWrapperProps {
   bridge: Phaser.Events.EventEmitter
@@ -11,7 +12,7 @@ interface GameWrapperProps {
 export function GameWrapper({ bridge }: GameWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
-  const { setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions } = useGameStore()
+  const { setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions, setAllowedCommands } = useGameStore()
   
 
   useEffect(() => {
@@ -19,8 +20,9 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
 
     gameRef.current = createPhaserGame(containerRef.current, bridge)
 
-    const handleLevelLoaded = (data: { levelId: number; maxCommands: number; name: string, maxAttempts: number, instructions?: string  }) => {
+    const handleLevelLoaded = (data: { levelId: number; maxCommands: number; name: string, maxAttempts: number, instructions?: string, allowedCommands?: Command[] | null }) => {
       setMaxCommands(data.maxCommands)
+      setAllowedCommands(data.allowedCommands ?? null)
       setCurrentLevel(data.levelId - 1)
       setLevelName(data.name) 
       setMaxAttempts(data.maxAttempts)

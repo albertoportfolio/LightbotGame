@@ -1,4 +1,5 @@
 import { LevelDef } from '../../types/game.types';
+import { Command } from '../../types/game.types';
 
 // ─── Nivel 8: Paraiso de letras ─────────────────────────────────────────
 //
@@ -18,6 +19,7 @@ const level8: LevelDef = {
   maxCommands: 10,
   maxAttempts: 1,
   instructions: 'Haz que B y C sean rojos',
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.COPY_VAR, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
   grid: [
     // col:  0          1       2       3          4       5       6

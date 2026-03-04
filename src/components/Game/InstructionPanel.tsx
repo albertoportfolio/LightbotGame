@@ -78,15 +78,16 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
 // ─── Source palette (available commands) ─────────────────────────────────────
 
 function CommandPalette() {
-  const { addCommand, queue, maxCommands } = useGameStore()
+  const { addCommand, queue, maxCommands, allowedCommands } = useGameStore()
   const isFull = queue.length >= maxCommands
 
-  return (
+  const visibleCommands = allowedCommands ?? ALL_COMMANDS  // ← filtro
 
+  return (
     <div className="mb-4">
       <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos Disponibles</p>
       <div className="flex flex-wrap gap-2">
-        {ALL_COMMANDS.map((cmd) => {
+        {visibleCommands.map((cmd) => {   // ← usar visibleCommands
           const meta = COMMAND_META[cmd]
           return (
             <button
@@ -100,7 +101,7 @@ function CommandPalette() {
                 transition-all hover:border-white/50 hover:scale-105
                 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
               `}
-              title={`Add ${meta.label}`}
+              title={meta.label}
             >
               <span className="text-2xl leading-none">{meta.icon}</span>
               <span className="text-[9px] mt-1 opacity-70 font-normal text-center leading-tight">

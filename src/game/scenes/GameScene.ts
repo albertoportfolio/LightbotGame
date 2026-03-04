@@ -336,6 +336,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     maxAttempts: def.maxAttempts,
     name: def.name,
     instructions: def.instructions ?? '',
+    allowedCommands: def.allowedCommands ?? null,
   })
 }
 

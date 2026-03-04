@@ -1,4 +1,5 @@
 import { LevelDef } from '../../types/game.types';
+import { Command } from '../../types/game.types';
 
 // ─── Nivel 5: Espiral Infinita ──────────────────────────────────────────────
 //
@@ -15,6 +16,7 @@ const level5: LevelDef = {
   maxCommands: 10,
   maxAttempts: 2,
   instructions: 'Lleva al robot a la planta utilizando un bucle',
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
 
   // 8 filas × 8 columnas

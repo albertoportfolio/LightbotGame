@@ -347,7 +347,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
 
   const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
   const grid = this.levelState.grid
-  const letters = ['A', 'B', 'C']
+  const letters = ['A', 'B', 'C', 'D', 'E']
   let idx = 0
 
   for (let r = 0; r < grid.length; r++) {

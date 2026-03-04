@@ -1,0 +1,160 @@
+Flujo del useGameBridge
+
+─── ARRANQUE ──────────────────────────────────────────────────────────────────
+
+[React] App.tsx
+  → monta GameScreen
+  → useGameBridge() crea el EventEmitter (una sola vez, via useRef)
+  → pasa bridge como prop a GameWrapper, InstructionPanel, LevelHUD
+
+[React] GameWrapper
+  → createPhaserGame(container, bridge)
+    → game.registry.set('bridge', bridge)  ← Phaser ya tiene el bridge
+  → bridge.on('level-loaded', handleLevelLoaded)
+
+[Phaser] BootScene
+  → genera textura del robot
+  → this.scene.start('GameScene')
+
+[Phaser] GameScene.create()
+  → this.bridge = this.registry.get('bridge')
+  → bridge.on('run-commands', ...)
+  → bridge.on('reset-level', ...)
+  → bridge.on('load-level', ...)
+  → bridge.on('stop-music', ...)
+  → loadLevel(0)
+    → buildState(def)
+    → renderGrid()
+    → bridge.emit('level-loaded', { levelId, maxCommands, maxAttempts, name, instructions, allowedCommands })
+
+[React] GameWrapper escucha 'level-loaded'
+  → setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions, setAllowedCommands
+  → store actualizado → LevelHUD y InstructionPanel se re-renderizan
+
+
+─── JUGADOR AÑADE COMANDOS ────────────────────────────────────────────────────
+
+[React] InstructionPanel / CommandPalette
+  → usuario hace click en un comando
+  → addCommand(cmd) → gameStore.queue actualizado
+  → QueueArea re-renderiza mostrando el nuevo chip
+
+
+─── JUGADOR PULSA EJECUTAR ────────────────────────────────────────────────────
+
+[React] InstructionPanel.handleRun()
+  → incrementAttempts()
+  → setIsRunning(true)
+  → bridge.emit('run-commands', [cmd1, cmd2, ...])
+
+[Phaser] GameScene escucha 'run-commands'
+  → CommandExecutor.execute(commands, callback)
+    → por cada comando, tras COMMAND_DELAY_MS:
+      → callback(cmd) → applyCommand(cmd)
+        → robot.moveForward() / turnLeft() / turnRight() / toggleLight() / copyVar()
+        → sfx.move() / sfx.turn() / sfx.error() ...
+      → renderGrid()
+      → robot.draw()
+      → bridge.emit('robot-moved', { row, col, direction })
+      → bridge.emit('command-executed', { command, index })
+
+[React] InstructionPanel escucha 'command-executed'
+  → setActiveCommandIndex(index) → chip activo se resalta en amarillo
+
+[React] LevelHUD escucha 'command-executed'
+  → muestra "▶ Paso N" animado
+
+
+─── VICTORIA ──────────────────────────────────────────────────────────────────
+
+  caso A — nivel con luces:
+    [Phaser] GameScene, tras cada comando
+      → levelManager.checkVictory() → todas las luces lit=true
+      → sfx.levelComplete()
+      → bridge.emit('level-complete', { levelId })
+
+  caso B — nivel con planta:
+    [Phaser] GameScene
+      → robot pisa celda type='plant'
+      → sfx.plantReached()
+      → executor.stop()
+      → bridge.emit('level-complete', { levelId })
+
+  caso C — nivel con variables:
+    [Phaser] GameScene, tras cada COPY_VAR
+      → levelManager.checkVictory() → victoryColors todos coinciden
+      → sfx.levelComplete()
+      → bridge.emit('level-complete', { levelId })
+
+[React] InstructionPanel escucha 'level-complete'
+  → setIsRunning(false), setActiveCommandIndex(-1)
+
+[React] App.tsx escucha 'level-complete'
+  → setLevelComplete(true)
+  → setHasNext(levelId < TOTAL_LEVELS)
+  → muestra LevelCompleteModal
+
+
+─── JUGADOR PULSA SIGUIENTE NIVEL ─────────────────────────────────────────────
+
+[React] App.tsx / LevelCompleteModal
+  → handleNextLevel()
+  → setLevelComplete(false)
+  → clearQueue()
+  → bridge.emit('load-level', nextLevelIndex)
+
+[Phaser] GameScene escucha 'load-level'
+  → executor.stop()
+  → loadLevel(index)
+    → wonThisLevel = false
+    → buildState(def)
+    → robot.reset()
+    → renderGrid()
+    → drawVarLabels()
+    → sfx.levelStart()
+    → sfx.startMusic()
+    → bridge.emit('level-loaded', { ... })
+
+[React] GameWrapper escucha 'level-loaded'
+  → store actualizado → UI re-renderiza para el nuevo nivel
+
+
+─── JUGADOR PULSA RESETEAR ────────────────────────────────────────────────────
+
+[React] InstructionPanel.handleReset()
+  → setIsRunning(false), setActiveCommandIndex(-1), clearQueue()
+  → bridge.emit('reset-level')
+
+[Phaser] GameScene escucha 'reset-level'
+  → executor.stop()
+  → loadLevel(currentLevelIndex)  ← recarga el mismo nivel
+    → wonThisLevel = false
+    → robot.reset(robotStart)
+    → renderGrid()
+    → bridge.emit('level-loaded', { ... })
+
+[React] GameWrapper escucha 'level-loaded'
+  → resetAttempts() no — esto lo hace handleReset en App.tsx
+  → store re-sincronizado
+
+
+─── AUDIO ─────────────────────────────────────────────────────────────────────
+
+[React] App.tsx / botón mute
+  → handleToggleMute() → settings.muted actualizado
+  → useEffect detecta cambio → bridge.emit('toggle-mute')
+
+[Phaser] GameScene escucha 'toggle-mute'
+  → sfx.toggleMute()
+    → masterGain.gain → 0 o _volume
+    → si muted: stopMusic()
+    → si unmuted: startMusic()
+
+[React] GameScreen, cuando se activa (isActive=true)
+  → bridge.emit('start-music')
+
+[React] handleBackToMenu()
+  → bridge.emit('stop-music')
+
+[Phaser] GameScene escucha 'stop-music' / 'start-music'
+  → sfx.stopMusic() / sfx.startMusic()

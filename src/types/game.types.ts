@@ -1,13 +1,17 @@
 // ─── Cell Types ──────────────────────────────────────────────────────────────
-export type CellType = 'floor' | 'empty' | 'light' | 'wall' | 'plant';
+export type CellType = 'floor' | 'empty' | 'light' | 'wall' | 'plant' | 'variable';
+
+export type VarColor = 'red' | 'blue' | 'none';
 
 export interface Cell {
   type: CellType;
   lit: boolean;
+  varColor?: VarColor;
 }
 
 // ─── Direction ────────────────────────────────────────────────────────────────
 export type Direction = 'UP' | 'RIGHT' | 'DOWN' | 'LEFT';
+
 
 // ─── Commands ─────────────────────────────────────────────────────────────────
 export enum Command {
@@ -16,6 +20,7 @@ export enum Command {
   TURN_RIGHT        = 'TURN_RIGHT',
   LIGHT_TOGGLE      = 'LIGHT_TOGGLE',
   LOOP_UNTIL_PLANT  = 'LOOP_UNTIL_PLANT',
+  COPY_VAR          = 'COPY_VAR',
 }
 
 // ─── Robot position ───────────────────────────────────────────────────────────
@@ -34,6 +39,9 @@ export interface LevelDef {
   grid: CellType[][];
   robotStart: RobotStart;
   maxCommands: number;
+  maxAttempts: number;
+   varColors?: Record<string, VarColor>;
+   victoryColors?: Record<string, VarColor>;
 }
 
 // ─── Runtime level state ──────────────────────────────────────────────────────
@@ -53,4 +61,5 @@ export interface GameEvents {
   'command-executed':  { command: Command; index: number };
   'command-failed':    { command: Command; reason: string };
   'level-loaded':      { levelId: number; name: string; maxCommands: number };
+  
 }

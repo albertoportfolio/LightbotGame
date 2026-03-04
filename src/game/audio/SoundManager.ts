@@ -149,9 +149,10 @@ export class SoundManager {
 // Y cuando arranque de nuevo, restaura el volumen:
 startMusic() {
   if (this.musicPlaying || this.muted) return
-  // Restaurar volumen antes de arrancar
   if (this.masterGain) {
-    this.masterGain.gain.setTargetAtTime(this._volume, this.getCtx().currentTime, 0.05)
+    // Cancelar transiciones pendientes y restaurar volumen instantáneamente
+    this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
+    this.masterGain.gain.setValueAtTime(this._volume, this.getCtx().currentTime)
   }
   this.musicPlaying = true
   this.playMusicLoop()

@@ -22,6 +22,7 @@ export class Robot {
   private sprite: Phaser.GameObjects.Sprite
   private scene: Phaser.Scene
   private state: RobotState
+  private lastVarCell: { row: number; col: number } | null = null;
 
   constructor(scene: Phaser.Scene, initialState: RobotState) {
     this.scene = scene
@@ -67,6 +68,31 @@ export class Robot {
     return true
   }
 
+  // método para copiar variable de luz:
+copyVar(levelState: LevelState): boolean {
+  const { row, col } = this.state
+  const currentCell = levelState.grid[row][col]
+
+  if (currentCell.type !== 'variable') return false
+
+  if (!this.lastVarCell) {
+    this.lastVarCell = { row, col }
+    console.log(`COPY_VAR primera visita: registrando (${row},${col}) color=${currentCell.varColor}`)
+    return true
+  }
+
+  const prev = this.lastVarCell
+  if (prev.row === row && prev.col === col) return false
+
+  const prevCell = levelState.grid[prev.row][prev.col]
+  console.log(`COPY_VAR: (${prev.row},${prev.col})=${prevCell.varColor} ← (${row},${col})=${currentCell.varColor}`)
+
+  prevCell.varColor = currentCell.varColor
+  this.lastVarCell = { row, col }
+
+  return true
+}
+
   toggleLight(levelState: LevelState): boolean {
     const cell = levelState.grid[this.state.row][this.state.col]
     if (cell.type !== 'light') return false
@@ -99,6 +125,7 @@ export class Robot {
 
   reset(initialState: RobotState) {
     this.state = { ...initialState }
+    this.lastVarCell = null;
     const { x, y } = this.cellToWorld(initialState.row, initialState.col)
     this.sprite.setPosition(x, y)
     this.sprite.setFrame(DIRECTION_FRAME[initialState.direction])

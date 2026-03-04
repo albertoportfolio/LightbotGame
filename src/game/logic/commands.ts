@@ -44,6 +44,13 @@ export const COMMAND_META: Record<Command, CommandMeta> = {
     bgColor: '#065f46',
     description: 'Repite los comandos anteriores hasta llegar a una planta',
   },
+  [Command.COPY_VAR]: {
+  label: 'Copiar',
+  icon: '📋',
+  color: '#fff',
+  bgColor: '#6d28d9',
+  description: 'Copia el color de esta celda a la última variable visitada (o al revés)',
+},
 };
 
 export const ALL_COMMANDS: Command[] = Object.values(Command);

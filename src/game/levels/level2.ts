@@ -6,6 +6,7 @@ const level2: LevelDef = {
   name: 'Laberinto de Luces',
   maxCommands: 9,
   maxAttempts: 5,
+  instructions: 'Enciende todas las luces',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
   grid: [
     ['floor', 'floor', 'floor', 'light', 'empty', 'empty', 'empty'],

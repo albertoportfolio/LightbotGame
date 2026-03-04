@@ -18,6 +18,7 @@ const level6: LevelDef = {
   name: 'El Gran Intercambio',
   maxCommands: 12,
   maxAttempts: 5,
+  instructions: 'Haz que A y B intercambien colores usando C como variable temporal',
   robotStart: { row: 1, col: 2, direction: 'UP' },
   victoryColors: {
   '2,0': 'red',  // B debe terminar rojo

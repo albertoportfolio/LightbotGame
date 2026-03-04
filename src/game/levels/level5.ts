@@ -14,6 +14,7 @@ const level5: LevelDef = {
   name:        'Espiral Infinita',
   maxCommands: 10,
   maxAttempts: 2,
+  instructions: 'Lleva al robot a la planta utilizando un bucle',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
 
   // 8 filas × 8 columnas

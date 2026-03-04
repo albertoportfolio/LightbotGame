@@ -17,6 +17,7 @@ const level8: LevelDef = {
   name: 'Paraiso de letras',
   maxCommands: 10,
   maxAttempts: 1,
+  instructions: 'Haz que B y C sean rojos',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
   grid: [
     // col:  0          1       2       3          4       5       6

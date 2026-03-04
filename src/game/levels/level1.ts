@@ -8,6 +8,7 @@ const level1: LevelDef = {
   name: 'Primer Contacto',
   maxCommands: 8,
   maxAttempts: 9,
+  instructions: 'Enciende todas las luces',
   robotStart: { row: 2, col: 0, direction: 'RIGHT' },
   grid: [
     ['empty', 'empty', 'empty', 'empty', 'empty', 'empty'],

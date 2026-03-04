@@ -9,6 +9,7 @@ const level3: LevelDef = {
   name: 'La Escalera Verde',
   maxCommands: 6,
   maxAttempts: 1,
+  instructions: 'Haz que el robot llegue a la planta con un bucle',
   robotStart: { row: 4, col: 0, direction: 'RIGHT' },
   grid: [
     ['empty', 'empty', 'empty', 'empty', 'floor', 'plant'],

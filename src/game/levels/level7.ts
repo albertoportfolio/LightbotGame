@@ -19,6 +19,7 @@ const level7: LevelDef = {
   name: 'El Doble Intercambio',
   maxCommands: 20,
   maxAttempts: 4,
+  instructions: 'haz que A sea Azul, B Azul, D Rojo y E Rojo',
   robotStart: { row: 2, col: 3, direction: 'UP' },
   grid: [
     // col:  0          1       2       3          4       5       6
@@ -38,8 +39,8 @@ const level7: LevelDef = {
   victoryColors: {
     '0,3': 'blue',   // A debe terminar azul
     '4,3': 'red',    // B debe terminar rojo
-    '2,0': 'blue',   // C debe terminar azul  (tenía rojo)
-    '2,6': 'red',    // D debe terminar rojo   (tenía azul)
+    '2,0': 'blue',   // D debe terminar azul  (tenía rojo)
+    '2,6': 'red',    // E debe terminar rojo   (tenía azul)
   },
 };
 

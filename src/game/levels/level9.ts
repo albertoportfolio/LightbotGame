@@ -15,7 +15,7 @@ import { Command } from '../../types/game.types';
 
 const level9: LevelDef = {
     id: 9,
-    name: 'Paraiso de letras',
+    name: 'Laberinto de Variables',
     maxCommands: 12,
     maxAttempts: 2,
     instructions: 'Haz que A sea Azul y D sea rojo',

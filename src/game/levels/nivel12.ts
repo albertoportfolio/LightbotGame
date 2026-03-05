@@ -6,7 +6,7 @@ import { Command } from '../../types/game.types';
 // Goal: toggle all 3 'light' cells
 const level12: LevelDef = {
   id: 12,
-  name: 'RECTA FINAL',
+  name: 'Recta de Letras',
   maxCommands: 6,
   maxAttempts: 4,
   textMode: true,  //propiedad para indicar que este nivel es de texto

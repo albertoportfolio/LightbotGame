@@ -6,9 +6,24 @@ import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 
-const TOTAL_LEVELS = 12 // ← actualiza este número al añadir nuevos niveles
+const TOTAL_LEVELS = 12
 
-type Screen = 'start' | 'game' | 'settings'
+type Screen = 'start' | 'levels' | 'game' | 'settings'
+
+const LEVEL_INFO = [
+  { name: 'Primer Contacto', icon: '💡', description: 'Enciende las 3 luces con los comandos básicos' },
+  { name: 'Laberinto de Luces', icon: '🗺️', description: 'Navega el laberinto y enciende todas las luces' },
+  { name: 'La Escalera Verde', icon: '🌿', description: 'Usa el bucle para subir la escalera hasta la planta' },
+  { name: 'Zigzag', icon: '⚡', description: 'Sigue el camino en zigzag, luces y planta te esperan' },
+  { name: 'Espiral Infinita', icon: '🌀', description: 'Recorre la espiral con un bucle hasta el final' },
+  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' },
+  { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },
+  { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },
+  { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' },
+  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },
+  { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },
+]
 
 function Star({ style }: { style: React.CSSProperties }) {
   return <div className="absolute text-2xl pointer-events-none select-none animate-bounce" style={style}>⭐</div>
@@ -30,8 +45,8 @@ function StartScreen({ onStart }: { onStart: () => void }) {
             animationDelay: `${Math.random() * 3}s`,
           }} />
       ))}
-      <Star style={{ top: '8%',     left: '6%',  animationDuration: '2.1s' }} />
-      <Star style={{ top: '12%',    right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
+      <Star style={{ top: '8%', left: '6%', animationDuration: '2.1s' }} />
+      <Star style={{ top: '12%', right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
       <Star style={{ bottom: '18%', left: '10%', animationDuration: '2.4s', animationDelay: '1s' }} />
       <Star style={{ bottom: '12%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
       <div className="absolute top-16 left-1/4 text-4xl animate-spin" style={{ animationDuration: '8s' }}>🪐</div>
@@ -72,7 +87,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
           {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
         </button>
         <p className="text-white/40 text-xs text-center">
-          Arrastra los comandos a la cola y pulsa Ejecutar para resolver el nivel. ¡Enciende todas las luces!
+          Arrastra los comandos a la cola y pulsa Ejecutar para resolver el nivel.
         </p>
       </div>
       <div className="relative z-10 mt-8 flex gap-6 flex-wrap justify-center px-4">
@@ -92,7 +107,89 @@ function StartScreen({ onStart }: { onStart: () => void }) {
   )
 }
 
-function LevelCompleteModal({ hasNext, onNext, onReplay }: { hasNext: boolean; onNext: () => void; onReplay: () => void }) {
+// ─── LevelSelectScreen ────────────────────────────────────────────────────────
+
+interface LevelSelectScreenProps {
+  onSelectLevel:   (index: number) => void
+  onBack:          () => void
+  completedLevels: number[]
+  levelInfo:       { name: string; icon: string; description: string }[]
+}
+
+function LevelSelectScreen({ onSelectLevel, onBack, completedLevels }: LevelSelectScreenProps) {
+  return (
+    <div className="min-h-screen flex flex-col"
+      style={{ background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)' }}>
+      <header className="flex items-center justify-between px-6 py-4"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        <button onClick={onBack}
+          className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
+          ← Menú
+        </button>
+        <span className="font-black text-white tracking-wide text-lg">🤖 SELECCIONA NIVEL</span>
+        <div className="w-16" />
+      </header>
+
+      <main className="flex-1 flex items-center justify-center p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full" style={{ maxWidth: 900 }}>
+          {LEVEL_INFO.map((level, index) => {
+            const completed = completedLevels.includes(index)
+            const locked = index > 0 && !completedLevels.includes(index - 1)
+            return (
+              <button
+                key={index}
+                disabled={locked}
+                onClick={() => onSelectLevel(index)}
+                className="relative flex flex-col items-center gap-3 p-5 rounded-2xl transition-all"
+                style={{
+                  background: completed
+                    ? 'linear-gradient(145deg, #1a3a2a, #0d2a1a)'
+                    : locked
+                      ? 'rgba(255,255,255,0.03)'
+                      : 'rgba(255,255,255,0.06)',
+                  border: completed
+                    ? '1px solid rgba(74,222,128,0.3)'
+                    : locked
+                      ? '1px solid rgba(255,255,255,0.05)'
+                      : '1px solid rgba(255,255,255,0.12)',
+                  boxShadow: completed ? '0 0 20px rgba(74,222,128,0.1)' : 'none',
+                  opacity: locked ? 0.4 : 1,
+                  cursor: locked ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <div className="absolute top-3 left-3 text-xs font-mono text-white/30">
+                  {String(index + 1).padStart(2, '0')}
+                </div>
+                {completed && (
+                  <div className="absolute top-3 right-3 text-green-400 text-sm">✓</div>
+                )}
+                {locked && (
+                  <div className="absolute top-3 right-3 text-white/30 text-sm">🔒</div>
+                )}
+                <span className="text-4xl mt-2" style={{ filter: locked ? 'grayscale(1)' : 'none' }}>
+                  {level.icon}
+                </span>
+                <div className="text-center">
+                  <p className="text-white font-bold text-sm leading-tight">{level.name}</p>
+                  <p className="text-white/40 text-xs mt-1 leading-tight">{level.description}</p>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+// ─── LevelCompleteModal ───────────────────────────────────────────────────────
+
+function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
+  hasNext: boolean
+  onNext: () => void
+  onReplay: () => void
+  onLevels: () => void
+}) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
@@ -123,22 +220,39 @@ function LevelCompleteModal({ hasNext, onNext, onReplay }: { hasNext: boolean; o
             Repetir
           </button>
         </div>
+        <button onClick={onLevels} className="w-full py-2 rounded-xl text-white/50 text-sm hover:text-white transition-colors">
+          ← Seleccionar nivel
+        </button>
       </div>
     </div>
   )
 }
 
 // ─── GameScreen ───────────────────────────────────────────────────────────────
+
 interface GameScreenProps {
-  onBackToMenu:   () => void
+  onBackToMenu: () => void
+  onBackToLevels: () => void
   onOpenSettings: () => void
-  muted:          boolean
-  volume:         number
-  onToggleMute:   () => void
-  isActive:       boolean // prop para indicar si el GameScreen está activo (game o settings)
+  muted: boolean
+  volume: number
+  onToggleMute: () => void
+  isActive: boolean
+  initialLevel: number
+  onLevelCompleted: (index: number) => void
 }
 
-function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute, isActive }: GameScreenProps) {
+function GameScreen({
+  onBackToMenu,
+  onBackToLevels,
+  onOpenSettings,
+  muted,
+  volume,
+  onToggleMute,
+  isActive,
+  initialLevel,
+  onLevelCompleted,
+}: GameScreenProps) {
   const { emitter, runCommands, resetLevel, loadLevel, toggleMute, setVolume } = useGameBridge()
   const { queue, clearQueue, resetAttempts } = useGameStore()
 
@@ -147,7 +261,25 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
   const [nextLevelIndex, setNextLevelIndex] = useState(0)
   const isTransitioning = useRef(false)
   const prevActive = useRef(false)
-  
+  const initialLevelLoaded = useRef(false)
+
+  // Cargar nivel seleccionado cuando el GameScreen se activa por primera vez
+  useEffect(() => {
+    if (isActive && !initialLevelLoaded.current) {
+      initialLevelLoaded.current = true
+      loadLevel(initialLevel)
+    }
+  }, [isActive])
+
+  // Recargar si cambia el nivel seleccionado (usuario vuelve a levels y elige otro)
+  useEffect(() => {
+    if (initialLevelLoaded.current) {
+      setLevelComplete(false)
+      resetAttempts()
+      clearQueue()
+      loadLevel(initialLevel)
+    }
+  }, [initialLevel])
 
   useEffect(() => {
     if (isActive && !prevActive.current && !muted) {
@@ -157,12 +289,15 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
   }, [isActive])
 
   const handleBackToMenu = () => {
-  console.log('emitiendo stop-music')
-  emitter.emit('stop-music')
-  onBackToMenu()
-}
+    emitter.emit('stop-music')
+    onBackToMenu()
+  }
 
-  // Sincronizar mute con Phaser cuando cambia el prop
+  const handleBackToLevels = () => {
+    emitter.emit('stop-music')
+    onBackToLevels()
+  }
+
   const prevMuted = useRef(muted)
   useEffect(() => {
     if (prevMuted.current !== muted) {
@@ -171,7 +306,6 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
     }
   }, [muted])
 
-  // Sincronizar volumen con Phaser cuando cambia el prop
   const prevVolume = useRef(volume)
   useEffect(() => {
     if (prevVolume.current !== volume) {
@@ -183,6 +317,7 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
   useEffect(() => {
     const handler = (data: { levelId: number }) => {
       if (isTransitioning.current) return
+      onLevelCompleted(data.levelId - 1)
       const next = data.levelId
       setNextLevelIndex(next)
       setHasNext(next < TOTAL_LEVELS)
@@ -214,10 +349,17 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
       style={{ background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)' }}>
       <header className="flex items-center justify-between px-6 py-3"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <button onClick={handleBackToMenu}
-          className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
-          ← Menú
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={handleBackToMenu}
+            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
+            ← Menú
+          </button>
+          <span className="text-white/20">|</span>
+          <button onClick={handleBackToLevels}
+            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
+            📋 Niveles
+          </button>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-xl">🤖</span>
           <span className="font-black text-white tracking-wide text-lg">ENCIENDE LAS LUCES</span>
@@ -258,23 +400,43 @@ function GameScreen({ onBackToMenu, onOpenSettings, muted, volume, onToggleMute,
           </div>
         </div>
       </main>
-      {levelComplete && <LevelCompleteModal hasNext={hasNext} onNext={handleNextLevel} onReplay={handleReset} />}
+      {levelComplete && (
+        <LevelCompleteModal
+          hasNext={hasNext}
+          onNext={handleNextLevel}
+          onReplay={handleReset}
+          onLevels={handleBackToLevels}
+        />
+      )}
     </div>
   )
 }
 
 // ─── App root ─────────────────────────────────────────────────────────────────
-export default function App() {
-  const [screen,   setScreen]   = useState<Screen>('start')
-  const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
-  const [hasStarted,  setHasStarted]  = useState(false)
 
-  const handleToggleMute   = () => setSettings(s => ({ ...s, muted: !s.muted }))
+export default function App() {
+  const [screen, setScreen] = useState<Screen>('start')
+  const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
+  const [hasStarted, setHasStarted] = useState(false)
+  const [completedLevels, setCompletedLevels] = useState<number[]>(
+    Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
+  const [selectedLevel, setSelectedLevel] = useState(0)
+
+  const handleToggleMute = () => setSettings(s => ({ ...s, muted: !s.muted }))
   const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
 
   const handleStart = () => {
-    setHasStarted(true)   // ← monta GameScreen la primera vez
+    setHasStarted(true)
+    setScreen('levels')
+  }
+
+  const handleSelectLevel = (index: number) => {
+    setSelectedLevel(index)
     setScreen('game')
+  }
+
+  const handleLevelCompleted = (index: number) => {
+    setCompletedLevels(prev => prev.includes(index) ? prev : [...prev, index])
   }
 
   return (
@@ -288,15 +450,27 @@ export default function App() {
 
       {screen === 'start' && <StartScreen onStart={handleStart} />}
 
+      {screen === 'levels' && (
+  <LevelSelectScreen
+    onSelectLevel={handleSelectLevel}
+    onBack={() => setScreen('start')}
+    completedLevels={completedLevels}
+    levelInfo={LEVEL_INFO}    
+  />
+)}
+
       {hasStarted && (
         <div style={{ display: (screen === 'game' || screen === 'settings') ? 'block' : 'none' }}>
           <GameScreen
             onBackToMenu={() => setScreen('start')}
+            onBackToLevels={() => setScreen('levels')}
             onOpenSettings={() => setScreen('settings')}
             muted={settings.muted}
             volume={settings.volume}
             onToggleMute={handleToggleMute}
             isActive={screen === 'game' || screen === 'settings'}
+            initialLevel={selectedLevel}
+            onLevelCompleted={handleLevelCompleted}
           />
         </div>
       )}

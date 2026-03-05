@@ -5,7 +5,22 @@ import { LevelHUD } from './components/Game/LevelHUD'
 import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
-import { LevelSelectScreen, LEVEL_INFO } from './components/LevelSelectScreen'
+import { LevelSelectScreen } from './components/LevelSelectScreen'
+
+export const LEVEL_INFO = [
+  { name: 'Primer Contacto', icon: '💡', description: 'Enciende las 3 luces con los comandos básicos' },
+  { name: 'Laberinto de Luces', icon: '🗺️', description: 'Navega el laberinto y enciende todas las luces' },
+  { name: 'La Escalera Verde', icon: '🌿', description: 'Usa el bucle para subir la escalera hasta la planta' },
+  { name: 'Zigzag', icon: '⚡', description: 'Sigue el camino en zigzag, luces y planta te esperan' },
+  { name: 'Espiral Infinita', icon: '🌀', description: 'Recorre la espiral con un bucle hasta el final' },
+  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' },
+  { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },
+  { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },
+  { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' },
+  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },
+  { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },
+]
 
 const TOTAL_LEVELS = 12
 
@@ -327,8 +342,11 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
   const [hasStarted, setHasStarted] = useState(false)
-  const [completedLevels, setCompletedLevels] = useState<number[]>(
-    Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
+
+  //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
+  //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
+
+  const [completedLevels, setCompletedLevels] = useState<number[]>([])
   const [selectedLevel, setSelectedLevel] = useState(0)
   const [prevScreen, setPrevScreen] = useState<Screen>('start')
 
@@ -368,6 +386,7 @@ export default function App() {
           muted={settings.muted}
           onToggleMute={handleToggleMute}
           onOpenSettings={() => { setPrevScreen('levels'); setScreen('settings') }}
+          levelInfo={LEVEL_INFO}
         />
       )}
 
@@ -377,7 +396,7 @@ export default function App() {
             onBackToMenu={() => setScreen('start')}
             onBackToLevels={() => setScreen('levels')}
             onOpenSettings={() => { setPrevScreen('game'); setScreen('settings') }}
-            onToggleMute={handleToggleMute}   
+            onToggleMute={handleToggleMute}
             muted={settings.muted}
             volume={settings.volume}
             isActive={screen === 'game' || screen === 'settings'}

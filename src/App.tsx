@@ -6,7 +6,7 @@ import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 
-const TOTAL_LEVELS = 11 // ← actualiza este número al añadir nuevos niveles
+const TOTAL_LEVELS = 12 // ← actualiza este número al añadir nuevos niveles
 
 type Screen = 'start' | 'game' | 'settings'
 

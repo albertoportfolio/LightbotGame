@@ -165,7 +165,14 @@ startMusic() {
 }
 
   private playMusicLoop() {
-    if (!this.musicPlaying || this.muted) return
+    if (!this.musicPlaying) return
+
+    if (this.muted) {
+    this.musicTimeout = setTimeout(() => {
+      if (this.musicPlaying) this.playMusicLoop()
+    }, 100)
+    return
+  }
     const ctx  = this.getCtx()
     const now  = ctx.currentTime
     const beat = 60 / 120
@@ -225,7 +232,7 @@ startMusic() {
 
     const loopMs = bars * bar * 1000
     this.musicTimeout = setTimeout(() => {
-      if (this.musicPlaying && !this.muted) this.playMusicLoop()
+      if (this.musicPlaying) this.playMusicLoop()
     }, loopMs - 100)
   }
 
@@ -271,17 +278,15 @@ startMusic() {
 
   private levelCompleteTimeout: ReturnType<typeof setTimeout> | null = null
  levelComplete() {
-   this.musicPlaying = false
-  if (this.musicTimeout) {
-    clearTimeout(this.musicTimeout)
-    this.musicTimeout = null
-  }
-  // Cancelar timeout anterior si existe
+  // ← NO tocar musicPlaying ni musicTimeout
+  // El loop sigue corriendo en segundo plano
+
   if (this.levelCompleteTimeout) {
     clearTimeout(this.levelCompleteTimeout)
     this.levelCompleteTimeout = null
   }
-  // gain no se toca — la melodía de victoria usa el gain actual
+
+  // Melodía de victoria suena encima de la música
   const melody = [
     { f: 523,  d: 0.15, t: 0.00 },
     { f: 659,  d: 0.15, t: 0.15 },
@@ -294,10 +299,6 @@ startMusic() {
   ;[1047, 1319, 1568].forEach((f, i) => {
     this.playTone(f, 0.6, 'sine', 0.08, 0.45 + i * 0.05)
   })
-  this.levelCompleteTimeout = setTimeout(() => {
-    this.levelCompleteTimeout = null
-    if (!this.muted) this.startMusic()
-  }, 1500)
 }
 
   levelStart() {

@@ -89,6 +89,6 @@ const setVolume = useCallback((v: number) => {
     setMute,
     setVolume,
     stopMusic,
-    startMusic,
+    startMusic
   }
 }

@@ -345,7 +345,8 @@ export default function App() {
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
   //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
-
+  // para probar el flujo normal de desbloqueo de niveles dejarlo así:
+  //  const [completedLevels, setCompletedLevels] = useState<number[]>([])
   const [completedLevels, setCompletedLevels] = useState<number[]>([])
   const [selectedLevel, setSelectedLevel] = useState(0)
   const [prevScreen, setPrevScreen] = useState<Screen>('start')

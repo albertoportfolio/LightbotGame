@@ -99,7 +99,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.on('reset-level', this.handleReset, this)
     this.bridge.on('load-level', this.handleLoadLevel, this)
     this.bridge.on('stop-music', this.handleStopMusic)
-    this.bridge.on('toggle-mute', this.handleToggleMute)
+    this.bridge.on('set-mute', this.handleSetMute, this)
     this.bridge.on('set-volume', this.handleSetVolume)
     this.bridge.on('start-music', this.handleStartMusic)
 
@@ -112,7 +112,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.off('load-level', this.handleLoadLevel, this)
     this.robot?.destroy()
     this.bridge.off('stop-music', this.handleStopMusic)
-    this.bridge.off('toggle-mute', this.handleToggleMute)
+    this.bridge.off('set-mute', this.handleSetMute, this)
     this.bridge.off('set-volume', this.handleSetVolume)
     this.bridge.off('start-music', this.handleStartMusic)
   }
@@ -475,6 +475,11 @@ if (def.victoryColors) {
     this.sfx.levelStart()
     
   }
+
+  private handleSetMute = (muted: boolean) => {
+  if (muted === this.sfx.isMuted()) return  // ya está en el estado correcto
+  this.sfx.toggleMute()
+}
 
   private applyCommand(cmd: Command): boolean {
     switch (cmd) {

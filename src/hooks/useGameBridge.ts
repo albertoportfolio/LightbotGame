@@ -61,8 +61,18 @@ export function useGameBridge() {
   )
 
   //controla sfx desde el menú de opciones
-  const toggleMute = useCallback(() => {
-  emitter.emit('toggle-mute')
+ 
+
+const setMute = useCallback((muted: boolean) => {
+  emitter.emit('set-mute', muted)
+}, [emitter])
+
+const stopMusic = useCallback(() => {
+  emitter.emit('stop-music')
+}, [emitter])
+
+const startMusic = useCallback(() => {
+  emitter.emit('start-music')
 }, [emitter])
 
 const setVolume = useCallback((v: number) => {
@@ -76,7 +86,9 @@ const setVolume = useCallback((v: number) => {
     onLevelComplete,
     onCommandExecuted,
     onLevelLoaded,
-    toggleMute,
+    setMute,
     setVolume,
+    stopMusic,
+    startMusic,
   }
 }

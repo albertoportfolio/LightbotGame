@@ -38,17 +38,16 @@ export class SoundManager {
   }
 
   toggleMute() {
-    this.muted = !this.muted
-    if (this.masterGain) {
-      const target = this.muted ? 0 : this._volume
-      this.masterGain.gain.setTargetAtTime(target, this.getCtx().currentTime, 0.05)
-    }
-    if (this.muted) {
-      this.stopMusic()
-    } else {
-      this.startMusic()
-    }
+  this.muted = !this.muted
+  if (this.masterGain) {
+    const target = this.muted ? 0 : this._volume
+    this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
+    this.masterGain.gain.setTargetAtTime(target, this.getCtx().currentTime, 0.05)
   }
+  if (!this.muted && !this.musicPlaying) {
+    this.startMusic()
+  }
+}
 
   isMuted() { return this.muted }
 
@@ -140,17 +139,24 @@ export class SoundManager {
     clearTimeout(this.musicTimeout)
     this.musicTimeout = null
   }
-  // Silencia inmediatamente todos los osciladores ya programados
   if (this.masterGain) {
-    this.masterGain.gain.setTargetAtTime(0, this.getCtx().currentTime, 0.05)
+    this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
+    this.masterGain.gain.setTargetAtTime(0, this.getCtx().currentTime, 0.3)
   }
+  // NO tocar masterGain aquí — el gain lo gestiona toggleMute y startMusic
 }
+
 
 // Y cuando arranque de nuevo, restaura el volumen:
 startMusic() {
+  // Cancelar el timeout de levelComplete si arranca música antes
+  if (this.levelCompleteTimeout) {
+    clearTimeout(this.levelCompleteTimeout)
+    this.levelCompleteTimeout = null
+  }
+
   if (this.musicPlaying || this.muted) return
   if (this.masterGain) {
-    // Cancelar transiciones pendientes y restaurar volumen instantáneamente
     this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
     this.masterGain.gain.setValueAtTime(this._volume, this.getCtx().currentTime)
   }
@@ -263,9 +269,19 @@ startMusic() {
     this.playTone(280, 0.04, 'square', 0.08)
   }
 
-  levelComplete() {
-
-  // 3. Tocar melodía de victoria
+  private levelCompleteTimeout: ReturnType<typeof setTimeout> | null = null
+ levelComplete() {
+   this.musicPlaying = false
+  if (this.musicTimeout) {
+    clearTimeout(this.musicTimeout)
+    this.musicTimeout = null
+  }
+  // Cancelar timeout anterior si existe
+  if (this.levelCompleteTimeout) {
+    clearTimeout(this.levelCompleteTimeout)
+    this.levelCompleteTimeout = null
+  }
+  // gain no se toca — la melodía de victoria usa el gain actual
   const melody = [
     { f: 523,  d: 0.15, t: 0.00 },
     { f: 659,  d: 0.15, t: 0.15 },
@@ -278,7 +294,10 @@ startMusic() {
   ;[1047, 1319, 1568].forEach((f, i) => {
     this.playTone(f, 0.6, 'sine', 0.08, 0.45 + i * 0.05)
   })
-
+  this.levelCompleteTimeout = setTimeout(() => {
+    this.levelCompleteTimeout = null
+    if (!this.muted) this.startMusic()
+  }, 1500)
 }
 
   levelStart() {

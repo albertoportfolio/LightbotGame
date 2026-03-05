@@ -9,8 +9,9 @@ import level7 from './level7';
 import level8 from './level8';
 import level9 from './level9';
 import level10 from './nivel10';
+import level11 from './nivel11';
 
-const LEVELS: LevelDef[] = [level1, level2, level3, level4, level5, level6, level7, level8, level9, level10];
+const LEVELS: LevelDef[] = [level1, level2, level3, level4, level5, level6, level7, level8, level9, level10, level11];
 
 export class LevelManager {
   private _currentIndex = 0;

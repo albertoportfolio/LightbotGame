@@ -20,9 +20,10 @@ export const LEVEL_INFO = [
   { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },
   { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },
   { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },
+  { name: 'Cruz de Luces', icon: '✝️', description: 'Enciende las 4 luces de la cruz' }, // ← índice 12
 ]
 
-const TOTAL_LEVELS = 12
+const TOTAL_LEVELS = 13
 
 type Screen = 'start' | 'levels' | 'game' | 'settings'
 
@@ -347,7 +348,7 @@ export default function App() {
   //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
   // para probar el flujo normal de desbloqueo de niveles dejarlo así:
   //  const [completedLevels, setCompletedLevels] = useState<number[]>([])
-  const [completedLevels, setCompletedLevels] = useState<number[]>([])
+  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
   const [selectedLevel, setSelectedLevel] = useState(0)
   const [prevScreen, setPrevScreen] = useState<Screen>('start')
 

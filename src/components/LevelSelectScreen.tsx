@@ -7,13 +7,13 @@ interface LevelInfo {
 }
 
 interface LevelSelectScreenProps {
-  onSelectLevel:   (index: number) => void
-  onBack:          () => void
+  onSelectLevel: (index: number) => void
+  onBack: () => void
   completedLevels: number[]
-  muted:           boolean
-  onToggleMute:    () => void
-  onOpenSettings:  () => void
-  levelInfo:       LevelInfo[]
+  muted: boolean
+  onToggleMute: () => void
+  onOpenSettings: () => void
+  levelInfo: LevelInfo[]
 }
 
 // ─── Mundos ───────────────────────────────────────────────────────────────────
@@ -23,7 +23,7 @@ const ZONES = [
     id: 0,
     name: 'Mundo 1',
     subtitle: '🌿 Tierra de Luces',
-    levels: [0, 1, 2, 3],
+    levels: [0, 1, 2, 3,],
     skyTop: '#87CEEB',
     skyBot: '#c8f5a0',
     groundCol: '#5d9e3a',
@@ -31,7 +31,7 @@ const ZONES = [
     accent: '#ff6b35',
     nodeGrad: ['#ffe066', '#ff6b35'],
     cloudCol: 'white',
-    decorations: ['🌸','🌼','🍄','🌲','🦋','🐝'],
+    decorations: ['🌸', '🌼', '🍄', '🌲', '🦋', '🐝'],
     pathCol: '#e8c87a',
   },
   {
@@ -41,19 +41,19 @@ const ZONES = [
     levels: [4, 5, 6, 7],
     skyTop: '#1a6ea8',
     skyBot: '#5ec8e5',
-    groundCol: '#e8a44a',
-    groundStripe: '#c98830',
+    groundCol: '#1a6ea8',
+    groundStripe: '#155d8f',
     accent: '#00d4ff',
     nodeGrad: ['#00d4ff', '#0080ff'],
     cloudCol: '#d0f4ff',
-    decorations: ['🐚','🦀','⚓','🐠','🌴','⭐'],
+    decorations: ['🐚', '🦀', '⚓', '🐠', '🌴', '⭐'],
     pathCol: '#f0e080',
   },
   {
     id: 2,
     name: 'Mundo 3',
     subtitle: '🚀 Galaxia Robot',
-    levels: [8, 9, 10, 11],
+    levels: [8, 9, 10, 11, 12],
     skyTop: '#0a0a2e',
     skyBot: '#1a1060',
     groundCol: '#3a1878',
@@ -61,19 +61,25 @@ const ZONES = [
     accent: '#ff77ff',
     nodeGrad: ['#ff77ff', '#aa44ff'],
     cloudCol: '#c8b0ff',
-    decorations: ['⭐','🌟','💫','🪐','🛸','✨'],
+    decorations: ['⭐', '🌟', '💫', '🪐', '🛸', '✨'],
     pathCol: '#aa88ff',
   },
 ]
 
 const NODE_POSITIONS = [
-  { x: 110, y: 52 },
-  { x: 270, y: 36 },
-  { x: 450, y: 56 },
-  { x: 630, y: 38 },
+  { x: 120, y: 60 },
+  { x: 300, y: 35 },
+  { x: 480, y: 65 },
+  { x: 660, y: 30 },
+  { x: 840, y: 60 },
+  { x: 1020, y: 35 },
+  { x: 1200, y: 65 },
+  { x: 1380, y: 30 },
+  { x: 1560, y: 60 },
+  { x: 1700, y: 38 },
 ]
 
-const ZONE_WIDTH = 800
+const ZONE_WIDTH = 1800
 
 // ─── Nube infantil ────────────────────────────────────────────────────────────
 
@@ -121,32 +127,30 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
 
 function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
   const isSpace = zone.id === 2
+  const isOcean = zone.id === 1
+
   return (
     <div className="absolute pointer-events-none" style={{ bottom: 44, left: x }}>
       {isSpace ? (
         <div style={{ fontSize: 32, lineHeight: 1 }}>🌟</div>
+      ) : isOcean ? (
+        <div style={{ fontSize: 28, lineHeight: 1 }}>🌊</div>
       ) : (
         <>
-          {/* tronco */}
           <div style={{
             width: 10, height: 22, margin: '0 auto',
             background: 'linear-gradient(180deg, #8B5e3c, #6b3f1e)',
             borderRadius: 4,
           }} />
-          {/* copa doble */}
           <div style={{
             width: 44, height: 44, borderRadius: '50% 50% 44% 44%',
-            background: zone.id === 1
-              ? 'linear-gradient(160deg,#22c55e,#15803d)'
-              : 'linear-gradient(160deg,#4ade80,#16a34a)',
+            background: 'linear-gradient(160deg,#4ade80,#16a34a)',
             marginTop: -12, marginLeft: -17,
             boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
           }} />
           <div style={{
             width: 34, height: 34, borderRadius: '50% 50% 44% 44%',
-            background: zone.id === 1
-              ? 'linear-gradient(160deg,#4ade80,#22c55e)'
-              : 'linear-gradient(160deg,#86efac,#4ade80)',
+            background: 'linear-gradient(160deg,#86efac,#4ade80)',
             marginTop: -20, marginLeft: -12,
           }} />
         </>
@@ -214,7 +218,7 @@ function LevelNode({
           }}
         >
           <p className="font-black text-gray-800 text-sm">{info.name}</p>
-         
+
           {/* flecha */}
           <div style={{
             position: 'absolute', bottom: -9, left: '50%',
@@ -270,16 +274,16 @@ function LevelNode({
           background: locked
             ? 'rgba(80,80,100,0.5)'
             : completed
-            ? `radial-gradient(circle at 35% 30%, white, ${g1})`
-            : active
-            ? `radial-gradient(circle at 35% 30%, ${g1}dd, ${g2})`
-            : `radial-gradient(circle at 35% 30%, ${g1}bb, ${g2}88)`,
+              ? `radial-gradient(circle at 35% 30%, white, ${g1})`
+              : active
+                ? `radial-gradient(circle at 35% 30%, ${g1}dd, ${g2})`
+                : `radial-gradient(circle at 35% 30%, ${g1}bb, ${g2}88)`,
           boxShadow: locked ? 'none'
             : completed
-            ? `0 5px 0 ${g2}bb, 0 8px 20px ${g1}60`
-            : active
-            ? `0 5px 0 ${g2}99, 0 8px 16px ${g1}50`
-            : `0 5px 0 ${g2}88, 0 6px 12px rgba(0,0,0,0.2)`,
+              ? `0 5px 0 ${g2}bb, 0 8px 20px ${g1}60`
+              : active
+                ? `0 5px 0 ${g2}99, 0 8px 16px ${g1}50`
+                : `0 5px 0 ${g2}88, 0 6px 12px rgba(0,0,0,0.2)`,
           transform: hov && !locked ? 'scale(1.18) translateY(-4px)' : 'scale(1)',
           transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s',
           cursor: locked ? 'not-allowed' : 'pointer',
@@ -329,6 +333,15 @@ function LevelNode({
 
 // ─── Zona/Mundo ───────────────────────────────────────────────────────────────
 
+const SPACE_STARS = [...Array(30)].map(() => ({
+  w: Math.random() * 2.5 + 1,
+  top: Math.random() * 58,
+  left: Math.random() * 100,
+  op: Math.random() * 0.7 + 0.2,
+  dur: Math.random() * 3 + 1.5,
+  del: Math.random() * 3,
+}))
+
 function ZoneSection({
   zone, completedLevels, nextLevel, onSelectLevel, levelInfo,
 }: {
@@ -339,14 +352,7 @@ function ZoneSection({
   levelInfo: LevelInfo[]
 }) {
   const nodes = NODE_POSITIONS
-  const SPACE_STARS = [...Array(30)].map(() => ({
-  w:    Math.random() * 2.5 + 1,
-  top:  Math.random() * 58,
-  left: Math.random() * 100,
-  op:   Math.random() * 0.7 + 0.2,
-  dur:  Math.random() * 3 + 1.5,
-  del:  Math.random() * 3,
-}))
+
 
   // Camino SVG curvo
   const pathD = nodes.reduce((acc, node, i) => {
@@ -356,12 +362,12 @@ function ZoneSection({
     return `${acc} C ${cx} ${prev.y}, ${cx} ${node.y}, ${node.x} ${node.y}`
   }, '')
 
-  const treeXs = [50, 165, 350, 520, 690, 745]
+  const treeXs = [60, 250, 460, 660, 860, 1060, 1260, 1460, 1660, 1860]
 
   // Decoraciones dispersas en la zona
   const decoItems = zone.decorations.map((emoji, i) => ({
     emoji,
-    x: 30 + i * 125 + (i % 2) * 40,
+    x: 80 + i * 300 + (i % 2) * 60,
     y: 30 + (i % 3) * 35,
     delay: i * 0.4,
     size: 18 + (i % 3) * 6,
@@ -375,7 +381,7 @@ function ZoneSection({
         height: '100%',
         background: `linear-gradient(180deg, ${zone.skyTop} 0%, ${zone.skyBot} 60%, ${zone.groundCol} 60%, ${zone.groundCol} 100%)`,
         borderRight: `3px solid rgba(0,0,0,0.15)`,
-        
+
       }}
     >
       {/* Estrellas en zona espacial */}
@@ -391,11 +397,18 @@ function ZoneSection({
       ))}
 
       {/* Nubes */}
-      <FunCloud x={20}  y={18}  scale={0.9} speed={22} color={zone.cloudCol} />
-      <FunCloud x={180} y={35}  scale={1.1} speed={30} color={zone.cloudCol} />
-      <FunCloud x={390} y={15}  scale={0.7} speed={26} color={zone.cloudCol} />
-      <FunCloud x={580} y={30}  scale={1.0} speed={34} color={zone.cloudCol} />
-      <FunCloud x={700} y={10}  scale={0.8} speed={20} color={zone.cloudCol} />
+      <FunCloud x={20} y={18} scale={0.9} speed={22} color={zone.cloudCol} />
+      <FunCloud x={180} y={35} scale={1.1} speed={30} color={zone.cloudCol} />
+      <FunCloud x={390} y={15} scale={0.7} speed={26} color={zone.cloudCol} />
+      <FunCloud x={580} y={30} scale={1.0} speed={34} color={zone.cloudCol} />
+      <FunCloud x={700} y={10} scale={0.8} speed={20} color={zone.cloudCol} />
+      <FunCloud x={20} y={18} scale={0.9} speed={22} color={zone.cloudCol} />
+      <FunCloud x={300} y={35} scale={1.1} speed={30} color={zone.cloudCol} />
+      <FunCloud x={600} y={15} scale={0.7} speed={26} color={zone.cloudCol} />
+      <FunCloud x={900} y={30} scale={1.0} speed={34} color={zone.cloudCol} />
+      <FunCloud x={1200} y={12} scale={0.8} speed={28} color={zone.cloudCol} />
+      <FunCloud x={1500} y={28} scale={1.1} speed={32} color={zone.cloudCol} />
+      <FunCloud x={1800} y={18} scale={0.7} speed={24} color={zone.cloudCol} />
 
       {/* Decoraciones flotantes */}
       {decoItems.map((d, i) => (
@@ -481,19 +494,46 @@ function ZoneSection({
       })}
 
       {/* Suelo con rayas */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: 52, zIndex: 2 }}>
-        {/* Franja verde/arena superior */}
-        <div style={{
-          height: 10,
-          background: `repeating-linear-gradient(90deg, ${zone.groundCol} 0px, ${zone.groundCol} 30px, ${zone.groundStripe} 30px, ${zone.groundStripe} 60px)`,
-        }} />
-        {/* Base sólida */}
-        <div style={{ height: 42, background: zone.groundStripe }} />
-        {/* Brillo en la orilla */}
-        <div style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-          background: 'rgba(255,255,255,0.3)',
-        }} />
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: zone.id === 1 ? 160 : 52, zIndex: 2 }}>
+        {/* Suelo con rayas */}
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-none"
+          style={{ height: zone.id === 1 ? 100 : 52, zIndex: 2 }}>
+          {zone.id === 1 ? (
+            <>
+              <svg viewBox="0 0 400 50" preserveAspectRatio="none"
+                style={{ width: '100%', height: 50, display: 'block' }}>
+                {/* Ola 1 */}
+                <path
+                  d="M0,5 C30,-10 60,20 90,5 C120,-10 150,20 180,5 C210,-10 240,20 270,5 C300,-10 330,20 360,5 C380,-5 390,-8 400,5 L400,50 L0,50 Z"
+                  fill="#7dd8f0"
+                />
+                {/* Ola 2 */}
+                <path
+                  d="M0,15 C30,0 60,30 90,15 C120,0 150,30 180,15 C210,0 240,30 270,15 C300,0 330,30 360,15 C380,5 390,2 400,15 L400,50 L0,50 Z"
+                  fill="#3aaed8"
+                />
+                {/* Ola 3 */}
+                <path
+                  d="M0,25 C30,12 60,38 90,25 C120,12 150,38 180,25 C210,12 240,38 270,25 C300,12 330,38 360,25 C380,18 390,15 400,25 L400,50 L0,50 Z"
+                  fill="#1a6ea8"
+                />
+              </svg>
+              <div style={{ height: 50, background: '#1a6ea8' }} />
+            </>
+          ) : (
+            <>
+              <div style={{
+                height: 10,
+                background: `repeating-linear-gradient(90deg, ${zone.groundCol} 0px, ${zone.groundCol} 30px, ${zone.groundStripe} 30px, ${zone.groundStripe} 60px)`,
+              }} />
+              <div style={{ height: 42, background: zone.groundStripe }} />
+              <div style={{
+                position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                background: 'rgba(255,255,255,0.3)',
+              }} />
+            </>
+          )}
+        </div>
       </div>
 
       {/* Árboles/decoraciones en el suelo */}

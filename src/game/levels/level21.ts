@@ -15,27 +15,23 @@ import { Command, LevelDef } from '../../types/game.types';
 
 const level21: LevelDef = {
   id: 21,
-  name: 'El Gran Intercambio',
+  name: 'Recta de Letras',
   maxCommands: 12,
-  maxAttempts: 5,
-  instructions: 'Haz que A y B intercambien colores usando C como variable temporal || PISTA: C = A -> A = B -> B = C',
+  maxAttempts: 3,
+  instructions: 'Haz que A y B intercambien colores usando C como variable temporal || PISTA: B = C -> C = A -> A = B',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.COPY_VAR],
-  robotStart: { row: 1, col: 2, direction: 'UP' },
-  victoryColors: {
-  '2,0': 'red',  // B debe terminar rojo
-  '0,2': 'blue',   // A debe terminar azul
-},
+  robotStart: { row: 0, col: 0, direction: 'RIGHT' },
   grid: [
-    // col: 0       1       2          3       4
-    ['floor', 'floor', 'variable', 'floor', 'floor'],  // fila 0 — A (rojo)
-    ['floor', 'floor', 'floor',    'floor', 'floor'],  // fila 1 — pasillo
-    ['variable', 'floor', 'floor', 'floor', 'variable'],  // fila 2 — B (azul) y C (vacio)
+    ['floor', 'variable', 'floor', 'variable', 'floor', 'variable', 'floor'],
   ],
-  // Los colores iniciales se definen en buildState via varColors
   varColors: {
-    '2,0': 'blue',   // B
-    '2,4': 'none',  // C inicialmente vacío
-    '0,2': 'red',  // A
+    '0,1': 'red',    // A
+    '0,3': 'none',   // B
+    '0,5': 'purple',    // C 
+  },
+  victoryColors: {
+    '0,5': 'red',  
+    '0,1': 'purple',  
   },
 };
 

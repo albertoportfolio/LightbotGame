@@ -19,11 +19,11 @@ const level33: LevelDef = {
   varColors: {
     '0,1': 'red',    // A
     '0,3': 'none',   // B
-    '0,5': 'blue',    // C 
+    '0,5': 'purple',    // C 
   },
   victoryColors: {
     '0,5': 'red',  
-    '0,1': 'blue',  
+    '0,1': 'purple',  
   },
 };
 

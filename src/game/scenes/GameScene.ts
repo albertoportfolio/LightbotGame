@@ -256,6 +256,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
         const colors = {
           red:  { base: 0x7f1d1d, fill: 0xef4444, glow: 0xfca5a5, border: 0xf87171 },
           blue: { base: 0x1e3a5f, fill: 0x3b82f6, glow: 0x93c5fd, border: 0x60a5fa },
+           purple: { base: 0x4a1d96, fill: 0x8b5cf6, glow: 0xc4b5fd, border: 0xa78bfa },
           none: { base: 0x1f2937, fill: 0x374151, glow: 0x6b7280, border: 0x4b5563 },
         }
         const vc = cell.varColor ?? 'none'
@@ -350,7 +351,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
 
   const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
   const grid = this.levelState.grid
-  const letters = ['A', 'B', 'C', 'D', 'E']
+  const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
   let idx = 0
 
   for (let r = 0; r < grid.length; r++) {

@@ -68,7 +68,7 @@ const ZONES = [
     id: 3,
     name: 'Mundo 4',
     subtitle: '🌋 Volcán Digital',
-    levels: [30, 31, 32, 33,34, 35, 36, 37, 38, 39],
+    levels: [30, 31, 32, 33, 34, 35, 36, 37, 38, 39],
     skyTop: '#1a0a00',
     skyBot: '#4a1a08',
     groundCol: '#2a0e04',
@@ -76,7 +76,7 @@ const ZONES = [
     accent: '#ff4400',
     nodeGrad: ['#ff6622', '#cc2200'],
     cloudCol: '#ff886640',
-    decorations: ['🔥', '🌋', '💎', '⚡', '🪨', '✴️'],
+    decorations: ['🔥', '🌋', '💎', '⚡', '🪨', '🔥'],
     pathCol: '#ff6633',
   },
 ]

@@ -1,7 +1,7 @@
 // ─── Cell Types ──────────────────────────────────────────────────────────────
 export type CellType = 'floor' | 'empty' | 'light' | 'wall' | 'plant' | 'variable';
 
-export type VarColor = 'red' | 'blue' | 'none';
+export type VarColor = 'red' | 'blue' | 'purple' | 'none';
 
 export interface Cell {
   type: CellType;

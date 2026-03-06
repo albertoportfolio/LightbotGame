@@ -31,16 +31,16 @@ export const LEVEL_INFO = [
   { name: 'Rio de Luces', icon: '🏞️', description: 'Sigue el rio encendiendo luces en cada curva' },                  // 18 level19
   { name: 'La Espiral Cuadrada', icon: '🔲', description: 'Bucle anidado: recorre la espiral hasta la planta' },       // 19 level20
   // Mundo 3 — Galaxia Robot (indices 20-23)
-  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' }, // 20 level21
+  { name: 'Recta de Letras', icon: '🔤', description: 'Intercambia los colores de A y C usando B como temporal' }, // 20 level21
   { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },  // 21 level22
   { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },       // 22 level23
   { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' }, // 23 level24
   { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'La Cadena', icon: '⛓️', description: 'Copia A en B, y B original en C' },                 // 24 level2
+  { name: 'El Triangulo', icon: '🔺', description: 'Rota los colores: A→B, B→C, C→A usando el temporal' },                 // 24 level2
+  { name: 'El Espejo', icon: '🪞', description: 'Completa el puzzle del espejo usando variables' },                 // 24 level2
+  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' }, // 24 level29
+  { name: 'El Gran Puzzle', icon: '🧩', description: 'Completa el puzzle de variables' },                 // 24 level2
   
   // 5
   // Mundo 4 — Volcán Digital (indices 24-26)

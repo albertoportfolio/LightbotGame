@@ -23,7 +23,7 @@ const ZONES = [
     id: 0,
     name: 'Mundo 1',
     subtitle: '🌿 Tierra de Luces',
-    levels: [0, 1, 2, 3,],
+    levels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
     skyTop: '#87CEEB',
     skyBot: '#c8f5a0',
     groundCol: '#5d9e3a',
@@ -38,7 +38,7 @@ const ZONES = [
     id: 1,
     name: 'Mundo 2',
     subtitle: '🌊 Islas del Código',
-    levels: [4, 5, 6, 7],
+    levels: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
     skyTop: '#1a6ea8',
     skyBot: '#5ec8e5',
     groundCol: '#1a6ea8',
@@ -53,7 +53,7 @@ const ZONES = [
     id: 2,
     name: 'Mundo 3',
     subtitle: '🚀 Galaxia Robot',
-    levels: [8, 9, 10, 11, 12],
+    levels: [20, 21, 22, 23],
     skyTop: '#0a0a2e',
     skyBot: '#1a1060',
     groundCol: '#3a1878',
@@ -63,6 +63,21 @@ const ZONES = [
     cloudCol: '#c8b0ff',
     decorations: ['⭐', '🌟', '💫', '🪐', '🛸', '✨'],
     pathCol: '#aa88ff',
+  },
+  {
+    id: 3,
+    name: 'Mundo 4',
+    subtitle: '🌋 Volcán Digital',
+    levels: [24, 25, 26],
+    skyTop: '#1a0a00',
+    skyBot: '#4a1a08',
+    groundCol: '#2a0e04',
+    groundStripe: '#1f0a02',
+    accent: '#ff4400',
+    nodeGrad: ['#ff6622', '#cc2200'],
+    cloudCol: '#ff886640',
+    decorations: ['🔥', '🌋', '💎', '⚡', '🪨', '✴️'],
+    pathCol: '#ff6633',
   },
 ]
 
@@ -128,10 +143,13 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
 function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
   const isSpace = zone.id === 2
   const isOcean = zone.id === 1
+  const isVolcano = zone.id === 3
 
   return (
     <div className="absolute pointer-events-none" style={{ bottom: 44, left: x }}>
-      {isSpace ? (
+      {isVolcano ? (
+        <div style={{ fontSize: 28, lineHeight: 1 }}>🔥</div>
+      ) : isSpace ? (
         <div style={{ fontSize: 32, lineHeight: 1 }}>🌟</div>
       ) : isOcean ? (
         <div style={{ fontSize: 28, lineHeight: 1 }}>🌊</div>
@@ -393,6 +411,20 @@ function ZoneSection({
           left: `${SPACE_STARS[i].left}%`,
           opacity: SPACE_STARS[i].op,
           animation: `starTwinkle ${SPACE_STARS[i].dur}s ease-in-out ${SPACE_STARS[i].del}s infinite`,
+        }} />
+      ))}
+
+      {/* Brasas flotantes en zona volcánica */}
+      {zone.id === 3 && [...Array(20)].map((_, i) => (
+        <div key={i} className="absolute rounded-full pointer-events-none" style={{
+          width: SPACE_STARS[i].w + 1,
+          height: SPACE_STARS[i].w + 1,
+          top: `${SPACE_STARS[i].top}%`,
+          left: `${SPACE_STARS[i].left}%`,
+          opacity: SPACE_STARS[i].op,
+          background: i % 3 === 0 ? '#ff4400' : i % 3 === 1 ? '#ff8800' : '#ffaa00',
+          animation: `starTwinkle ${SPACE_STARS[i].dur}s ease-in-out ${SPACE_STARS[i].del}s infinite`,
+          boxShadow: `0 0 4px ${i % 2 === 0 ? '#ff4400' : '#ff8800'}`,
         }} />
       ))}
 

@@ -8,22 +8,40 @@ import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 import { LevelSelectScreen } from './components/LevelSelectScreen'
 
 export const LEVEL_INFO = [
-  { name: 'Primer Contacto', icon: '💡', description: 'Enciende las 3 luces con los comandos básicos' },
-  { name: 'Laberinto de Luces', icon: '🗺️', description: 'Navega el laberinto y enciende todas las luces' },
-  { name: 'La Escalera Verde', icon: '🌿', description: 'Usa el bucle para subir la escalera hasta la planta' },
-  { name: 'Zigzag', icon: '⚡', description: 'Sigue el camino en zigzag, luces y planta te esperan' },
-  { name: 'Espiral Infinita', icon: '🌀', description: 'Recorre la espiral con un bucle hasta el final' },
-  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' },
-  { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },
-  { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },
-  { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' },
-  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },
-  { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },
-  { name: 'Cruz de Luces', icon: '✝️', description: 'Enciende las 4 luces de la cruz' }, // ← índice 12
+  // Mundo 1 — Tierra de Luces (indices 0-9)
+  { name: 'Primer Contacto', icon: '💡', description: 'Enciende las 3 luces con los comandos básicos' },         // 0  level1
+  { name: 'Laberinto de Luces', icon: '🗺️', description: 'Navega el laberinto y enciende todas las luces' },      // 1  level2
+  { name: 'Cruz de Luces', icon: '✝️', description: 'Enciende las 4 luces de la cruz' },                          // 2  level3
+  { name: 'Escalones de Luces', icon: '🪜', description: 'Enciende las 4 luces siguiendo la escalera diagonal' }, // 3  level4
+  { name: 'La Esquina', icon: '↩️', description: 'Gira en la esquina y enciende las luces' },                     // 4  level5
+  { name: 'La Plaza', icon: '🏛️', description: 'Recorre la plaza encendiendo luces en cada esquina' },            // 5  level6
+  { name: 'La Serpiente', icon: '🐍', description: 'Sortea los muros y enciende todas las luces' },               // 6  level7
+  { name: 'Caja de Luces', icon: '📦', description: 'Recorre la U y enciende las 3 luces' },                      // 7  level8
+  { name: 'Doble Pasillo', icon: '🔀', description: 'Enciende las 4 luces recorriendo ambos pasillos' },          // 8  level9
+  { name: 'La Gran Espiral', icon: '🌀', description: '8 luces en espiral — solo 3 intentos y 20 comandos' },     // 9  level10
+  // Mundo 2 — Islas del Código (indices 10-19)
+  { name: 'La Escalera Verde', icon: '🌿', description: 'Usa el bucle para subir la escalera hasta la planta' },      // 10 level11
+  { name: 'Zigzag', icon: '⚡', description: 'Sigue el camino en zigzag, luces y planta te esperan' },                // 11 level12
+  { name: 'Espiral Infinita', icon: '🌀', description: 'Recorre la espiral con un bucle hasta el final' },            // 12 level13
+  { name: 'El Tunel', icon: '🚇', description: 'Usa el bucle para llegar al final del túnel' },                       // 13 level14
+  { name: 'Escalera Luminosa', icon: '🏔️', description: 'Sube la escalera encendiendo luces con un bucle' },          // 14 level15
+  { name: 'Descenso', icon: '⬇️', description: 'Baja la escalera hasta la planta usando un bucle' },                  // 15 level16
+  { name: 'Zigzag Luminoso', icon: '💡', description: 'Enciende luces subiendo y bajando hasta la planta' },           // 16 level17
+  { name: 'Dientes de Sierra', icon: '🦷', description: 'Recorre los dientes encendiendo luces hasta la planta' },     // 17 level18
+  { name: 'Rio de Luces', icon: '🏞️', description: 'Sigue el rio encendiendo luces en cada curva' },                  // 18 level19
+  { name: 'La Espiral Cuadrada', icon: '🔲', description: 'Bucle anidado: recorre la espiral hasta la planta' },       // 19 level20
+  // Mundo 3 — Galaxia Robot (indices 20-23)
+  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' }, // 20 level21
+  { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },  // 21 level22
+  { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },       // 22 level23
+  { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' }, // 23 level24
+  // Mundo 4 — Volcán Digital (indices 24-26)
+  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },       // 24 level31
+  { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },       // 25 level32
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
 ]
 
-const TOTAL_LEVELS = 13
+const TOTAL_LEVELS = 27
 
 type Screen = 'start' | 'levels' | 'game' | 'settings'
 

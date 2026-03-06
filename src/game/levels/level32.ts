@@ -4,7 +4,7 @@ import { Command } from '../../types/game.types';
 // Legend: 'floor' | 'empty' | 'light' | 'wall'
 // Robot starts at (row=0, col=0) facing RIGHT
 // Goal: toggle all 3 'light' cells
-const level11: LevelDef = {
+const level32: LevelDef = {
   id: 11,
   name: 'RECTA FINAL',
   maxCommands: 2,
@@ -18,4 +18,4 @@ const level11: LevelDef = {
   ],
 };
 
-export default level11;
+export default level32;

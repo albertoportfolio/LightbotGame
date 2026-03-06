@@ -4,7 +4,7 @@ import { Command } from '../../types/game.types';
 // Legend: 'floor' | 'empty' | 'light' | 'wall'
 // Robot starts at (row=2, col=0) facing RIGHT
 // Goal: toggle all 3 'light' cells
-const level10: LevelDef = {
+const level31: LevelDef = {
   id: 10,
   name: 'MANDA CON PALABRAS',
   maxCommands: 5,
@@ -22,4 +22,4 @@ const level10: LevelDef = {
   ],
 };
 
-export default level10;
+export default level31;

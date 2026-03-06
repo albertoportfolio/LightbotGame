@@ -13,7 +13,7 @@ import { Command } from '../../types/game.types';
 const level4: LevelDef = {
   id: 4,
   name: 'Escalones de Luces',
-  maxCommands: 20,
+  maxCommands: 6,
   maxAttempts: 5,
   instructions: 'Enciende las 4 luces siguiendo la escalera diagonal',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE, Command.LOOP_UNTIL_PLANT],

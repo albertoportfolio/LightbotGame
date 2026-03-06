@@ -14,7 +14,7 @@ import { Command, LevelDef } from '../../types/game.types';
 // Victoria: A=azul y B=rojo
 
 const level21: LevelDef = {
-  id: 6,
+  id: 21,
   name: 'El Gran Intercambio',
   maxCommands: 12,
   maxAttempts: 5,

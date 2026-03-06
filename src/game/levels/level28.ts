@@ -13,8 +13,8 @@ import { Command } from '../../types/game.types';
 // El objetivo es hacer que C y B sean iguales utilizando un bucle solo:
 // Victoria: A=blue, B=red, C=red ✓✓✓✓
 
-const level24: LevelDef = {
-    id: 24,
+const level28: LevelDef = {
+    id: 28,
     name: 'Laberinto de Variables',
     maxCommands: 12,
     maxAttempts: 2,
@@ -45,4 +45,4 @@ const level24: LevelDef = {
     },
 };
 
-export default level24;
+export default level28;

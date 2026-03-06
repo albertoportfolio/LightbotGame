@@ -5,7 +5,7 @@ import { Command } from '../../types/game.types';
 // Robot starts at (row=2, col=0) facing RIGHT
 // Goal: toggle all 3 'light' cells
 const level31: LevelDef = {
-  id: 10,
+  id: 31,
   name: 'MANDA CON PALABRAS',
   maxCommands: 5,
   maxAttempts: 9,

@@ -14,7 +14,7 @@ import { Command } from '../../types/game.types';
 // Victoria: A=blue, B=red, C=red ✓✓✓✓
 
 const level23: LevelDef = {
-  id: 8,
+  id: 23,
   name: 'Paraiso de letras',
   maxCommands: 10,
   maxAttempts: 1,

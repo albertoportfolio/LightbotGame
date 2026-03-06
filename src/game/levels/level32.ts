@@ -5,7 +5,7 @@ import { Command } from '../../types/game.types';
 // Robot starts at (row=0, col=0) facing RIGHT
 // Goal: toggle all 3 'light' cells
 const level32: LevelDef = {
-  id: 11,
+  id: 32,
   name: 'RECTA FINAL',
   maxCommands: 2,
   maxAttempts: 1,

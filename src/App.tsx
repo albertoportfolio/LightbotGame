@@ -35,13 +35,28 @@ export const LEVEL_INFO = [
   { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },  // 21 level22
   { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },       // 22 level23
   { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' }, // 23 level24
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
+  
+  // 5
   // Mundo 4 — Volcán Digital (indices 24-26)
   { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },       // 24 level31
   { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },       // 25 level32
   { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
 ]
 
-const TOTAL_LEVELS = 27
+const TOTAL_LEVELS = 40
 
 type Screen = 'start' | 'levels' | 'game' | 'settings'
 

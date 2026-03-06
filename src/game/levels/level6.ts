@@ -7,8 +7,8 @@ import { Command } from '../../types/game.types';
 const level6: LevelDef = {
   id: 6,
   name: 'La Plaza',
-  maxCommands: 10,
-  maxAttempts: 5,
+  maxCommands: 4,
+  maxAttempts: 3,
   instructions: 'Recorre la plaza y enciende las 3 luces',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },

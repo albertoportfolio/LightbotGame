@@ -23,9 +23,22 @@ import level21 from './level21';
 import level22 from './level22';
 import level23 from './level23';
 import level24 from './level24';
+import level25 from './level25';
+import level26 from './level26';
+import level27 from './level27';
+import level28 from './level28';
+import level29 from './level29';
+import level30 from './level30';
 import level31 from './level31';
 import level32 from './level32';
 import level33 from './level33';
+import level34 from './level34';
+import level35 from './level35';
+import level36 from './level36';
+import level37 from './level37';
+import level38 from './level38';
+import level39 from './level39';
+import level40 from './level40';
 
 const LEVELS: LevelDef[] = [
   // Mundo 1 — Tierra de Luces (indices 0-9)
@@ -33,9 +46,9 @@ const LEVELS: LevelDef[] = [
   // Mundo 2 — Islas del Código (indices 10-19)
   level11, level12, level13, level14, level15, level16, level17, level18, level19, level20,
   // Mundo 3 — Galaxia Robot (indices 20-23)
-  level21, level22, level23, level24,
+  level21, level22, level23, level24, level25, level26, level27, level28, level29, level30,
   // Mundo 4 — Volcán Digital (indices 24-26)
-  level31, level32, level33,
+  level31, level32, level33, level34, level35, level36, level37, level38, level39, level40,
 ];
 
 export class LevelManager {

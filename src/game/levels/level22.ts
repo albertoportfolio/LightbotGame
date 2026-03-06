@@ -16,7 +16,7 @@ import { Command } from '../../types/game.types';
 // Victoria: A=blue, B=red, C=purple, D=green ✓✓✓✓
 
 const level22: LevelDef = {
-  id: 7,
+  id: 22,
   name: 'El Doble Intercambio',
   maxCommands: 20,
   maxAttempts: 4,

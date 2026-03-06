@@ -8,7 +8,7 @@ const level5: LevelDef = {
   id: 5,
   name: 'La Esquina',
   maxCommands: 8,
-  maxAttempts: 7,
+  maxAttempts: 1,
   instructions: 'Gira en la esquina y enciende las luces',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   robotStart: { row: 2, col: 0, direction: 'RIGHT' },

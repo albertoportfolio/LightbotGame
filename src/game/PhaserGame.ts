@@ -18,6 +18,7 @@ export function createPhaserGame(
     type: Phaser.AUTO,
     width: GAME_CONFIG.WIDTH,
     height: GAME_CONFIG.HEIGHT,
+  
     parent,
     backgroundColor: '#1a1a2e',
     scene: [BootScene, GameScene],

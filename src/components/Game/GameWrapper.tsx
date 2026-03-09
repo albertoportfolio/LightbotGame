@@ -41,11 +41,11 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
     }
   }, [])
 
-  return (
-    <div
-      ref={containerRef}
-      className="rounded-xl overflow-hidden shadow-2xl border border-white/10"
-      style={{ width: GAME_CONFIG.WIDTH, height: GAME_CONFIG.HEIGHT }}
-    />
-  )
+ return (
+  <div
+    ref={containerRef}
+    className="rounded-xl overflow-hidden shadow-2xl border border-white/10"
+    style={{ width: '100%', height: '100%' }}  // ← en vez de los valores fijos
+  />
+)
 }

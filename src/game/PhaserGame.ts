@@ -16,12 +16,12 @@ export function createPhaserGame(
 ): Phaser.Game {
   const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
-   scale: {
-  mode: Phaser.Scale.NONE,
-  autoCenter: Phaser.Scale.CENTER_BOTH,
-  width: GAME_CONFIG.WIDTH,
-  height: GAME_CONFIG.HEIGHT,
-},
+    scale: {
+      mode: Phaser.Scale.FIT,
+      autoCenter: Phaser.Scale.CENTER_BOTH,
+      width: GAME_CONFIG.WIDTH,
+      height: GAME_CONFIG.HEIGHT,
+    },
   
     parent,
     backgroundColor: '#1a1a2e',

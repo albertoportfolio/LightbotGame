@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { GAME_CONFIG } from './game/constants/gameConfig'
 import { GameWrapper } from './components/Game/GameWrapper'
 import { InstructionPanel } from './components/Game/InstructionPanel'
 import { LevelHUD } from './components/Game/LevelHUD'
@@ -335,17 +336,19 @@ function GameScreen({
         </div>
       </header>
       <main className="flex-1 flex items-center justify-center p-4 md:p-6">
-        <div className="flex gap-5 items-start flex-wrap justify-center w-full" style={{ maxWidth: 1100 }}>
-          <div className="flex-shrink-0">
+        <div className="flex flex-wrap gap-5 items-start justify-center w-full" style={{ maxWidth: 1100 }}>
+          {/* Canvas: ocupa toda la fila en móvil, tamaño fijo en escritorio */}
+          <div style={{ width: `min(100%, ${GAME_CONFIG.WIDTH}px)`, flexShrink: 0 }}>
             <div className="rounded-2xl overflow-hidden"
               style={{ boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 20px 60px rgba(0,0,0,0.5)' }}>
               <GameWrapper bridge={emitter} />
             </div>
           </div>
-          <div className="flex-1 flex flex-col gap-3" style={{ minWidth: 340, maxWidth: 400 }}>
+          {/* Panel de instrucciones: se pone debajo en móvil, al lado en escritorio */}
+          <div className="flex-1 flex flex-col gap-3" style={{ minWidth: 0, maxWidth: 400 }}>
             <LevelHUD bridge={emitter} />
             <div className="rounded-2xl p-4 flex flex-col"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', minHeight: 460 }}>
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}>
               <InstructionPanel
                 bridge={emitter}
                 onRun={() => runCommands(queue)}

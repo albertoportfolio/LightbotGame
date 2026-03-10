@@ -16,6 +16,9 @@
       "bundleIdentifier": "com.lightbot.mobile"
     },
     "android": {
+      "navigationBar": {
+    "visible": "immersive"
+  },
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e"
       },

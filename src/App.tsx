@@ -70,8 +70,8 @@ function StartScreen({ onStart }: { onStart: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
+    <div className="relative  flex flex-col items-center justify-center overflow-hidden"
+      style={{height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
       {[...Array(20)].map((_, i) => (
         <div key={i} className="absolute rounded-full bg-white"
           style={{
@@ -306,6 +306,7 @@ function GameScreen({
     <div style={{
       height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
       background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)',
+      paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
       <header className="flex items-center justify-between px-4 py-2"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
@@ -350,7 +351,7 @@ function GameScreen({
           maxWidth: 'calc(100% - 152px)',
         }}>
           <div className="rounded-2xl overflow-hidden"
-            style={{ boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 8px 40px rgba(0,0,0,0.5)' }}>
+            style={{  height: '100%', boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 8px 40px rgba(0,0,0,0.5)' }}>
             <GameWrapper bridge={emitter} />
           </div>
         </div>

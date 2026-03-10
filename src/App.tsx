@@ -70,8 +70,8 @@ function StartScreen({ onStart }: { onStart: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
-    <div className="relative  flex flex-col items-center justify-center overflow-hidden"
-      style={{height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
+    <div className="relative flex items-center justify-center overflow-hidden"
+      style={{ height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
       {[...Array(20)].map((_, i) => (
         <div key={i} className="absolute rounded-full bg-white"
           style={{
@@ -84,61 +84,67 @@ function StartScreen({ onStart }: { onStart: () => void }) {
       ))}
       <Star style={{ top: '8%', left: '6%', animationDuration: '2.1s' }} />
       <Star style={{ top: '12%', right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
-      <Star style={{ bottom: '18%', left: '10%', animationDuration: '2.4s', animationDelay: '1s' }} />
-      <Star style={{ bottom: '12%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
-      <div className="absolute top-16 left-1/4 text-4xl animate-spin" style={{ animationDuration: '8s' }}>🪐</div>
-      <div className="absolute bottom-20 right-1/4 text-3xl animate-spin" style={{ animationDuration: '12s', animationDirection: 'reverse' }}>🌙</div>
-      <div className="relative z-10 flex flex-col items-center gap-8 px-8 py-12 rounded-3xl"
+      <Star style={{ bottom: '12%', left: '10%', animationDuration: '2.4s', animationDelay: '1s' }} />
+      <Star style={{ bottom: '8%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
+
+      {/* Layout horizontal: robot a la izquierda, contenido a la derecha */}
+      <div className="relative z-10 flex flex-row items-center gap-6 px-8 py-5 rounded-3xl"
         style={{
           background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
           border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)', maxWidth: 480, width: '90%',
+          boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)',
+          maxWidth: 780, width: '92%', maxHeight: '90dvh',
         }}>
-        <div className="text-8xl" style={{ filter: 'drop-shadow(0 0 20px #63b3ed)' }}>🤖</div>
-        <div className="text-center">
-          <h1 className="font-black tracking-tight leading-none"
-            style={{
-              fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-              background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
-              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: 'none',
-            }}>
-            ENCIENDE LAS LUCES
-          </h1>
-          <p className="text-white/70 text-lg mt-1 font-medium">¡Programa al robot y enciende las luces!</p>
-        </div>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {['🧩 Puzles', '💡 Luces', '🎮 Comandos', '🏆 Niveles'].map(tag => (
-            <span key={tag} className="px-3 py-1 rounded-full text-sm font-semibold text-white/80"
-              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
-              {tag}
-            </span>
-          ))}
-        </div>
-        <button onClick={handleClick}
-          style={{
-            background: pressed ? 'linear-gradient(135deg, #2b6cb0, #276749)' : 'linear-gradient(135deg, #63b3ed, #48bb78)',
-            boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 20px rgba(99,179,237,0.4)' : '0 6px 0 #1a365d, 0 0 30px rgba(99,179,237,0.5)',
-            transform: pressed ? 'translateY(4px)' : 'translateY(0)', transition: 'all 0.1s ease',
-          }}
-          className="px-12 py-4 rounded-2xl font-black text-white text-2xl tracking-wide w-full">
-          {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
-        </button>
-        <p className="text-white/40 text-xs text-center">
-          Arrastra los comandos a la cola y pulsa Ejecutar para resolver el nivel.
-        </p>
-      </div>
-      <div className="relative z-10 mt-8 flex gap-6 flex-wrap justify-center px-4">
-        {[
-          { icon: '☝️', text: 'Añade comandos' },
-          { icon: '🔀', text: 'Ordénalos' },
-          { icon: '▶️', text: 'Ejecuta' },
-          { icon: '💡', text: '¡Enciende todo!' },
-        ].map(({ icon, text }) => (
-          <div key={text} className="flex flex-col items-center gap-1 text-white/60 text-sm font-medium">
-            <span className="text-2xl">{icon}</span>
-            <span>{text}</span>
+        {/* Robot */}
+        <div className="text-6xl flex-shrink-0" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
+
+        {/* Contenido */}
+        <div className="flex flex-col gap-3 flex-1 min-w-0">
+          <div>
+            <h1 className="font-black tracking-tight leading-none"
+              style={{
+                fontSize: 'clamp(1.2rem, 3.5vw, 1.8rem)',
+                background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
+                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+              }}>
+              ENCIENDE LAS LUCES
+            </h1>
+            <p className="text-white/70 text-sm mt-0.5">¡Programa al robot y enciende las luces!</p>
           </div>
-        ))}
+
+          <div className="flex flex-wrap gap-1.5">
+            {['🧩 Puzles', '💡 Luces', '🎮 Comandos', '🏆 Niveles'].map(tag => (
+              <span key={tag} className="px-2 py-0.5 rounded-full text-xs font-semibold text-white/80"
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          <button onClick={handleClick}
+            style={{
+              background: pressed ? 'linear-gradient(135deg, #2b6cb0, #276749)' : 'linear-gradient(135deg, #63b3ed, #48bb78)',
+              boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 16px rgba(99,179,237,0.4)' : '0 5px 0 #1a365d, 0 0 24px rgba(99,179,237,0.5)',
+              transform: pressed ? 'translateY(3px)' : 'translateY(0)', transition: 'all 0.1s ease',
+            }}
+            className="px-8 py-3 rounded-2xl font-black text-white text-xl tracking-wide w-full">
+            {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
+          </button>
+
+          <div className="flex gap-4 justify-center">
+            {[
+              { icon: '☝️', text: 'Añade' },
+              { icon: '🔀', text: 'Ordena' },
+              { icon: '▶️', text: 'Ejecuta' },
+              { icon: '💡', text: '¡Enciende!' },
+            ].map(({ icon, text }) => (
+              <div key={text} className="flex flex-col items-center gap-0.5 text-white/50 text-xs font-medium">
+                <span className="text-lg">{icon}</span>
+                <span>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )

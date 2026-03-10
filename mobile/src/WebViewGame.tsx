@@ -33,7 +33,7 @@ export default function WebViewGame() {
         domStorageEnabled
         mediaPlaybackRequiresUserAction={false}
         allowsInlineMediaPlayback
-        scrollEnabled
+        scrollEnabled={false}
         bounces={false}
         overScrollMode="never"
         startInLoadingState

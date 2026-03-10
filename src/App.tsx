@@ -303,60 +303,76 @@ function GameScreen({
   }
 
   return (
-    <div className="min-h-screen flex flex-col"
-      style={{ background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)' }}>
-      <header className="flex items-center justify-between px-6 py-3"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-3">
+    <div style={{
+      height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)',
+    }}>
+      <header className="flex items-center justify-between px-4 py-2"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+        <div className="flex items-center gap-2">
           <button onClick={handleBackToMenu}
-            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
+            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm font-semibold">
             ← Menú
           </button>
           <span className="text-white/20">|</span>
           <button onClick={handleBackToLevels}
-            className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm font-semibold">
+            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm font-semibold">
             📋 Niveles
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xl">🤖</span>
-          <span className="font-black text-white tracking-wide text-lg">ENCIENDE LAS LUCES</span>
+        <div className="flex items-center gap-1">
+          <span className="text-lg">🤖</span>
+          <span className="font-black text-white tracking-wide text-sm hidden sm:inline">ENCIENDE LAS LUCES</span>
         </div>
         <div className="flex items-center gap-1">
           <button onClick={onToggleMute}
-            className="text-2xl w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
             title={muted ? 'Activar sonido' : 'Silenciar'}>
             {muted ? '🔇' : '🔊'}
           </button>
           <button onClick={onOpenSettings}
-            className="text-white/50 hover:text-white text-xl w-10 h-10 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors"
+            className="text-white/50 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
             title="Opciones">
             ⚙️
           </button>
         </div>
       </header>
-      <main className="flex-1 flex items-center justify-center p-4 md:p-6">
-        <div className="flex flex-wrap gap-5 items-start justify-center w-full" style={{ maxWidth: 1100 }}>
-          {/* Canvas: ocupa toda la fila en móvil, tamaño fijo en escritorio */}
-          <div style={{ width: `min(100%, ${GAME_CONFIG.WIDTH}px)`, flexShrink: 0 }}>
-            <div className="rounded-2xl overflow-hidden"
-              style={{ boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 20px 60px rgba(0,0,0,0.5)' }}>
-              <GameWrapper bridge={emitter} />
-            </div>
+      <main style={{
+        flex: 1, minHeight: 0, overflow: 'hidden',
+        display: 'flex', flexDirection: 'row',
+        padding: '6px', gap: '6px', alignItems: 'stretch',
+      }}>
+        {/* GameWrapper — izquierda: ocupa la altura completa del main, ancho por aspect-ratio */}
+        <div style={{
+          flexShrink: 0,
+          alignSelf: 'stretch',
+          aspectRatio: `${GAME_CONFIG.WIDTH} / ${GAME_CONFIG.HEIGHT}`,
+          maxWidth: 'calc(100% - 152px)',
+        }}>
+          <div className="rounded-2xl overflow-hidden"
+            style={{ boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 8px 40px rgba(0,0,0,0.5)' }}>
+            <GameWrapper bridge={emitter} />
           </div>
-          {/* Panel de instrucciones: se pone debajo en móvil, al lado en escritorio */}
-          <div className="flex-1 flex flex-col gap-3" style={{ minWidth: 0, maxWidth: 400 }}>
-            <LevelHUD bridge={emitter} />
-            <div className="rounded-2xl p-4 flex flex-col"
-              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}>
-              <InstructionPanel
-                bridge={emitter}
-                onRun={() => runCommands(queue)}
-                onReset={handleReset}
-                onNextLevel={handleNextLevel}
-                showNextLevel={levelComplete && hasNext}
-              />
-            </div>
+        </div>
+        {/* Paleta de comandos — derecha: ocupa el espacio restante */}
+        <div style={{
+          flex: 1, minWidth: 0,
+          alignSelf: 'stretch',
+          display: 'flex', flexDirection: 'column', gap: '6px',
+          overflow: 'hidden',
+        }}>
+          <LevelHUD bridge={emitter} />
+          <div className="rounded-2xl" style={{
+            flex: 1, overflow: 'auto', padding: '10px',
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+          }}>
+            <InstructionPanel
+              bridge={emitter}
+              onRun={() => runCommands(queue)}
+              onReset={handleReset}
+              onNextLevel={handleNextLevel}
+              showNextLevel={levelComplete && hasNext}
+            />
           </div>
         </div>
       </main>

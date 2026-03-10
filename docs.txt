@@ -158,3 +158,24 @@ Flujo del useGameBridge
 
 [Phaser] GameScene escucha 'stop-music' / 'start-music'
   → sfx.stopMusic() / sfx.startMusic()
+
+
+
+-----------------  SKILL DE ADONISJS --------------------
+
+La skill lightbot-api se activa cuando:
+  - Pides crear rutas, controladores, modelos, migraciones, middleware, validators,
+  transformers o endpoints
+  - Mencionas AdonisJS, Lucid ORM, VineJS, HttpContext
+  - Trabajas en cualquier archivo dentro de lightbotAPI/
+
+  Contiene:
+  - Mapa completo de archivos clave y sus roles
+  - Rutas actuales documentadas
+  - Guias paso a paso: crear endpoint, crear modelo, agregar validacion
+  - Stack de middleware y flujo de autenticacion
+  - Formato de respuesta ({ data: ... })
+  - Esquema de la BD (users + auth_access_tokens)
+  - Comandos de AdonisJS (serve, migrate, make, test)
+  - Convenciones (imports #, Tuyau registry, snake_case en BD / camelCase en modelos)        
+  - Referencia con ejemplo completo de CRUD, paginacion y tests

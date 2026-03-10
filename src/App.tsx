@@ -88,31 +88,32 @@ function StartScreen({ onStart }: { onStart: () => void }) {
       <Star style={{ bottom: '8%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
 
       {/* Layout horizontal: robot a la izquierda, contenido a la derecha */}
-      <div className="relative z-10 flex flex-row items-center gap-6 px-8 py-5 rounded-3xl"
+      <div className="relative z-10 flex flex-row items-center gap-8 px-10 py-8 rounded-3xl"
         style={{
           background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
           border: '2px solid rgba(255,255,255,0.12)',
           boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)',
-          maxWidth: 780, width: '92%', maxHeight: '90dvh',
+          maxWidth: 780, width: '92%', maxHeight: '92dvh',
         }}>
         {/* Robot */}
-        <div className="text-6xl flex-shrink-0" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
+        <div className="text-7xl flex-shrink-0" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
 
         {/* Contenido */}
-        <div className="flex flex-col gap-3 flex-1 min-w-0">
+        <div className="flex flex-col gap-4 flex-1 min-w-0">
           <div>
             <h1 className="font-black tracking-tight leading-none"
               style={{
+                textAlign: 'center',
                 fontSize: 'clamp(1.2rem, 3.5vw, 1.8rem)',
                 background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>
               ENCIENDE LAS LUCES
             </h1>
-            <p className="text-white/70 text-sm mt-0.5">¡Programa al robot y enciende las luces!</p>
+            <p style={{textAlign: 'center'}} className="text-white/70 text-sm mt-0.5">¡Programa al robot y enciende las luces!</p>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div style={{justifyContent:'space-evenly', flex: 1}} className="flex flex-wrap gap-1.5">
             {['🧩 Puzles', '💡 Luces', '🎮 Comandos', '🏆 Niveles'].map(tag => (
               <span key={tag} className="px-2 py-0.5 rounded-full text-xs font-semibold text-white/80"
                 style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
@@ -127,11 +128,11 @@ function StartScreen({ onStart }: { onStart: () => void }) {
               boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 16px rgba(99,179,237,0.4)' : '0 5px 0 #1a365d, 0 0 24px rgba(99,179,237,0.5)',
               transform: pressed ? 'translateY(3px)' : 'translateY(0)', transition: 'all 0.1s ease',
             }}
-            className="px-8 py-3 rounded-2xl font-black text-white text-xl tracking-wide w-full">
+            className="px-8 py-4 rounded-2xl font-black text-white text-xl tracking-wide w-full">
             {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
           </button>
 
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-16 justify-center">
             {[
               { icon: '☝️', text: 'Añade' },
               { icon: '🔀', text: 'Ordena' },

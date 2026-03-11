@@ -7,6 +7,7 @@ import { useGameBridge } from './hooks/useGameBridge'
 import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 import { LevelSelectScreen } from './components/LevelSelectScreen'
+import { AuthScreen } from './components/AuthScreen'
 
 export const LEVEL_INFO = [
   // Mundo 1 — Tierra de Luces (indices 0-9)
@@ -59,7 +60,7 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
-type Screen = 'start' | 'levels' | 'game' | 'settings'
+type Screen = 'start' | 'auth' | 'levels' | 'game' | 'settings'
 
 
 function Star({ style }: { style: React.CSSProperties }) {
@@ -402,6 +403,7 @@ function GameScreen({
 export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
+  const [token, setToken] = useState<string | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
@@ -416,6 +418,11 @@ export default function App() {
   const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
 
   const handleStart = () => {
+    setScreen('auth')
+  }
+
+  const handleAuthSuccess = (t: string) => {
+    setToken(t)
     setHasStarted(true)
     setScreen('levels')
   }
@@ -439,6 +446,13 @@ export default function App() {
       `}</style>
 
       {screen === 'start' && <StartScreen onStart={handleStart} />}
+
+      {screen === 'auth' && (
+        <AuthScreen
+          onAuthSuccess={handleAuthSuccess}
+          onBack={() => setScreen('start')}
+        />
+      )}
 
       {screen === 'levels' && (
         <LevelSelectScreen

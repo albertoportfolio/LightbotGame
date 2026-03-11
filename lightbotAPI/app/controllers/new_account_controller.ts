@@ -1,4 +1,4 @@
-import User from '#models/user'
+import User from '#models/tutors'
 import { signupValidator } from '#validators/user'
 import type { HttpContext } from '@adonisjs/core/http'
 import UserTransformer from '#transformers/user_transformer'

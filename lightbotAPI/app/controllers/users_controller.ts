@@ -9,9 +9,10 @@ export default class UsersController {
     return serialize(users.map((u) => UserTransformer.transform(u)))
   }
 
-  async store({ request, serialize }: HttpContext) {
-    const { name, password, tutorId } = await request.validateUsing(createUserValidator)
-    const user = await User.create({ name, password, tutorId })
+  async store({ request, serialize, auth }: HttpContext) {
+    const { name, password} = await request.validateUsing(createUserValidator)
+    const tutor = await auth.getUserOrFail()
+    const user = await User.create({ name, password, tutorId : tutor.id })
     return serialize(UserTransformer.transform(user))
   }
 
@@ -28,8 +29,9 @@ export default class UsersController {
     return serialize(UserTransformer.transform(user))
   }
 
-  async destroy({ params, response }: HttpContext) {
-    const user = await User.findOrFail(params.id)
+  async destroy({ params, response, auth }: HttpContext) {
+    const tutor = await auth.getUserOrFail()
+    const user = await tutor.related('users').query().where('id', params.id).firstOrFail()
     await user.delete()
     return response.noContent()
   }

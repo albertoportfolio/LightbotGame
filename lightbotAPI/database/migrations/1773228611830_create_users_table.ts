@@ -14,8 +14,8 @@ export default class extends BaseSchema {
         .unsigned()
         .references('id')
         .inTable('tutors')
-        .onDelete('SET NULL')
-        .nullable()
+        .onDelete('CASCADE')
+        .notNullable()
 
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()

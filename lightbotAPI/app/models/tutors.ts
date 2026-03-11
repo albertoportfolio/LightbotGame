@@ -3,11 +3,15 @@ import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { type AccessToken, DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
+import User from './user.ts'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
+import { hasMany } from '@adonisjs/lucid/orm'
 
 export default class Tutors extends compose(TutorSchema, withAuthFinder(hash)) {
-  static accessTokens = DbAccessTokensProvider.forModel(Tutors, {
-  table: 'API_tokens',
-})
+  @hasMany(() => User, { foreignKey: 'tutorId' })
+  declare users: HasMany<typeof User>
+
+  static accessTokens = DbAccessTokensProvider.forModel(Tutors, { table: 'API_tokens', })
   declare currentAccessToken?: AccessToken
 
   get initials() {
@@ -17,4 +21,6 @@ export default class Tutors extends compose(TutorSchema, withAuthFinder(hash)) {
     }
     return `${first.slice(0, 2)}`.toUpperCase()
   }
+
+
 }

@@ -1,14 +1,16 @@
 import { useState } from 'react'
 import { login, signup } from '../services/service'
+import { useAuth } from '../context/AuthContext'
 
 interface Props {
-  onAuthSuccess: (token: string) => void
+  onAuthSuccess: () => void
   onBack: () => void
 }
 
 type Tab = 'login' | 'register'
 
 export function AuthScreen({ onAuthSuccess, onBack }: Props) {
+  const { setAuth } = useAuth()
   const [tab, setTab] = useState<Tab>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -34,7 +36,8 @@ export function AuthScreen({ onAuthSuccess, onBack }: Props) {
     setLoading(true)
     try {
       const res = await login(email, password)
-      onAuthSuccess(res.data.token)
+      setAuth(res.data.token, res.data.tutor)
+      onAuthSuccess()
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión')
     } finally {
@@ -52,7 +55,8 @@ export function AuthScreen({ onAuthSuccess, onBack }: Props) {
     setLoading(true)
     try {
       const res = await signup(regName || null, regEmail, regPassword, regConfirm)
-      onAuthSuccess(res.data.token)
+      setAuth(res.data.token, res.data.tutor)
+      onAuthSuccess()
     } catch (err: any) {
       setError(err.message || 'Error al registrarse')
     } finally {

@@ -403,7 +403,6 @@ function GameScreen({
 export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
-  const [token, setToken] = useState<string | null>(null)
   const [hasStarted, setHasStarted] = useState(false)
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
@@ -421,8 +420,7 @@ export default function App() {
     setScreen('auth')
   }
 
-  const handleAuthSuccess = (t: string) => {
-    setToken(t)
+  const handleAuthSuccess = () => {
     setHasStarted(true)
     setScreen('levels')
   }

@@ -33,7 +33,6 @@ export class ApiTokenSchema extends BaseModel {
 }
 
 export class TutorSchema extends BaseModel {
-  
   static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = TutorSchema.$columns
   @column.dateTime({ autoCreate: true })
@@ -46,6 +45,25 @@ export class TutorSchema extends BaseModel {
   declare id: number
   @column({ serializeAs: null })
   declare password: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
+export class UserSchema extends BaseModel {
+  static $columns = ['createdAt', 'currentLevel', 'id', 'name', 'password', 'tutorId', 'updatedAt'] as const
+  $columns = UserSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare currentLevel: number | null
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare name: string
+  @column({ serializeAs: null })
+  declare password: string
+  @column()
+  declare tutorId: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

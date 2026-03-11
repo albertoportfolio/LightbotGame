@@ -16,4 +16,13 @@ export interface ApiDefinition {
       show: typeof routes['profile.profile.show']
     }
   }
+  users: {
+    users: {
+      index: typeof routes['users.users.index']
+      store: typeof routes['users.users.store']
+      show: typeof routes['users.users.show']
+      update: typeof routes['users.users.update']
+      destroy: typeof routes['users.users.destroy']
+    }
+  }
 }

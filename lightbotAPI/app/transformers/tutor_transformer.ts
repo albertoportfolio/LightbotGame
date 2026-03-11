@@ -1,15 +1,15 @@
-import type User from '#models/user'
+import type Tutors from '#models/tutors'
 import { BaseTransformer } from '@adonisjs/core/transformers'
 
-export default class UserTransformer extends BaseTransformer<User> {
+export default class TutorTransformer extends BaseTransformer<Tutors> {
   toObject() {
     return this.pick(this.resource, [
       'id',
-      'name',
-      'currentLevel',
-      'tutorId',
+      'fullName',
+      'email',
       'createdAt',
       'updatedAt',
+      'initials',
     ])
   }
 }

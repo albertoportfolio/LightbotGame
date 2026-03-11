@@ -1,25 +1,29 @@
-import User from '#models/tutors'
+import Tutors from '#models/tutors'
 import { loginValidator } from '#validators/tutors'
 import type { HttpContext } from '@adonisjs/core/http'
-import UserTransformer from '#transformers/tutor_transformer'
+import TutorsTransformer from '#transformers/tutor_transformer'
 
 export default class AccessTokenController {
+
   async store({ request, serialize }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
+    const tutor = await Tutors.verifyCredentials(email, password)
+    
+  const prevTokens = await Tutors.accessTokens.all(tutor)
+  await Promise.all(prevTokens.map((t) => Tutors.accessTokens.delete(tutor, t.identifier)))
 
-    const user = await User.verifyCredentials(email, password)
-    const token = await User.accessTokens.create(user)
-
+const token = await Tutors.accessTokens.create(tutor)
     return serialize({
-      user: UserTransformer.transform(user),
+
+      tutor: TutorsTransformer.transform(tutor),
       token: token.value!.release(),
     })
   }
 
   async destroy({ auth }: HttpContext) {
-    const user = auth.getUserOrFail()
-    if (user.currentAccessToken) {
-      await User.accessTokens.delete(user, user.currentAccessToken.identifier)
+    const tutor = auth.getUserOrFail()
+    if (tutor.currentAccessToken) {
+      await Tutors.accessTokens.delete(tutor, tutor.currentAccessToken.identifier)
     }
 
     return {

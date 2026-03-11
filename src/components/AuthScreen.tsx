@@ -66,8 +66,8 @@ export function AuthScreen({ onAuthSuccess, onBack }: Props) {
 
   return (
     <div
-      className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-      style={{ background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}
+      className="relative flex flex-col items-center overflow-y-auto py-10"
+      style={{ height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}
     >
       {/* Estrellas de fondo */}
       {[...Array(24)].map((_, i) => (

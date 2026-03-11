@@ -18,8 +18,9 @@ const corsConfig = defineConfig({
    * In production, keep an explicit allowlist (empty by default, so no
    * cross-origin browser access is allowed until configured).
    */
-  origin: app.inDev ? true : [],
+  // esto sirve solo para desarrollo, no para produccion --> origin: app.inDev ? true : [],
 
+  origin: true,
   /**
    * HTTP methods accepted for cross-origin requests.
    */

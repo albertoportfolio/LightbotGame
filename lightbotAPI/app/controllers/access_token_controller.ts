@@ -8,8 +8,10 @@ export default class AccessTokenController {
   async store({ request, serialize }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
     const tutor = await Tutors.verifyCredentials(email, password)
-    
-const token = await Tutors.accessTokens.create(tutor)
+
+    const token = await Tutors.accessTokens.create(tutor, ['*'], {
+      expiresIn: '30 days'
+    })
     return serialize({
 
       tutor: TutorTransformer.transform(tutor),

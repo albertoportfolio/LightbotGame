@@ -8,7 +8,9 @@ export default class NewAccountController {
     const { fullName, email, password } = await request.validateUsing(signupValidator)
 
     const tutor = await Tutors.create({ fullName, email, password })
-    const token = await Tutors.accessTokens.create(tutor)
+    const token = await Tutors.accessTokens.create(tutor, ['*'], {
+      expiresIn : '30 days'
+    })
 
     return serialize({
       tutor: TutorTransformer.transform(tutor),

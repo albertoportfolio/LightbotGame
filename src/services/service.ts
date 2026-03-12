@@ -1,5 +1,8 @@
-const API_URL = 'http://localhost:3333/api/v1'
+const isAndroidEmulator = window.location.hostname === '10.0.2.2'
 
+export const API_URL = isAndroidEmulator
+  ? 'http://10.0.2.2:3333/api/v1'
+  : 'http://localhost:3333/api/v1'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface Tutor {

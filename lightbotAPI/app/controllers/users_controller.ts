@@ -4,16 +4,16 @@ import { createUserValidator, updateUserValidator } from '#validators/users'
 import type { HttpContext } from '@adonisjs/core/http'
 
 export default class UsersController {
-  async index({ serialize, auth }: HttpContext) {
-      const tutor = await auth.authenticate()
+ async index({ auth, response }: HttpContext) {
+  const tutor = await auth.authenticate()
   const users = await User.query().where('tutor_id', tutor.id)
-    return serialize(users.map((u) => UserTransformer.transform(u)))
-  }
+  return response.ok(users.map(u => new UserTransformer(u).toObject()))
+}
 
   async store({ request, serialize, auth }: HttpContext) {
-    const { name, password} = await request.validateUsing(createUserValidator)
+    const { name} = await request.validateUsing(createUserValidator)
     const tutor = await auth.getUserOrFail()
-    const user = await User.create({ name, password, tutorId : tutor.id })
+    const user = await User.create({ name, tutorId : tutor.id })
     return serialize(UserTransformer.transform(user))
   }
 

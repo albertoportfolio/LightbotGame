@@ -50,7 +50,7 @@ export class TutorSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'currentLevel', 'id', 'name', 'password', 'tutorId', 'updatedAt'] as const
+  static $columns = ['createdAt', 'currentLevel', 'id', 'name', 'tutorId', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -60,8 +60,6 @@ export class UserSchema extends BaseModel {
   declare id: number
   @column()
   declare name: string
-  @column({ serializeAs: null })
-  declare password: string
   @column()
   declare tutorId: number | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })

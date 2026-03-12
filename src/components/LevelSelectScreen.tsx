@@ -13,6 +13,7 @@ interface LevelSelectScreenProps {
   muted: boolean
   onToggleMute: () => void
   onOpenSettings: () => void
+  onOpenProfile: () => void
   levelInfo: LevelInfo[]
 }
 
@@ -583,6 +584,7 @@ export function LevelSelectScreen({
   muted,
   onToggleMute,
   onOpenSettings,
+  onOpenProfile,
   levelInfo,
 }: LevelSelectScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -745,7 +747,7 @@ export function LevelSelectScreen({
           </div>
         </div>
 
-        {/* Botones audio/settings */}
+        {/* Botones audio/settings/profile */}
         <div className="flex items-center gap-1.5">
           <button
             onClick={onToggleMute}
@@ -768,6 +770,17 @@ export function LevelSelectScreen({
             }}
           >
             ⚙️
+          </button>
+          <button
+            onClick={onOpenProfile}
+            className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
+            style={{
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
+            }}
+          >
+            👤
           </button>
         </div>
       </header>

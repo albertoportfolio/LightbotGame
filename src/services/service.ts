@@ -128,7 +128,7 @@ export async function getUser(
 
 export async function createUser(
   token: string,
-  data: { name: string; password: string; passwordConfirmation: string; tutorId?: number }
+  data: { name: string }
 ): Promise<UserResponse> {
   const res = await fetch(`${API_URL}/users`, {
     method: 'POST',

@@ -8,6 +8,7 @@ import { useGameStore } from './store/gameStore'
 import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 import { LevelSelectScreen } from './components/LevelSelectScreen'
 import { AuthScreen } from './components/AuthScreen'
+import { TutorProfileScreen } from './components/TutorProfileScreen'
 
 export const LEVEL_INFO = [
   // Mundo 1 — Tierra de Luces (indices 0-9)
@@ -60,7 +61,7 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
-type Screen = 'start' | 'auth' | 'levels' | 'game' | 'settings'
+type Screen = 'start' | 'auth' | 'levels' | 'game' | 'settings' | 'profile'
 
 
 function Star({ style }: { style: React.CSSProperties }) {
@@ -425,6 +426,11 @@ export default function App() {
     setScreen('levels')
   }
 
+  const handleLogout = () => {
+    setHasStarted(false)
+    setScreen('start')
+  }
+
   const handleSelectLevel = (index: number) => {
     setSelectedLevel(index)
     setScreen('game')
@@ -460,7 +466,15 @@ export default function App() {
           muted={settings.muted}
           onToggleMute={handleToggleMute}
           onOpenSettings={() => { setPrevScreen('levels'); setScreen('settings') }}
+          onOpenProfile={() => setScreen('profile')}
           levelInfo={LEVEL_INFO}
+        />
+      )}
+
+      {screen === 'profile' && (
+        <TutorProfileScreen
+          onBack={() => setScreen('levels')}
+          onLogout={handleLogout}
         />
       )}
 

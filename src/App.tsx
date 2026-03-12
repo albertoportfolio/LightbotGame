@@ -427,8 +427,13 @@ export default function App() {
   const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
 
   const handleStart = () => {
+  if (token) {
+    setHasStarted(true)
+    setScreen('levels')  // ← ya logueado, saltar auth
+  } else {
     setScreen('auth')
   }
+}
 
   const handleAuthSuccess = () => {
     setHasStarted(true)

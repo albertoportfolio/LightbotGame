@@ -11,10 +11,18 @@ interface AuthState {
 const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null)
-  const [tutor, setTutor] = useState<Tutor | null>(null)
+  const [token, setToken] = useState<string | null>(
+    () => localStorage.getItem('token'))
+  const [tutor, setTutor] = useState<Tutor | null>(
+    () => {
+      const saved = localStorage.getItem('tutor')
+      return saved ? JSON.parse(saved) : null
+    }
+  )
 
   const setAuth = (t: string, tu: Tutor) => {
+    localStorage.setItem('token', t)           // ← guardar
+    localStorage.setItem('tutor', JSON.stringify(tu))
     setToken(t)
     setTutor(tu)
   }
@@ -22,6 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAuth = () => {
     setToken(null)
     setTutor(null)
+    localStorage.removeItem('token')           // ← borrar al logout
+    localStorage.removeItem('tutor')
   }
 
   return (

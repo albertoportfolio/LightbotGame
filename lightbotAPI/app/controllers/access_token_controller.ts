@@ -9,9 +9,6 @@ export default class AccessTokenController {
     const { email, password } = await request.validateUsing(loginValidator)
     const tutor = await Tutors.verifyCredentials(email, password)
     
-  const prevTokens = await Tutors.accessTokens.all(tutor)
-  await Promise.all(prevTokens.map((t) => Tutors.accessTokens.delete(tutor, t.identifier)))
-
 const token = await Tutors.accessTokens.create(tutor)
     return serialize({
 

@@ -9,5 +9,5 @@ export const createUserValidator = vine.create({
 
 export const updateUserValidator = vine.create({
   name: vine.string().minLength(1).maxLength(100).optional(),
-  currentLevel: vine.number().positive(),
+  currentLevel: vine.number().positive().optional(),
 })

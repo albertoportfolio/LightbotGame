@@ -83,7 +83,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
   const openEdit = (user: User) => {
     setEditingUser(user)
     setFormName(user.name)
-    setFormLevel(user.currentLevel != null ? String(user.currentLevel) : '')
+    setFormLevel(String(user.currentLevel))
     setFormError('')
     setModal('edit')
   }
@@ -115,11 +115,13 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
     setFormLoading(true)
     setFormError('')
     try {
-      const levelNum = formLevel !== '' ? parseInt(formLevel, 10) : undefined
-      const res = await updateUser(token, editingUser.id, {
-        name: formName,
-        ...(levelNum !== undefined && !isNaN(levelNum) ? { currentLevel: levelNum } : {}),
-      })
+      const currentLevel = parseInt(formLevel, 10)
+      if (isNaN(currentLevel)) {
+        setFormError('El nivel debe ser un número válido')
+        setFormLoading(false)
+        return
+      }
+      const res = await updateUser(token, editingUser.id, { name: formName, currentLevel })
       // If this user is selected, update context
       if (selectedUser?.id === editingUser.id) {
         setSelectedUser(res.data)
@@ -387,7 +389,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
               type="number"
               value={formLevel}
               onChange={setFormLevel}
-              placeholder="Ej: 5 (dejar vacío para no cambiar)"
+              placeholder="Ej: 5"
             />
             <ModalSubmit loading={formLoading} label="Guardar" />
           </form>
@@ -488,7 +490,7 @@ function UserCard({
       <div className="flex flex-col flex-1 min-w-0">
         <span className="text-white font-semibold text-sm truncate">{user.name}</span>
         <span className="text-white/40 text-xs">
-          Nivel: {user.currentLevel ?? 'Sin empezar'}
+          Nivel: {user.currentLevel}
         </span>
       </div>
 

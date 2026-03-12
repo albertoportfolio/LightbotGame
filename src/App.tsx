@@ -9,6 +9,9 @@ import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 import { LevelSelectScreen } from './components/LevelSelectScreen'
 import { AuthScreen } from './components/AuthScreen'
 import { TutorProfileScreen } from './components/TutorProfileScreen'
+import { useUser } from './context/UserContext'
+import { useAuth } from './context/AuthContext'
+import { updateUser } from './services/service'
 
 export const LEVEL_INFO = [
   // Mundo 1 — Tierra de Luces (indices 0-9)
@@ -405,12 +408,18 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
   const [hasStarted, setHasStarted] = useState(false)
+  const { selectedUser } = useUser()
+  const { token } = useAuth()
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
   //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
   // para probar el flujo normal de desbloqueo de niveles dejarlo así:
   //  const [completedLevels, setCompletedLevels] = useState<number[]>([])
-  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
+  
+  const completedLevels = selectedUser?.currentLevel !== undefined
+  ? Array.from({ length: selectedUser.currentLevel - 1 }, (_, i) => i)
+  : []
+  
   const [selectedLevel, setSelectedLevel] = useState(0)
   const [prevScreen, setPrevScreen] = useState<Screen>('start')
 
@@ -437,7 +446,7 @@ export default function App() {
   }
 
   const handleLevelCompleted = (index: number) => {
-    setCompletedLevels(prev => prev.includes(index) ? prev : [...prev, index])
+    updateUser(token!, selectedUser!.id, { currentLevel: index + 1 })
   }
 
   return (

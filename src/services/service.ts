@@ -17,7 +17,7 @@ export interface Tutor {
 export interface User {
   id: number
   name: string
-  currentLevel: number | null
+  currentLevel: number
   tutorId: number | null
   createdAt: string
   updatedAt: string | null
@@ -141,7 +141,7 @@ export async function createUser(
 export async function updateUser(
   token: string,
   id: number,
-  data: { name?: string; currentLevel?: number }
+  data: { name?: string; currentLevel: number }
 ): Promise<UserResponse> {
   const res = await fetch(`${API_URL}/users/${id}`, {
     method: 'PUT',

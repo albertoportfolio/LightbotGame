@@ -83,7 +83,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
   const openEdit = (user: User) => {
     setEditingUser(user)
     setFormName(user.name)
-    setFormLevel(String(user.currentLevel))
+    setFormLevel(String(user.currentLevel + 1)) // Mostrar el nivel actual +1 para que sea más intuitivo
     setFormError('')
     setModal('edit')
   }
@@ -121,7 +121,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
         setFormLoading(false)
         return
       }
-      const res = await updateUser(token, editingUser.id, { name: formName, currentLevel })
+      const res = await updateUser(token, editingUser.id, { name: formName, currentLevel: currentLevel - 1 }) // Restar 1 para guardar el nivel correcto
       // If this user is selected, update context
       if (selectedUser?.id === editingUser.id) {
         setSelectedUser(res.data)
@@ -490,7 +490,7 @@ function UserCard({
       <div className="flex flex-col flex-1 min-w-0">
         <span className="text-white font-semibold text-sm truncate">{user.name}</span>
         <span className="text-white/40 text-xs">
-          Nivel: {user.currentLevel}
+          Nivel: {user.currentLevel +1}
         </span>
       </div>
 

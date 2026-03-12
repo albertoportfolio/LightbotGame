@@ -295,7 +295,7 @@ function GameScreen({
     }
     emitter.on('level-complete', handler)
     return () => { emitter.off('level-complete', handler) }
-  }, [emitter])
+  }, [emitter, onLevelCompleted])
 
   const handleReset = () => {
     isTransitioning.current = false
@@ -408,7 +408,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
   const [hasStarted, setHasStarted] = useState(false)
-  const { selectedUser } = useUser()
+  const { selectedUser, setSelectedUser } = useUser()
   const { token } = useAuth()
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
@@ -417,7 +417,7 @@ export default function App() {
   //  const [completedLevels, setCompletedLevels] = useState<number[]>([])
   
   const completedLevels = selectedUser?.currentLevel !== undefined
-  ? Array.from({ length: selectedUser.currentLevel - 1 }, (_, i) => i)
+  ? Array.from({ length: selectedUser.currentLevel }, (_, i) => i)
   : []
   
   const [selectedLevel, setSelectedLevel] = useState(0)
@@ -445,9 +445,18 @@ export default function App() {
     setScreen('game')
   }
 
-  const handleLevelCompleted = (index: number) => {
-    updateUser(token!, selectedUser!.id, { currentLevel: index + 1 })
+  const handleLevelCompleted = async (index: number) => {
+  if (!token || !selectedUser) return
+  const newLevel = index + 1
+  console.log('actualizando nivel:', selectedUser.id, newLevel)
+  try {
+    const result = await updateUser(token, selectedUser.id, { currentLevel: newLevel })
+    console.log('resultado:', result)
+    setSelectedUser({ ...selectedUser, currentLevel: newLevel })
+  } catch (err) {
+    console.error('error al actualizar:', err)
   }
+}
 
   return (
     <>

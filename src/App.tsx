@@ -9,6 +9,7 @@ import { SettingsScreen, SettingsState } from './components/SettingsScreen'
 import { LevelSelectScreen } from './components/LevelSelectScreen'
 import { AuthScreen } from './components/AuthScreen'
 import { TutorProfileScreen } from './components/TutorProfileScreen'
+import { UserSelectScreen } from './components/UserSelectScreen'
 import { useUser } from './context/UserContext'
 import { useAuth } from './context/AuthContext'
 import { updateUser } from './services/service'
@@ -64,7 +65,7 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
-type Screen = 'start' | 'auth' | 'levels' | 'game' | 'settings' | 'profile'
+type Screen = 'start' | 'auth' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
 
 
 function Star({ style }: { style: React.CSSProperties }) {
@@ -427,15 +428,18 @@ export default function App() {
   const handleVolumeChange = (v: number) => setSettings(s => ({ ...s, volume: v }))
 
   const handleStart = () => {
-  if (token) {
-    setHasStarted(true)
-    setScreen('levels')  // ← ya logueado, saltar auth
-  } else {
-    setScreen('auth')
+    if (token) {
+      setScreen('user-select')
+    } else {
+      setScreen('auth')
+    }
   }
-}
 
   const handleAuthSuccess = () => {
+    setScreen('user-select')
+  }
+
+  const handleUserSelected = () => {
     setHasStarted(true)
     setScreen('levels')
   }
@@ -477,6 +481,13 @@ export default function App() {
       {screen === 'auth' && (
         <AuthScreen
           onAuthSuccess={handleAuthSuccess}
+          onBack={() => setScreen('start')}
+        />
+      )}
+
+      {screen === 'user-select' && (
+        <UserSelectScreen
+          onContinue={handleUserSelected}
           onBack={() => setScreen('start')}
         />
       )}

@@ -17,8 +17,8 @@
     },
     "android": {
       "navigationBar": {
-    "visible": "immersive"
-  },
+        "visible": "immersive"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e"
       },
@@ -27,6 +27,14 @@
     "plugins": [
       "expo-router",
       "expo-asset"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "52249e76-2788-42a3-96ea-c0a4ad3f18b5"
+      }
+    }
   }
 }

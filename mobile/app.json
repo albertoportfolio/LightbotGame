@@ -16,10 +16,6 @@
       "bundleIdentifier": "com.lightbot.mobile"
     },
     "android": {
-      "kotlinVersion": "1.9.25",
-      "navigationBar": {
-        "visible": "immersive"
-      },
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e"
       },
@@ -27,7 +23,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-asset"
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {

@@ -5,11 +5,12 @@ import { useAuth } from '../context/AuthContext'
 interface Props {
   onAuthSuccess: () => void
   onBack: () => void
+  onSignupSuccess: (email: string) => void
 }
 
 type Tab = 'login' | 'register'
 
-export function AuthScreen({ onAuthSuccess, onBack }: Props) {
+export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
   const { setAuth } = useAuth()
   const [tab, setTab] = useState<Tab>('login')
   const [loading, setLoading] = useState(false)
@@ -54,9 +55,8 @@ export function AuthScreen({ onAuthSuccess, onBack }: Props) {
     }
     setLoading(true)
     try {
-      const res = await signup(regName || null, regEmail, regPassword, regConfirm)
-      setAuth(res.data.token, res.data.tutor)
-      onAuthSuccess()
+      await signup(regName || null, regEmail, regPassword, regConfirm)
+      onSignupSuccess(regEmail)
     } catch (err: any) {
       setError(err.message || 'Error al registrarse')
     } finally {

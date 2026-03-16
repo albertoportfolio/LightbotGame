@@ -7,6 +7,7 @@ export default class TutorTransformer extends BaseTransformer<Tutors> {
       'id',
       'fullName',
       'email',
+      'emailVerifiedAt',
       'createdAt',
       'updatedAt',
       'initials',

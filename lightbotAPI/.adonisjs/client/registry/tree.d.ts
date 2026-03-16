@@ -10,6 +10,10 @@ export interface ApiDefinition {
       store: typeof routes['auth.access_token.store']
       destroy: typeof routes['auth.access_token.destroy']
     }
+    emailVerification: {
+      verify: typeof routes['auth.email_verification.verify']
+      resend: typeof routes['auth.email_verification.resend']
+    }
   }
   profile: {
     profile: {

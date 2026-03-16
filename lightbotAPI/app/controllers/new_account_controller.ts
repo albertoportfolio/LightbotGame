@@ -1,20 +1,25 @@
 import Tutors from '#models/tutors'
 import { signupValidator } from '#validators/tutors'
 import type { HttpContext } from '@adonisjs/core/http'
-import TutorTransformer from '#transformers/tutor_transformer'
+import { generateVerificationToken, sendVerificationEmail } from '#services/email_verification_service'
 
 export default class NewAccountController {
-  async store({ request, serialize }: HttpContext) {
+  async store({ request, response }: HttpContext) {
     const { fullName, email, password } = await request.validateUsing(signupValidator)
 
-    const tutor = await Tutors.create({ fullName, email, password })
-    const token = await Tutors.accessTokens.create(tutor, ['*'], {
-      expiresIn : '30 days'
+    const token = generateVerificationToken()
+    await Tutors.create({
+      fullName,
+      email,
+      password,
+      emailVerificationToken: token,
     })
 
-    return serialize({
-      tutor: TutorTransformer.transform(tutor),
-      token: token.value!.release(),
+    const tutor = await Tutors.findByOrFail('email', email)
+    await sendVerificationEmail(tutor, token)
+
+    return response.created({
+      message: 'Cuenta creada. Revisa tu correo electrónico para verificar tu cuenta.',
     })
   }
 }

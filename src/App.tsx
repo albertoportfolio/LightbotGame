@@ -11,6 +11,7 @@ import { AuthScreen } from './components/AuthScreen'
 import { TutorProfileScreen } from './components/TutorProfileScreen'
 import { UserSelectScreen } from './components/UserSelectScreen'
 import { useUser } from './context/UserContext'
+import { EmailVerificationScreen } from './components/EmailVerificationScreen'
 import { useAuth } from './context/AuthContext'
 import { updateUser } from './services/service'
 
@@ -65,7 +66,7 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
-type Screen = 'start' | 'auth' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
+type Screen = 'start' | 'auth' | 'verify-email' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
 
 
 function Star({ style }: { style: React.CSSProperties }) {
@@ -411,6 +412,7 @@ export default function App() {
   const [hasStarted, setHasStarted] = useState(false)
   const { selectedUser, setSelectedUser } = useUser()
   const { token } = useAuth()
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('')
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
   //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
@@ -439,6 +441,11 @@ export default function App() {
     setScreen('user-select')
   }
 
+  const handleSignupSuccess = (email: string) => {
+    setPendingVerificationEmail(email)
+    setScreen('verify-email')
+  }
+
   const handleUserSelected = () => {
     setHasStarted(true)
     setScreen('levels')
@@ -455,7 +462,7 @@ export default function App() {
   }
 
   const handleLevelCompleted = async (index: number) => {
-  if (!token || !selectedUser) return
+  if (!token || !selectedUser || index < selectedUser.currentLevel) return
   const newLevel = index + 1
   console.log('actualizando nivel:', selectedUser.id, newLevel)
   try {
@@ -482,6 +489,14 @@ export default function App() {
         <AuthScreen
           onAuthSuccess={handleAuthSuccess}
           onBack={() => setScreen('start')}
+          onSignupSuccess={handleSignupSuccess}
+        />
+      )}
+
+      {screen === 'verify-email' && (
+        <EmailVerificationScreen
+          email={pendingVerificationEmail}
+          onBackToLogin={() => setScreen('auth')}
         />
       )}
 

@@ -2,7 +2,7 @@ const isAndroidEmulator = window.location.hostname === '10.0.2.2'
 
 export const API_URL = isAndroidEmulator
   ? 'http://10.0.2.2:3333/api/v1'
-  : 'https://lightbot.duckdns.org/api/v1'
+  : 'http://localhost:3333/api/v1'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface Tutor {
@@ -19,12 +19,16 @@ export interface User {
   name: string
   currentLevel: number
   tutorId: number | null
-  createdAt: string
+  createdAt: string 
   updatedAt: string | null
 }
 
 interface AuthResponse {
   data: { tutor: Tutor; token: string }
+}
+
+interface MessageResponse {
+  message: string
 }
 
 interface ProfileResponse {
@@ -50,8 +54,12 @@ function authHeaders(token: string): HeadersInit {
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ message: res.statusText }))
-    throw new Error(error.message ?? res.statusText)
+    const body = await res.json().catch(() => ({ message: res.statusText }))
+    // VineJS validation errors come as { errors: [{ message, field }] }
+    if (Array.isArray(body.errors) && body.errors.length > 0) {
+      throw new Error(body.errors.map((e: { message: string }) => e.message).join('. '))
+    }
+    throw new Error(body.message ?? res.statusText)
   }
   return res.json()
 }
@@ -63,13 +71,22 @@ export async function signup(
   email: string,
   password: string,
   passwordConfirmation: string
-): Promise<AuthResponse> {
+): Promise<MessageResponse> {
   const res = await fetch(`${API_URL}/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fullName, email, password, passwordConfirmation }),
   })
-  return handleResponse<AuthResponse>(res)
+  return handleResponse<MessageResponse>(res)
+}
+
+export async function resendVerification(email: string): Promise<MessageResponse> {
+  const res = await fetch(`${API_URL}/auth/resend-verification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  })
+  return handleResponse<MessageResponse>(res)
 }
 
 export async function login(

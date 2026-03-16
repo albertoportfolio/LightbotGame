@@ -33,12 +33,16 @@ export class ApiTokenSchema extends BaseModel {
 }
 
 export class TutorSchema extends BaseModel {
-  static $columns = ['createdAt', 'email', 'fullName', 'id', 'password', 'updatedAt'] as const
+  static $columns = ['createdAt', 'email', 'emailVerificationToken', 'emailVerifiedAt', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = TutorSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
   @column()
   declare email: string
+  @column()
+  declare emailVerificationToken: string | null
+  @column.dateTime()
+  declare emailVerifiedAt: DateTime | null
   @column()
   declare fullName: string | null
   @column({ isPrimary: true })

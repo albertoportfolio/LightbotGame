@@ -287,12 +287,6 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
             <span className="text-white/70">
               Usuario activo: <strong className="text-white">{selectedUser.name}</strong>
             </span>
-            <button
-              onClick={() => setSelectedUser(null)}
-              className="text-white/40 hover:text-white text-xs transition-colors"
-            >
-              Deseleccionar
-            </button>
           </div>
         )}
 

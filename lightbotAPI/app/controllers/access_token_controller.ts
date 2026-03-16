@@ -5,15 +5,20 @@ import TutorTransformer from '#transformers/tutor_transformer'
 
 export default class AccessTokenController {
 
-  async store({ request, serialize }: HttpContext) {
+  async store({ request, response, serialize }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
     const tutor = await Tutors.verifyCredentials(email, password)
+
+    if (!tutor.emailVerifiedAt) {
+      return response.forbidden({
+        message: 'Debes verificar tu correo electrónico antes de iniciar sesión.',
+      })
+    }
 
     const token = await Tutors.accessTokens.create(tutor, ['*'], {
       expiresIn: '30 days'
     })
     return serialize({
-
       tutor: TutorTransformer.transform(tutor),
       token: token.value!.release(),
     })

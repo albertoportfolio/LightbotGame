@@ -86,7 +86,7 @@ export function UserSelectScreen({ onContinue, onBack }: Props) {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center overflow-y-auto py-8"
+      className="relative flex flex-col items-center justify-center overflow-x-hidden overflow-y-auto py-8"
       style={{
         height: '100dvh',
         background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)',
@@ -183,7 +183,7 @@ export function UserSelectScreen({ onContinue, onBack }: Props) {
             <p className="text-white/40 text-sm">
               Selecciona con quién quieres jugar:
             </p>
-            <div className="flex flex-col gap-2" style={{ maxHeight: 280, overflowY: 'auto' }}>
+            <div className="flex flex-col gap-2" style={{ maxHeight: 280, overflowY: 'auto', overflowX: 'hidden' }}>
               {users.map((user) => (
                 <button
                   key={user.id}

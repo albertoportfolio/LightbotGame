@@ -12,6 +12,7 @@ import { TutorProfileScreen } from './components/TutorProfileScreen'
 import { UserSelectScreen } from './components/UserSelectScreen'
 import { useUser } from './context/UserContext'
 import { EmailVerificationScreen } from './components/EmailVerificationScreen'
+import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
 import { updateUser } from './services/service'
 
@@ -66,7 +67,7 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
-type Screen = 'start' | 'auth' | 'verify-email' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
+type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
 
 
 function Star({ style }: { style: React.CSSProperties }) {
@@ -414,6 +415,15 @@ export default function App() {
   const { token } = useAuth()
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('')
 
+  // Detect ?verified=ok from email verification redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('verified') === 'ok') {
+      setScreen('email-verified')
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
   //  const [completedLevels, setCompletedLevels] = useState<number[]>(Array.from({ length: TOTAL_LEVELS }, (_, i) => i))
   // para probar el flujo normal de desbloqueo de niveles dejarlo así:
@@ -498,6 +508,10 @@ export default function App() {
           email={pendingVerificationEmail}
           onBackToLogin={() => setScreen('auth')}
         />
+      )}
+
+      {screen === 'email-verified' && (
+        <EmailVerifiedScreen onGoToLogin={() => setScreen('auth')} />
       )}
 
       {screen === 'user-select' && (

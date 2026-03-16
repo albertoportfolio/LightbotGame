@@ -32,6 +32,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   DB_PASSWORD: Env.schema.secret(),
   DB_DATABASE: Env.schema.string(),
 
+  // Frontend
+  FRONTEND_URL: Env.schema.string({ format: 'url', tld: false }),
+
   // SMTP (email verification)
   SMTP_HOST: Env.schema.string(),
   SMTP_PORT: Env.schema.number(),

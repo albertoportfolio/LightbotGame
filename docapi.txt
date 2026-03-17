@@ -1,0 +1,463 @@
+================================================================================
+ DOCUMENTACION COMPLETA — LIGHTBOT API (directorio ./lightbotAPI)
+================================================================================
+
+ TABLA DE CONTENIDOS
+ 1. Descripcion general
+ 2. Stack tecnologico
+ 3. Estructura de archivos
+ 4. Base de datos y esquema
+ 5. Modelos (Lucid ORM)
+ 6. Controladores
+ 7. Rutas (endpoints)
+ 8. Validadores (VineJS)
+ 9. Transformers
+10. Servicio de verificacion de email
+11. Middleware
+12. Autenticacion y tokens
+13. Flujo completo de uso
+14. Configuracion
+
+================================================================================
+ 1. DESCRIPCION GENERAL
+================================================================================
+
+La API de Lightbot es un backend REST construido con AdonisJS 6 que gestiona:
+  - Autenticacion de tutores (registro, login, logout)
+  - Verificacion de email
+  - CRUD de usuarios (jugadores/alumnos) asociados a un tutor
+  - Progreso del juego (nivel actual de cada usuario)
+
+Cada "tutor" es una cuenta con email/password que puede tener multiples
+"usuarios" (alumnos/jugadores). Los tutores gestionan a sus usuarios y
+cada usuario tiene un campo currentLevel que refleja su progreso.
+
+================================================================================
+ 2. STACK TECNOLOGICO
+================================================================================
+
+  - AdonisJS 6         — Framework Node.js (MVC, IoC container)
+  - Lucid ORM          — ORM de AdonisJS (Active Record pattern)
+  - VineJS             — Validacion de datos (requests)
+  - SQLite/MySQL       — Base de datos (configurable)
+  - Nodemailer         — Envio de emails SMTP
+  - Access Tokens      — Autenticacion basada en tokens (Bearer)
+  - TypeScript          — Tipado estricto
+
+================================================================================
+ 3. ESTRUCTURA DE ARCHIVOS
+================================================================================
+
+  lightbotAPI/
+  ├── app/
+  │   ├── controllers/
+  │   │   ├── access_token_controller.ts   Login/Logout (tokens)
+  │   │   ├── new_account_controller.ts    Registro (signup)
+  │   │   ├── profile_controller.ts        Perfil del tutor
+  │   │   ├── users_controller.ts          CRUD de usuarios/jugadores
+  │   │   └── email_verification_controller.ts  Verificacion email
+  │   ├── models/
+  │   │   ├── tutors.ts                    Modelo Tutor (con auth)
+  │   │   └── user.ts                      Modelo User (jugador)
+  │   ├── validators/
+  │   │   ├── tutors.ts                    Validacion signup/login
+  │   │   └── users.ts                     Validacion create/update user
+  │   ├── transformers/
+  │   │   ├── tutor_transformer.ts         Serializacion de Tutor
+  │   │   └── user_transformer.ts          Serializacion de User
+  │   ├── services/
+  │   │   └── email_verification_service.ts Token + envio email SMTP
+  │   ├── middleware/
+  │   │   ├── auth_middleware.ts            Verifica Bearer token
+  │   │   ├── container_bindings_middleware.ts Bindings IoC
+  │   │   ├── force_json_response_middleware.ts Fuerza JSON responses
+  │   │   └── silent_auth_middleware.ts     Auth silenciosa
+  │   └── exceptions/
+  │       └── handler.ts                   Manejador global de errores
+  │
+  ├── database/
+  │   ├── schema.ts                        Esquemas auto-generados
+  │   ├── schema_rules.ts                  Reglas de esquema
+  │   └── migrations/
+  │       ├── ..._create_all_tables_table.ts   Migracion principal
+  │       └── ..._add_email_verification...ts  Migracion verificacion
+  │
+  ├── start/
+  │   ├── routes.ts                        Definicion de rutas HTTP
+  │   ├── kernel.ts                        Middleware global
+  │   ├── validator.ts                     Config del validador
+  │   └── env.ts                           Variables de entorno
+  │
+  ├── config/
+  │   ├── app.ts          Config general de la app
+  │   ├── auth.ts         Config autenticacion
+  │   ├── cors.ts         Config CORS
+  │   ├── database.ts     Config base de datos
+  │   ├── hash.ts         Config hashing (passwords)
+  │   ├── bodyparser.ts   Config body parser
+  │   ├── encryption.ts   Config encriptacion
+  │   ├── logger.ts       Config logs
+  │   ├── session.ts      Config sesiones
+  │   └── shield.ts       Config seguridad (CSRF, etc.)
+  │
+  ├── bin/                Scripts de arranque
+  ├── build/              Output de compilacion
+  ├── adonisrc.ts         Config principal AdonisJS
+  ├── ace.js              CLI de AdonisJS
+  └── package.json        Dependencias y scripts
+
+================================================================================
+ 4. BASE DE DATOS Y ESQUEMA
+================================================================================
+
+  TABLAS (definidas en la migracion principal):
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ TABLA: tutors                                                   │
+  ├─────────────────┬───────────────────────────────────────────────┤
+  │ id              │ INTEGER, PK, autoincrement                    │
+  │ full_name       │ VARCHAR, nullable                             │
+  │ email           │ VARCHAR(254), unique, not null                │
+  │ password        │ VARCHAR, not null (hash scrypt)               │
+  │ email_verified_at│ TIMESTAMP, nullable                          │
+  │ email_verification_token│ VARCHAR(64), nullable                 │
+  │ created_at      │ TIMESTAMP, not null                           │
+  │ updated_at      │ TIMESTAMP, nullable                           │
+  └─────────────────┴───────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ TABLA: API_tokens                                               │
+  ├─────────────────┬───────────────────────────────────────────────┤
+  │ id              │ INTEGER, PK, autoincrement                    │
+  │ tokenable_id    │ INTEGER, FK → tutors(id) ON DELETE CASCADE    │
+  │ type            │ VARCHAR, not null                             │
+  │ name            │ VARCHAR, nullable                             │
+  │ hash            │ VARCHAR, not null (hash del token)            │
+  │ abilities       │ TEXT, not null (JSON de permisos)             │
+  │ created_at      │ TIMESTAMP                                     │
+  │ updated_at      │ TIMESTAMP                                     │
+  │ last_used_at    │ TIMESTAMP, nullable                           │
+  │ expires_at      │ TIMESTAMP, nullable                           │
+  └─────────────────┴───────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │ TABLA: users (jugadores/alumnos)                                │
+  ├─────────────────┬───────────────────────────────────────────────┤
+  │ id              │ INTEGER, PK, autoincrement                    │
+  │ name            │ VARCHAR, not null                             │
+  │ current_level   │ INTEGER, default 0                            │
+  │ tutor_id        │ INTEGER, FK → tutors(id) ON DELETE CASCADE    │
+  │ created_at      │ TIMESTAMP, not null                           │
+  │ updated_at      │ TIMESTAMP, nullable                           │
+  └─────────────────┴───────────────────────────────────────────────┘
+
+  RELACIONES:
+    Tutor (1) ──hasMany──> (N) User
+    User  (N) ──belongsTo──> (1) Tutor
+    Tutor (1) ──hasMany──> (N) API_tokens
+
+  MIGRACIONES:
+    1. create_all_tables: crea tutors, API_tokens, users
+    2. add_email_verification: anade email_verified_at y
+       email_verification_token a tutors
+
+================================================================================
+ 5. MODELOS (LUCID ORM)
+================================================================================
+
+  TUTOR (app/models/tutors.ts):
+    - Extiende TutorSchema (auto-generado) + withAuthFinder (hash mixin)
+    - Relacion: @hasMany(() => User, { foreignKey: 'tutorId' })
+    - Access tokens: DbAccessTokensProvider (tabla API_tokens)
+    - Propiedad computada: get initials() → "JD" de "John Doe"
+    - verifyCredentials(email, password) — heredado de withAuthFinder
+
+  USER (app/models/user.ts):
+    - Extiende UserSchema (auto-generado)
+    - Relacion: @belongsTo(() => Tutors, { foreignKey: 'tutorId' })
+    - Campos: id, name, currentLevel, tutorId, createdAt, updatedAt
+
+  SCHEMAS (database/schema.ts):
+    - Auto-generados por `node ace migration:run`
+    - ApiTokenSchema, TutorSchema, UserSchema
+    - Definen @column decorators con tipos TypeScript
+
+================================================================================
+ 6. CONTROLADORES
+================================================================================
+
+  ACCESS TOKEN CONTROLLER (access_token_controller.ts):
+    ┌────────────────────────────────────────────────────────────────┐
+    │ store() — POST /api/v1/auth/login                             │
+    │   1. Valida email+password con loginValidator                  │
+    │   2. Verifica credenciales con Tutors.verifyCredentials()      │
+    │   3. Comprueba que emailVerifiedAt no sea null                 │
+    │   4. Crea access token (expira en 30 dias)                    │
+    │   5. Retorna { tutor: {...}, token: "oat_..." }               │
+    ├────────────────────────────────────────────────────────────────┤
+    │ destroy() — POST /api/v1/auth/logout                          │
+    │   1. Obtiene el tutor autenticado                              │
+    │   2. Elimina el token actual de la BD                          │
+    │   3. Retorna { message: "Logged out successfully" }            │
+    └────────────────────────────────────────────────────────────────┘
+
+  NEW ACCOUNT CONTROLLER (new_account_controller.ts):
+    ┌────────────────────────────────────────────────────────────────┐
+    │ store() — POST /api/v1/auth/signup                             │
+    │   1. Valida con signupValidator (email unico, password 8-32)   │
+    │   2. Genera token de verificacion (64 chars hex)               │
+    │   3. Crea el tutor en BD con el token                          │
+    │   4. Envia email de verificacion via SMTP                      │
+    │   5. Retorna 201: { message: "Cuenta creada..." }              │
+    └────────────────────────────────────────────────────────────────┘
+
+  EMAIL VERIFICATION CONTROLLER (email_verification_controller.ts):
+    ┌────────────────────────────────────────────────────────────────┐
+    │ verify() — GET /api/v1/auth/verify-email?token=...             │
+    │   1. Lee ?token de la query string                             │
+    │   2. Busca tutor por emailVerificationToken                    │
+    │   3. Si existe y no verificado: marca emailVerifiedAt = now()  │
+    │   4. Redirige al frontend: ?verified=ok o ?verified=error      │
+    ├────────────────────────────────────────────────────────────────┤
+    │ resend() — POST /api/v1/auth/resend-verification               │
+    │   1. Lee email del body                                        │
+    │   2. Busca tutor por email                                     │
+    │   3. Si ya verificado: "ya fue verificado"                     │
+    │   4. Si no: genera nuevo token, guarda, envia email            │
+    │   5. Respuesta generica (no revela si el email existe)         │
+    └────────────────────────────────────────────────────────────────┘
+
+  PROFILE CONTROLLER (profile_controller.ts):
+    ┌────────────────────────────────────────────────────────────────┐
+    │ show() — GET /api/v1/account/profile                           │
+    │   1. Obtiene tutor autenticado con auth.getUserOrFail()        │
+    │   2. Serializa con TutorTransformer                            │
+    │   3. Retorna datos del tutor (sin password)                    │
+    └────────────────────────────────────────────────────────────────┘
+
+  USERS CONTROLLER (users_controller.ts):
+    ┌────────────────────────────────────────────────────────────────┐
+    │ index() — GET /api/v1/users                                    │
+    │   Lista todos los usuarios del tutor autenticado               │
+    │   → Filtra por tutor_id del tutor logueado                     │
+    ├────────────────────────────────────────────────────────────────┤
+    │ store() — POST /api/v1/users                                   │
+    │   Crea un nuevo usuario (jugador) asociado al tutor            │
+    │   Body: { name: string }                                       │
+    ├────────────────────────────────────────────────────────────────┤
+    │ show() — GET /api/v1/users/:id                                 │
+    │   Obtiene un usuario por ID (solo si pertenece al tutor)       │
+    ├────────────────────────────────────────────────────────────────┤
+    │ update() — PUT /api/v1/users/:id                               │
+    │   Actualiza nombre y/o currentLevel del usuario                │
+    │   Body: { name?: string, currentLevel?: number }               │
+    ├────────────────────────────────────────────────────────────────┤
+    │ destroy() — DELETE /api/v1/users/:id                           │
+    │   Elimina un usuario (solo si pertenece al tutor)              │
+    └────────────────────────────────────────────────────────────────┘
+
+================================================================================
+ 7. RUTAS (ENDPOINTS)
+================================================================================
+
+  Todas bajo el prefijo /api/v1
+
+  PUBLICAS (sin auth):
+    POST   /api/v1/auth/signup              → NewAccount.store
+    POST   /api/v1/auth/login               → AccessToken.store
+    GET    /api/v1/auth/verify-email        → EmailVerification.verify
+    POST   /api/v1/auth/resend-verification → EmailVerification.resend
+
+  AUTENTICADAS (Bearer token):
+    POST   /api/v1/auth/logout              → AccessToken.destroy
+    GET    /api/v1/account/profile          → Profile.show
+    GET    /api/v1/users                    → Users.index
+    POST   /api/v1/users                    → Users.store
+    GET    /api/v1/users/:id                → Users.show
+    PUT    /api/v1/users/:id                → Users.update
+    DELETE /api/v1/users/:id                → Users.destroy
+
+  AUTENTICACION:
+    Header: Authorization: Bearer <token>
+    El token se obtiene en POST /auth/login
+    Expira en 30 dias
+    Se invalida en POST /auth/logout
+
+================================================================================
+ 8. VALIDADORES (VineJS)
+================================================================================
+
+  TUTORS (validators/tutors.ts):
+
+    signupValidator:
+      - fullName: string, nullable
+      - email: string, email, max 254, unico en tabla tutors
+      - password: string, min 8, max 32
+      - passwordConfirmation: string, min 8, max 32, sameAs('password')
+
+    loginValidator:
+      - email: string, email, max 254
+      - password: string (sin restriccion de longitud en login)
+
+  USERS (validators/users.ts):
+
+    createUserValidator:
+      - name: string, min 1, max 100
+
+    updateUserValidator:
+      - name: string, min 1, max 100, optional
+      - currentLevel: number, min 0, optional
+
+  ERRORES DE VALIDACION:
+    Si falla, VineJS retorna 422 con formato:
+    { errors: [{ message: "...", field: "..." }, ...] }
+
+================================================================================
+ 9. TRANSFORMERS
+================================================================================
+
+  Los transformers controlan que campos se exponen en la API.
+  Usan BaseTransformer de AdonisJS con el metodo pick().
+
+  TutorTransformer — campos expuestos:
+    id, fullName, email, emailVerifiedAt, createdAt, updatedAt, initials
+
+  UserTransformer — campos expuestos:
+    id, name, currentLevel, tutorId, createdAt, updatedAt
+
+  NOTA: El password del tutor NUNCA se expone (serializeAs: null en el schema).
+
+================================================================================
+10. SERVICIO DE VERIFICACION DE EMAIL
+================================================================================
+
+  email_verification_service.ts:
+
+  generateVerificationToken():
+    - Genera 32 bytes aleatorios con crypto.randomBytes
+    - Los convierte a hex (64 caracteres)
+    - Criptograficamente seguro
+
+  sendVerificationEmail(tutor, token):
+    - Usa Nodemailer con transporte SMTP
+    - Configuracion SMTP desde variables de entorno:
+      SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM
+    - TLS: rejectUnauthorized false (para servidores auto-firmados)
+    - Construye URL de verificacion:
+      {APP_URL}/api/v1/auth/verify-email?token={token}
+    - Envia email HTML con estilo Lightbot (gradiente, boton)
+    - Asunto: "Lightbot — Confirma tu correo electronico"
+
+================================================================================
+11. MIDDLEWARE
+================================================================================
+
+  auth_middleware.ts:
+    - Verifica que el request tenga un Bearer token valido
+    - Usa auth.authenticate() de AdonisJS
+    - Si falla: 401 Unauthorized
+
+  force_json_response_middleware.ts:
+    - Fuerza Accept: application/json en todas las requests
+    - Asegura que las respuestas sean siempre JSON
+
+  container_bindings_middleware.ts:
+    - Configura bindings del contenedor IoC de AdonisJS
+
+  silent_auth_middleware.ts:
+    - Intenta autenticar sin lanzar error si falla
+    - Util para rutas que funcionan con o sin auth
+
+================================================================================
+12. AUTENTICACION Y TOKENS
+================================================================================
+
+  SISTEMA: Access Tokens (no sesiones, no JWT)
+    - Basado en DbAccessTokensProvider de AdonisJS
+    - Tokens almacenados como hash en tabla API_tokens
+    - Formato del token: "oat_..." (opaque access token)
+    - Expiracion: 30 dias desde la creacion
+
+  FLUJO DE REGISTRO:
+    1. POST /auth/signup con {fullName, email, password, passwordConfirmation}
+    2. Se valida con signupValidator (email unico, passwords coinciden)
+    3. Se crea el tutor con password hasheado (scrypt)
+    4. Se genera token de verificacion y se envia email
+    5. Respuesta: 201 { message: "Cuenta creada..." }
+
+  FLUJO DE VERIFICACION:
+    1. Usuario hace click en el enlace del email
+    2. GET /auth/verify-email?token=...
+    3. Se busca el tutor por el token
+    4. Se marca emailVerifiedAt = ahora, se borra el token
+    5. Redirige al frontend con ?verified=ok
+
+  FLUJO DE LOGIN:
+    1. POST /auth/login con {email, password}
+    2. Se verifican credenciales con verifyCredentials()
+    3. Se comprueba que el email este verificado
+    4. Se crea un access token (30 dias)
+    5. Respuesta: { data: { tutor: {...}, token: "oat_..." } }
+
+  FLUJO DE LOGOUT:
+    1. POST /auth/logout con header Authorization: Bearer oat_...
+    2. Se obtiene el tutor del token
+    3. Se elimina el token de la BD
+    4. Respuesta: { message: "Logged out" }
+
+  SEGURIDAD:
+    - Passwords hasheados con scrypt (via @adonisjs/hash)
+    - Tokens almacenados como hash (no en texto plano)
+    - Cada usuario solo puede acceder a SUS propios datos (tutor_id)
+    - Email verificacion requerida antes de poder hacer login
+    - Respuestas de reenvio no revelan si el email existe
+
+================================================================================
+13. FLUJO COMPLETO DE USO
+================================================================================
+
+  1. Tutor se registra → recibe email con enlace de verificacion
+  2. Tutor verifica su email → redirigido al frontend
+  3. Tutor hace login → recibe token de acceso
+  4. Tutor crea uno o mas usuarios (jugadores)
+  5. Jugador juega niveles en el frontend
+  6. Al completar un nivel, el frontend llama:
+     PUT /api/v1/users/:id { currentLevel: nuevoNivel }
+  7. El progreso se persiste en la BD
+  8. El tutor puede ver/editar/borrar jugadores desde el perfil
+  9. Al cerrar sesion, el token se invalida
+
+================================================================================
+14. CONFIGURACION
+================================================================================
+
+  VARIABLES DE ENTORNO (.env):
+    TZ                   — Zona horaria
+    PORT                 — Puerto del servidor (default: 3333)
+    HOST                 — Host (default: localhost)
+    LOG_LEVEL            — Nivel de logs
+    APP_KEY              — Clave de encriptacion de la app
+    APP_URL              — URL publica del backend
+    FRONTEND_URL         — URL del frontend (para redirects)
+    NODE_ENV             — Entorno (development/production)
+    DB_HOST, DB_PORT     — Host y puerto de la BD
+    DB_USER, DB_PASSWORD — Credenciales BD
+    DB_DATABASE          — Nombre de la BD
+    SMTP_HOST            — Servidor SMTP
+    SMTP_PORT            — Puerto SMTP
+    SMTP_USER            — Usuario SMTP
+    SMTP_PASS            — Password SMTP
+    SMTP_FROM            — Email "from" para emails
+
+  CORS (config/cors.ts):
+    Configurado para permitir requests del frontend
+
+  COMMANDS:
+    node ace serve --watch     — Servidor de desarrollo
+    node ace migration:run     — Ejecutar migraciones
+    node ace migration:rollback — Revertir migraciones
+    node ace build             — Build de produccion
+
+================================================================================
+ FIN DE LA DOCUMENTACION API
+================================================================================

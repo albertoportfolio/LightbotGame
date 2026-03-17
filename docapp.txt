@@ -1,0 +1,231 @@
+================================================================================
+ DOCUMENTACION COMPLETA — LIGHTBOT MOBILE (directorio ./mobile)
+================================================================================
+
+ TABLA DE CONTENIDOS
+ 1. Descripcion general
+ 2. Stack tecnologico
+ 3. Estructura de archivos
+ 4. Flujo de arranque
+ 5. WebView y comunicacion con el juego
+ 6. Configuracion de URL
+ 7. Configuracion nativa (app.json)
+ 8. Dependencias
+ 9. Comandos disponibles
+10. Build y despliegue
+
+================================================================================
+ 1. DESCRIPCION GENERAL
+================================================================================
+
+La app movil de Lightbot es un wrapper nativo (Android/iOS) que envuelve el
+juego web en un WebView a pantalla completa. NO contiene logica de juego propia:
+simplemente carga la URL del juego web (localhost en dev, produccion en release)
+dentro de un componente WebView de React Native.
+
+Es una "app hibrida" que aprovecha todo el codigo web existente sin duplicar
+logica. El juego se ve y funciona identico a la version web.
+
+================================================================================
+ 2. STACK TECNOLOGICO
+================================================================================
+
+  - Expo SDK 52        — framework React Native (managed workflow)
+  - Expo Router 4      — sistema de rutas basado en archivos
+  - React Native 0.76  — runtime nativo
+  - WebView            — react-native-webview 13.12.5
+  - TypeScript          — tipado
+  - EAS Build           — sistema de build cloud de Expo
+
+================================================================================
+ 3. ESTRUCTURA DE ARCHIVOS
+================================================================================
+
+  mobile/
+  ├── app/
+  │   ├── _layout.tsx       Layout raiz (Expo Router Stack)
+  │   └── index.tsx         Pantalla principal → renderiza WebViewGame
+  │
+  ├── src/
+  │   ├── WebViewGame.tsx   Componente WebView a pantalla completa
+  │   └── config.ts         URL del juego (dev vs produccion)
+  │
+  ├── android/              Codigo nativo Android (generado por prebuild)
+  ├── assets/               Iconos y splash screen
+  ├── app.json              Configuracion Expo
+  ├── eas.json              Configuracion de builds EAS
+  ├── babel.config.js       Config Babel
+  ├── tsconfig.json         Config TypeScript
+  └── package.json          Dependencias y scripts
+
+================================================================================
+ 4. FLUJO DE ARRANQUE
+================================================================================
+
+  1. Expo carga el entry point definido en package.json:
+     "main": "expo-router/entry"
+
+  2. Expo Router lee el directorio app/ y genera las rutas:
+     - app/_layout.tsx → Layout raiz
+     - app/index.tsx   → Ruta principal "/"
+
+  3. _layout.tsx:
+     - Renderiza un <Stack> de Expo Router
+     - headerShown: false (sin barra de navegacion)
+     - animation: 'none' (sin transiciones)
+
+  4. index.tsx:
+     - Renderiza <WebViewGame /> directamente
+     - Es el unico screen de la app
+
+  5. WebViewGame.tsx:
+     - Oculta la barra de navegacion Android (NavigationBar.setVisibilityAsync)
+     - Oculta la StatusBar
+     - Carga GAME_URL en un WebView a pantalla completa
+     - Maneja el boton "atras" de Android (navega dentro del WebView)
+
+================================================================================
+ 5. WEBVIEW Y COMUNICACION CON EL JUEGO
+================================================================================
+
+  WebViewGame.tsx es el componente central de la app movil:
+
+  CONFIGURACION DEL WEBVIEW:
+    - source: { uri: GAME_URL }          — carga la URL del juego
+    - javaScriptEnabled: true             — JS necesario para Phaser
+    - domStorageEnabled: true             — localStorage para auth tokens
+    - mediaPlaybackRequiresUserAction: false — audio sin interaccion
+    - allowsInlineMediaPlayback: true     — audio inline en iOS
+    - scrollEnabled: false                — sin scroll (el juego es fijo)
+    - bounces: false                      — sin efecto rebote iOS
+    - overScrollMode: "never"             — sin overscroll Android
+    - startInLoadingState: true           — muestra spinner al cargar
+
+  SPINNER DE CARGA:
+    - renderLoading() muestra un ActivityIndicator centrado
+    - Color: #64ffda (cyan)
+    - Fondo: #1a1a2e (azul oscuro, igual que el juego)
+
+  BOTON ATRAS ANDROID:
+    - useFocusEffect + BackHandler.addEventListener
+    - Al pulsar "atras", llama webViewRef.current.goBack()
+    - Navega hacia atras dentro del WebView (si hay historial)
+    - return true previene que la app se cierre
+
+  BARRA DE NAVEGACION ANDROID:
+    - Se oculta con NavigationBar.setVisibilityAsync('hidden')
+    - Modo: 'overlay-swipe' (se muestra al deslizar desde abajo)
+
+  ESTILOS:
+    - container: flex: 1, backgroundColor: '#1a1a2e'
+    - webview: flex: 1, backgroundColor: '#1a1a2e'
+    - loading: absoluteFillObject, centrado
+
+  NO HAY COMUNICACION NATIVA-WEB:
+    La app no usa postMessage ni inyecta JS en el WebView.
+    Todo funciona a traves de la web standard (HTTP, localStorage).
+    El juego detecta si esta en emulador Android por window.location.hostname
+    para apuntar a la API correcta (10.0.2.2 vs produccion).
+
+================================================================================
+ 6. CONFIGURACION DE URL (config.ts)
+================================================================================
+
+  config.ts decide la URL del juego segun el entorno:
+
+  DESARROLLO (__DEV__ = true):
+    - Android emulador: http://10.0.2.2:3000
+      (10.0.2.2 es el alias de localhost del host en el emulador Android)
+    - iOS / otros: http://localhost:3000
+      (conecta directamente al servidor Vite local)
+
+  PRODUCCION (__DEV__ = false):
+    - https://lightbot.duckdns.org
+      (URL publica donde esta desplegado el juego web)
+
+  La constante exportada GAME_URL se usa en WebViewGame como source.
+
+================================================================================
+ 7. CONFIGURACION NATIVA (app.json)
+================================================================================
+
+  {
+    "name": "Lightbot",
+    "slug": "lightbot-mobile",
+    "version": "1.0.0",
+    "orientation": "landscape",        ← siempre horizontal
+    "userInterfaceStyle": "dark",      ← modo oscuro
+    "scheme": "lightbot",              ← deep linking scheme
+    "splash": { "backgroundColor": "#1a1a2e" },
+
+    "ios": {
+      "bundleIdentifier": "com.lightbot.mobile",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.lightbot.mobile",
+      "adaptiveIcon": { "backgroundColor": "#1a1a2e" }
+    },
+
+    "plugins": [
+      "expo-router",
+      "expo-asset",
+      ["expo-build-properties", {
+        "android": { "kotlinVersion": "1.9.25" }
+      }]
+    ]
+  }
+
+  NOTAS:
+    - Orientacion landscape para el juego
+    - Kotlin 1.9.25 especificado para compatibilidad
+    - EAS project ID: 52249e76-2788-42a3-96ea-c0a4ad3f18b5
+
+================================================================================
+ 8. DEPENDENCIAS
+================================================================================
+
+  PRINCIPALES:
+    expo ~52.0.0                     — Framework Expo
+    expo-router ~4.0.0               — Router basado en archivos
+    react-native 0.76.6              — Runtime nativo
+    react-native-webview 13.12.5     — Componente WebView
+    expo-navigation-bar ~4.0.9       — Control barra navegacion Android
+    expo-constants ~17.0.0           — Acceso a constantes de la app
+    expo-status-bar ~2.0.0           — Control de la StatusBar
+
+  DEV:
+    @babel/core ^7.25.0              — Compilador JS
+    @types/react ~18.3.0             — Tipos React
+    typescript ^5.3.0                — TypeScript
+
+================================================================================
+ 9. COMANDOS DISPONIBLES
+================================================================================
+
+  npm start              — Inicia Expo dev server
+  npm run android        — Ejecuta en dispositivo/emulador Android
+  npm run ios            — Ejecuta en simulador iOS
+  npm run web            — Inicia version web con Expo
+  npm run build:web      — Ejecuta `cd .. && npm run build` (build web)
+  npm run prebuild       — Genera codigo nativo (android/ y ios/)
+
+================================================================================
+10. BUILD Y DESPLIEGUE
+================================================================================
+
+  DESARROLLO:
+    1. Ejecutar el servidor Vite web: cd .. && npm run dev
+    2. Ejecutar la app movil: cd mobile && npm run android
+    3. El WebView carga http://10.0.2.2:3000 (el servidor Vite local)
+
+  PRODUCCION:
+    1. Desplegar el juego web en https://lightbot.duckdns.org
+    2. Hacer build de la app: eas build --platform android
+    3. La app cargara la URL de produccion automaticamente
+
+  eas.json contiene la configuracion de perfiles de build para EAS.
+
+================================================================================
+ FIN DE LA DOCUMENTACION MOBILE
+================================================================================

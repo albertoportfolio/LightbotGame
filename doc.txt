@@ -1,0 +1,464 @@
+================================================================================
+ DOCUMENTACION COMPLETA — LIGHTBOT WEB (directorio raiz ./lightbot)
+================================================================================
+
+ TABLA DE CONTENIDOS
+ 1. Descripcion general del proyecto
+ 2. Stack tecnologico
+ 3. Estructura de archivos
+ 4. Flujo de arranque completo (de Vite a Phaser a React)
+ 5. Comunicacion React <-> Phaser (Bridge)
+ 6. Sistema de niveles
+ 7. Entidades del juego
+ 8. Sistema de comandos
+ 9. Sistema de audio
+10. Estado global (Zustand Store)
+11. Pantallas y navegacion (React)
+12. Sistema de autenticacion
+13. Servicio API (service.ts)
+14. Configuracion y constantes
+
+================================================================================
+ 1. DESCRIPCION GENERAL DEL PROYECTO
+================================================================================
+
+Lightbot Web es un juego de puzzles educativo estilo "Lightbot" donde el
+jugador programa un robot arrastrando comandos (drag-and-drop) o escribiendo
+texto en espanol para que el robot navegue por una cuadricula, encienda luces,
+manipule variables de colores y use bucles para resolver puzzles.
+
+El proyecto tiene 40 niveles organizados en  mundos tematicos:
+  - Mundo 1 (niveles 1-10):  Tierra de Luces — comandos basicos
+  - Mundo 2 (niveles 11-20): Islas del Codigo — introduccion de bucles
+  - Mundo 3 (niveles 21-30): Galaxia Robot — variables y copia de colores
+  - Mundo 4 (niveles 31-40): Volcan Digital — modo texto libre
+
+================================================================================
+ 2. STACK TECNOLOGICO
+================================================================================
+
+  - React 18          — UI, pantallas, paneles de instrucciones
+  - TypeScript         — tipado estricto en todo el proyecto
+  - Vite               — bundler y dev server (puerto 3000)
+  - Phaser 3           — motor de juego 2D (canvas WebGL/Canvas)
+  - Zustand            — estado global reactivo (cola de comandos, nivel, etc.)
+  - Tailwind CSS       — estilos utility-first para la UI
+  - @dnd-kit           — drag-and-drop para reordenar comandos
+  - Web Audio API      — musica procedural y efectos de sonido (sin archivos)
+
+================================================================================
+ 3. ESTRUCTURA DE ARCHIVOS
+================================================================================
+
+  src/
+  ├── main.tsx                        Punto de entrada React
+  ├── App.tsx                         Enrutador de pantallas + GameScreen
+  ├── index.css                       Estilos globales Tailwind
+  │
+  ├── types/
+  │   └── game.types.ts               Tipos compartidos (Cell, Command, Level...)
+  │
+  ├── store/
+  │   └── gameStore.ts                Zustand store global
+  │
+  ├── hooks/
+  │   └── useGameBridge.ts            Hook React-Phaser bridge (EventEmitter)
+  │
+  ├── context/
+  │   ├── AuthContext.tsx              Contexto de autenticacion (token + tutor)
+  │   └── UserContext.tsx              Contexto del usuario seleccionado
+  │
+  ├── services/
+  │   └── service.ts                  Cliente HTTP para la API REST
+  │
+  ├── components/
+  │   ├── Game/
+  │   │   ├── GameWrapper.tsx          Contenedor DOM del canvas Phaser
+  │   │   ├── InstructionPanel.tsx     Paleta de comandos (DnD + texto)
+  │   │   └── LevelHUD.tsx            HUD con info del nivel actual
+  │   ├── AuthScreen.tsx              Pantalla login/registro
+  │   ├── EmailVerificationScreen.tsx Pantalla "verifica tu email"
+  │   ├── EmailVerifiedScreen.tsx     Pantalla "email verificado OK"
+  │   ├── LevelSelectScreen.tsx       Mapa de seleccion de niveles
+  │   ├── SettingsScreen.tsx          Pantalla de opciones (audio)
+  │   ├── TutorProfileScreen.tsx      Perfil del tutor + CRUD usuarios
+  │   └── UserSelectScreen.tsx        Seleccion/creacion de jugador
+  │
+  └── game/
+      ├── PhaserGame.ts               Fabrica de la instancia Phaser.Game
+      ├── constants/
+      │   └── gameConfig.ts            Constantes (canvas, celdas, tiempos)
+      ├── scenes/
+      │   ├── BootScene.ts             Genera sprite del robot proceduralmente
+      │   └── GameScene.ts             Escena principal: grid, robot, logica
+      ├── entities/
+      │   └── Robot.ts                 Sprite del robot + movimiento + acciones
+      ├── logic/
+      │   ├── CommandExecutor.ts       Motor de ejecucion secuencial
+      │   ├── commands.ts              Metadatos de cada comando (label, icono)
+      │   └── textCommandParser.ts     Parser de texto en espanol a Command[]
+      ├── levels/
+      │   ├── LevelManager.ts          Catalogo, builder de estado, victoria
+      │   ├── level1.ts ... level40.ts Definiciones de los 40 niveles
+      └── audio/
+          └── SoundManager.ts          Musica y SFX procedurales (Web Audio)
+
+================================================================================
+ 4. FLUJO DE ARRANQUE COMPLETO
+================================================================================
+
+  1. VITE arranca el servidor de desarrollo en http://localhost:3000.
+
+  2. index.html carga el script main.tsx como modulo ESM.
+
+  3. main.tsx:
+     - Crea el root de React con ReactDOM.createRoot()
+     - Envuelve <App /> en:
+       <React.StrictMode>
+         <AuthProvider>      ← contexto de autenticacion (token en localStorage)
+           <UserProvider>    ← contexto del usuario jugador seleccionado
+             <App />
+           </UserProvider>
+         </AuthProvider>
+       </React.StrictMode>
+
+  4. App.tsx:
+     - Gestiona un estado `screen` que puede ser:
+       'start' | 'auth' | 'verify-email' | 'email-verified' |
+       'user-select' | 'levels' | 'game' | 'settings' | 'profile'
+     - Renderiza condicionalmente la pantalla activa.
+     - Cuando screen='game', renderiza <GameScreen> que contiene:
+       a) <GameWrapper> — monta el canvas de Phaser
+       b) <InstructionPanel> — panel de comandos
+       c) <LevelHUD> — informacion del nivel
+
+  5. GameWrapper.tsx:
+     - useEffect crea la instancia Phaser UNA VEZ:
+       gameRef.current = createPhaserGame(containerRef.current, bridge)
+     - El `bridge` (EventEmitter) se pasa como prop desde GameScreen
+     - Escucha el evento 'level-loaded' para sincronizar datos del nivel
+       con el store de Zustand (maxCommands, levelName, etc.)
+
+  6. PhaserGame.ts — createPhaserGame():
+     - Crea Phaser.Game con config:
+       * Modo: AUTO (WebGL si disponible, Canvas como fallback)
+       * Escala: FIT + CENTER_BOTH (responsive)
+       * Tamano: 680x560 px
+       * Escenas: [BootScene, GameScene]
+     - Inyecta el bridge en game.registry.set('bridge', bridge)
+
+  7. BootScene.ts:
+     - create(): Dibuja 4 frames del robot con Graphics API:
+       * Frame 0: mirando abajo (frente)
+       * Frame 1: mirando arriba (espalda)
+       * Frame 2: mirando derecha
+       * Frame 3: mirando izquierda
+     - Genera textura 'robot' de 256x64 px (4 frames de 64x64)
+     - Registra sub-frames en el TextureManager
+     - Lanza GameScene con this.scene.start('GameScene')
+
+  8. GameScene.ts — create():
+     - Obtiene el bridge del registry
+     - Crea objetos Graphics para fondo, decoraciones y grid
+     - Instancia CommandExecutor y SoundManager
+     - Dibuja el fondo (cielo, estrellas, luna, colinas, hierba, nubes)
+     - Carga el nivel 0 (por defecto)
+     - Se suscribe a eventos del bridge:
+       'run-commands', 'reset-level', 'load-level',
+       'stop-music', 'set-mute', 'set-volume', 'start-music'
+     - Emite 'level-loaded' hacia React con datos del nivel
+
+  RESULTADO: React y Phaser estan corriendo en paralelo, comunicandose
+  a traves del EventEmitter compartido (bridge).
+
+================================================================================
+ 5. COMUNICACION REACT <-> PHASER (BRIDGE)
+================================================================================
+
+  El bridge es un Phaser.Events.EventEmitter creado en useGameBridge().
+  Se almacena con useRef para ser estable entre renders.
+
+  ┌────────────────────────────────────────────────────────────────────┐
+  │                        REACT → PHASER                             │
+  ├──────────────────────┬─────────────────────────────────────────────┤
+  │ Evento               │ Payload / Proposito                        │
+  ├──────────────────────┼─────────────────────────────────────────────┤
+  │ 'run-commands'       │ Command[] — ejecutar la cola de comandos   │
+  │ 'reset-level'        │ void — reiniciar el nivel actual           │
+  │ 'load-level'         │ number (indice) — cargar un nivel          │
+  │ 'set-mute'           │ boolean — silenciar/activar audio          │
+  │ 'set-volume'         │ number (0-1) — ajustar volumen             │
+  │ 'start-music'        │ void — iniciar musica de fondo             │
+  │ 'stop-music'         │ void — detener musica de fondo             │
+  └──────────────────────┴─────────────────────────────────────────────┘
+
+  ┌────────────────────────────────────────────────────────────────────┐
+  │                        PHASER → REACT                             │
+  ├──────────────────────┬─────────────────────────────────────────────┤
+  │ Evento               │ Payload / Proposito                        │
+  ├──────────────────────┼─────────────────────────────────────────────┤
+  │ 'level-loaded'       │ {levelId, maxCommands, maxAttempts, name,  │
+  │                      │  instructions, allowedCommands, textMode}  │
+  │ 'level-complete'     │ {levelId} — nivel superado                 │
+  │ 'robot-moved'        │ RobotState {row, col, direction}           │
+  │ 'command-executed'   │ {command, index} — comando ejecutado OK    │
+  │ 'command-failed'     │ {command, reason} — comando fallido        │
+  └──────────────────────┴─────────────────────────────────────────────┘
+
+  FLUJO DE UNA EJECUCION TIPICA:
+  1. Usuario arrastra comandos al panel → se anaden al queue (Zustand)
+  2. Pulsa "Ejecutar" → React emite 'run-commands' con el array Command[]
+  3. GameScene.handleRunCommands recibe los comandos
+  4. CommandExecutor.execute() itera secuencialmente con delays
+  5. Por cada comando, se llama applyCommand() que mueve/gira/enciende
+  6. Phaser emite 'command-executed' → React actualiza el indice activo
+  7. Si falla → 'command-failed', si victoria → 'level-complete'
+
+================================================================================
+ 6. SISTEMA DE NIVELES
+================================================================================
+
+  DEFINICION (LevelDef):
+  Cada nivel se define en src/game/levels/levelN.ts y exporta:
+    {
+      id: number,               // ID unico (1-40)
+      name: string,             // Nombre del nivel
+      grid: CellType[][],       // Cuadricula 2D
+      robotStart: RobotStart,   // {row, col, direction}
+      maxCommands: number,      // Max comandos permitidos
+      maxAttempts: number,      // Max intentos
+      varColors?: Record<string, VarColor>,    // Colores iniciales variables
+      victoryColors?: Record<string, VarColor>, // Colores objetivo
+      instructions?: string,    // Texto de ayuda
+      allowedCommands?: Command[], // Comandos disponibles
+      textMode?: boolean        // Si true, usa input de texto
+    }
+
+  TIPOS DE CELDA:
+    - 'floor'    → suelo normal (verde)
+    - 'light'    → luz (apagada=morada, encendida=cyan con rayos)
+    - 'wall'     → muro (no se puede pisar)
+    - 'plant'    → planta (destino de bucles)
+    - 'variable' → celda con color (red/blue/purple/none)
+    - 'empty'    → vacio (no renderizable)
+
+  CONDICIONES DE VICTORIA (en orden de prioridad):
+    1. Si hay variables → todos los varColor coinciden con victoryColors
+    2. Si hay planta → el robot llega a la celda planta
+    3. Si hay luces → todas las luces encendidas
+
+  CATALOGO (LevelManager):
+    - Importa los 40 niveles y los registra en un array LEVELS[]
+    - loadLevel(index) → carga un nivel por indice
+    - buildState(def) → construye el LevelState runtime (grid de Cell[][])
+    - checkVictory(state, def) → evalua las condiciones de victoria
+
+================================================================================
+ 7. ENTIDADES DEL JUEGO
+================================================================================
+
+  ROBOT (Robot.ts):
+    - Sprite Phaser con 4 frames direccionales (generados en BootScene)
+    - Estado: {row, col, direction}
+    - Metodos:
+      * moveForward(level) — avanza 1 celda si no hay muro/vacio/limites
+      * turnLeft()         — gira 90 grados a la izquierda
+      * turnRight()        — gira 90 grados a la derecha
+      * toggleLight(level) — enciende/apaga la luz de la celda actual
+      * copyVar(level)     — copia el color entre variables:
+        - 1a vez: registra la celda actual como "lastVarCell"
+        - 2a vez: copia el color de lastVarCell ← celda actual
+    - Animacion: tween de 280ms con ease Cubic.easeInOut
+
+  COMMAND EXECUTOR (CommandExecutor.ts):
+    - Ejecuta comandos uno a uno con un delay de 380ms entre ellos
+    - Maneja LOOP_UNTIL_PLANT:
+      * Si el robot esta en una planta → termina el bucle
+      * Si no → reinicia desde el indice 0
+      * Maximo 20 iteraciones (seguridad anti-bucle infinito)
+    - Emite eventos 'command-executed' y 'command-failed'
+
+================================================================================
+ 8. SISTEMA DE COMANDOS
+================================================================================
+
+  ENUM Command (game.types.ts):
+    MOVE_FORWARD     — "Avanzar" (avanza 1 celda)
+    TURN_LEFT        — "Girar izquierda" (90 grados)
+    TURN_RIGHT       — "Girar derecha" (90 grados)
+    LIGHT_TOGGLE     — "Luz" (toggle encender/apagar)
+    LOOP_UNTIL_PLANT — "Bucle" (repite hasta llegar a planta)
+    COPY_VAR         — "Copiar" (copia color entre variables)
+
+  METADATOS (commands.ts):
+    Cada comando tiene label, icono, color, bgColor y descripcion (en espanol).
+
+  MODO DRAG-AND-DROP (InstructionPanel.tsx):
+    - Paleta de comandos disponibles arriba
+    - Area de cola (queue) con slots vacios/llenos
+    - Reordenar con @dnd-kit (SortableContext + PointerSensor)
+    - Boton de eliminar (x) en cada chip
+
+  MODO TEXTO (textCommandParser.ts):
+    - Aliases en espanol: AVANZA, IZQUIERDA, DERECHA, LUZ, COPIAR, BUCLE
+    - Formato: "AVANZA 4, IZQUIERDA, LUZ" (separados por comas)
+    - Soporta repeticion: "AVANZA 3" = 3x MOVE_FORWARD
+    - Activo cuando el nivel tiene textMode=true
+
+================================================================================
+ 9. SISTEMA DE AUDIO
+================================================================================
+
+  SoundManager usa Web Audio API pura (sin archivos de audio):
+
+  ARQUITECTURA:
+    AudioContext → masterGain (volumen global) → destination (altavoces)
+
+  MUSICA DE FONDO (playMusicLoop):
+    - 8 compases a 120 BPM
+    - 4 capas simultaneas: melodia (square), bajo (sawtooth),
+      arpegio (triangle), percusion (ruido filtrado)
+    - Se repite en bucle con setTimeout
+
+  EFECTOS DE SONIDO:
+    - move()          — tono grave 180Hz + 220Hz (avanzar)
+    - turn()          — tono 440Hz + 330Hz (girar)
+    - lightOn()       — tono agudo 660Hz + 880Hz (encender)
+    - lightOff()      — tono medio (apagar)
+    - error()         — sawtooth grave + ruido (error)
+    - plantReached()  — escala ascendente 5 notas
+    - levelComplete() — melodia victoria (Do-Mi-Sol-Do agudo en acorde)
+    - levelStart()    — jingle 3 notas (330-440-523)
+    - buttonClick()   — tono corto 440Hz
+
+  CONTROL:
+    - toggleMute() — silencia/restaura con fade suave (0.05s)
+    - setVolume(v) — ajusta masterGain con ramp suave
+
+================================================================================
+10. ESTADO GLOBAL (ZUSTAND STORE)
+================================================================================
+
+  gameStore.ts — useGameStore():
+
+  Estado:
+    queue: Command[]           — cola de comandos del jugador
+    maxCommands: number        — limite de comandos para el nivel
+    currentLevel: number       — indice del nivel actual
+    isRunning: boolean         — ejecucion en curso
+    activeCommandIndex: number — indice del comando ejecutandose
+    levelName: string          — nombre del nivel
+    instructions: string       — instrucciones opcionales
+    attempts: number           — intentos usados
+    maxAttempts: number        — intentos maximos
+    allowedCommands: Command[] | null — comandos permitidos
+    textMode: boolean          — modo texto activo
+
+  Acciones principales:
+    addCommand(cmd)     — anade comando si no supera maxCommands
+    removeCommand(idx)  — elimina por indice
+    setQueue(queue)     — reemplaza toda la cola (para reordenar)
+    clearQueue()        — vacia cola y resetea indice
+    incrementAttempts() — incrementa contador de intentos
+
+================================================================================
+11. PANTALLAS Y NAVEGACION (REACT)
+================================================================================
+
+  El enrutamiento es por estado React (sin React Router):
+  App.tsx maneja `screen: Screen` con useState.
+
+  FLUJO DE NAVEGACION:
+    start → auth → verify-email (si registro)
+                 → user-select (si login OK)
+                    → levels → game ↔ settings
+                             → profile
+
+  PANTALLAS:
+    StartScreen          — Splash con boton "JUGAR"
+    AuthScreen           — Login/Registro con tabs
+    EmailVerification    — "Revisa tu email" + boton reenviar
+    EmailVerifiedScreen  — "Tu email fue verificado" (redirect ?verified=ok)
+    UserSelectScreen     — Elegir/crear jugador (auto-skip si solo hay 1)
+    LevelSelectScreen    — Mapa horizontal scrolleable con 4 mundos
+    GameScreen           — Canvas Phaser + panel de comandos + HUD
+    SettingsScreen       — Opciones de audio (mute + slider volumen)
+    TutorProfileScreen   — Perfil tutor + CRUD de usuarios/jugadores
+
+  LEVEL SELECT SCREEN:
+    - 4 zonas con tema visual unico (colores, decoraciones, nubes)
+    - Camino SVG curvo con nodos circulares para cada nivel
+    - Nodos: completado (3 estrellas), activo (pulso), bloqueado (candado)
+    - Scroll horizontal infinito con flechas de navegacion
+    - Auto-scroll al siguiente nivel disponible al montar
+
+================================================================================
+12. SISTEMA DE AUTENTICACION
+================================================================================
+
+  AuthContext.tsx:
+    - Almacena token y tutor en localStorage
+    - setAuth(token, tutor) → persiste en localStorage + estado
+    - clearAuth() → limpia localStorage + estado
+    - useAuth() hook para acceder desde cualquier componente
+
+  UserContext.tsx:
+    - Almacena el usuario (jugador) seleccionado en memoria
+    - setSelectedUser(user | null)
+    - useUser() hook para acceder
+
+  Flujo de auth:
+    1. Registro → POST /api/v1/auth/signup → email verificacion
+    2. Login → POST /api/v1/auth/login → recibe {token, tutor}
+    3. Token se usa como Bearer en todas las llamadas autenticadas
+    4. Logout → POST /api/v1/auth/logout → invalida token
+
+================================================================================
+13. SERVICIO API (service.ts)
+================================================================================
+
+  URL base: https://lightbot.duckdns.org/api/v1
+  (En emulador Android: http://10.0.2.2:3333/api/v1)
+
+  ENDPOINTS:
+    Auth:
+      signup(fullName, email, password, confirm) → POST /auth/signup
+      login(email, password) → POST /auth/login → {token, tutor}
+      logout(token) → POST /auth/logout
+      resendVerification(email) → POST /auth/resend-verification
+
+    Profile:
+      getProfile(token) → GET /account/profile
+
+    Users (CRUD):
+      getUsers(token) → GET /users
+      getUser(token, id) → GET /users/:id
+      createUser(token, {name}) → POST /users
+      updateUser(token, id, {name?, currentLevel}) → PUT /users/:id
+      deleteUser(token, id) → DELETE /users/:id
+
+  handleResponse<T>():
+    - Si !res.ok: parsea errores VineJS ({errors:[{message}]}) o generico
+    - Si OK: devuelve res.json()
+
+================================================================================
+14. CONFIGURACION Y CONSTANTES
+================================================================================
+
+  gameConfig.ts:
+    WIDTH: 680           — ancho del canvas Phaser
+    HEIGHT: 560          — alto del canvas Phaser
+    CELL_SIZE: 64        — tamano de cada celda en pixeles
+    GRID_OFFSET_X: 24    — offset X del grid
+    GRID_OFFSET_Y: 24    — offset Y del grid
+    MOVE_DURATION_MS: 280 — duracion de animacion de movimiento
+    COMMAND_DELAY_MS: 380 — pausa entre comandos consecutivos
+    COLORS: {...}         — paleta de colores hex para Phaser Graphics
+
+  TOTAL_LEVELS: 40 (definido en App.tsx)
+  MAX_LOOP_ITERATIONS: 20 (seguridad en CommandExecutor.ts)
+  FRAME_SIZE: 64 (tamano de cada frame del robot sprite)
+
+================================================================================
+ FIN DE LA DOCUMENTACION WEB
+================================================================================

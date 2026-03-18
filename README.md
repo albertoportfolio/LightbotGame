@@ -1,134 +1,293 @@
-# 🤖 Lightbot — React + Phaser 3
+# Lightbot
 
-A Lightbot-style puzzle game built with **React 18 + Vite + Phaser 3 + Tailwind CSS + TypeScript**.
+Juego de puzzles estilo Lightbot donde los jugadores programan un robot mediante comandos de arrastrar y soltar (o entrada de texto en español) para navegar por una cuadrícula, encender luces y resolver desafíos lógicos.
+
+El proyecto es un **monorepo** con tres partes: el juego web (frontend), la API REST (backend) y la app móvil (wrapper nativo).
 
 ---
 
-## 📦 Installation
+## Estructura del monorepo
 
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Start dev server
-npm run dev
-# → http://localhost:3000
-
-# 3. Build for production
-npm run build
+```
+lightbot/
+├── src/                  # Frontend — React + Phaser 3 (juego web)
+├── lightbotAPI/          # Backend  — AdonisJS REST API
+├── mobile/               # Mobile   — Expo + React Native (WebView wrapper)
+├── public/               # Assets estáticos del frontend
+├── dist/                 # Build de producción del frontend
+└── package.json          # Dependencias del frontend
 ```
 
-### Required dependencies (already in package.json)
+---
 
-| Package | Purpose |
-|---|---|
-| `phaser` | Game engine (canvas rendering, tweens, events) |
-| `@dnd-kit/core` | Drag-and-drop primitives |
-| `@dnd-kit/sortable` | Sortable list for instruction queue |
-| `@dnd-kit/utilities` | CSS transform helpers |
-| `zustand` | Lightweight global state for React UI |
-| `tailwindcss` | Utility CSS for all React UI (outside canvas) |
+## Tech Stack
+
+| Capa | Tecnologías |
+|------|-------------|
+| **Frontend** | React 18, TypeScript, Vite, Phaser 3, Zustand, Tailwind CSS, @dnd-kit |
+| **Backend** | AdonisJS 7, Lucid ORM, VineJS, Access Tokens (Bearer), Nodemailer |
+| **Mobile** | Expo 52, React Native 0.76, Expo Router, React Native WebView |
+| **Base de datos** | PostgreSQL 
 
 ---
 
-## 🏗 Architecture
+## Instalación y ejecución
+
+### Frontend (juego web)
+
+```bash
+# Desde la raíz del proyecto
+npm install
+npm run dev        # → http://localhost:3000
+npm run build      # TypeScript check + build de producción
+npm run preview    # Previsualizar build
+```
+
+### Backend (API)
+
+```bash
+cd lightbotAPI
+npm install
+
+# Configurar variables de entorno
+cp .env.example .env
+# Editar .env con los datos de tu BD, SMTP, etc.
+
+# Ejecutar migraciones
+node ace migration:run
+
+# Iniciar servidor de desarrollo
+npm run dev        # → http://localhost:3333
+```
+
+### Mobile (app nativa)
+
+```bash
+cd mobile
+npm install
+npx expo start          # Inicia Expo dev server
+npx expo run:android    # Ejecuta en Android (requiere emulador o dispositivo)
+npx expo run:ios        # Ejecuta en iOS (solo macOS)
+```
+
+> La app móvil carga el juego web dentro de un WebView. En desarrollo apunta a `localhost:3000` (o `10.0.2.2:3000` en emulador Android). En producción apunta a la URL configurada en `mobile/src/config.ts`.
+
+---
+
+## Arquitectura del Frontend
 
 ```
 src/
-├── components/Game/
-│   ├── GameWrapper.tsx      # Mounts/destroys Phaser in a div (useEffect cleanup)
-│   ├── InstructionPanel.tsx # Drag-and-drop command palette + queue
-│   └── LevelHUD.tsx         # Level name, step counter
+├── components/
+│   ├── Game/
+│   │   ├── GameWrapper.tsx        # Monta/destruye Phaser en un div
+│   │   ├── InstructionPanel.tsx   # Paleta de comandos + cola drag-and-drop
+│   │   └── LevelHUD.tsx           # Nombre del nivel, contador de pasos
+│   ├── AuthScreen.tsx             # Pantalla de login/registro
+│   ├── EmailVerificationScreen.tsx
+│   ├── EmailVerifiedScreen.tsx
+│   ├── LevelSelectScreen.tsx      # Mapa de mundos con nodos de niveles
+│   ├── SettingsScreen.tsx         # Ajustes de audio y preferencias
+│   ├── TutorProfileScreen.tsx     # Perfil del tutor autenticado
+│   └── UserSelectScreen.tsx       # Selección/creación de alumnos
+├── context/
+│   ├── AuthContext.tsx             # Estado global de autenticación (tutor + token)
+│   └── UserContext.tsx             # Estado global del usuario/alumno activo
 ├── game/
-│   ├── PhaserGame.ts        # Phaser.Game factory (injects bridge into registry)
+│   ├── PhaserGame.ts              # Factory de Phaser.Game (inyecta bridge en registry)
 │   ├── scenes/
-│   │   ├── BootScene.ts     # Asset preload → transitions to GameScene
-│   │   └── GameScene.ts     # Grid rendering, command dispatch, win detection
+│   │   ├── BootScene.ts           # Genera assets procedurales → transición a GameScene
+│   │   └── GameScene.ts           # Renderizado de cuadrícula, despacho de comandos, detección de victoria
 │   ├── entities/
-│   │   └── Robot.ts         # Robot graphics + move/turn/toggleLight methods
+│   │   └── Robot.ts               # Sprite del robot + métodos move/turn/toggleLight/copyVar
 │   ├── levels/
-│   │   ├── LevelManager.ts  # Level catalogue + LevelState builder
-│   │   ├── level1.ts        # "First Steps"
-│   │   └── level2.ts        # "The Corner"
+│   │   ├── LevelManager.ts        # Catálogo de 40 niveles en 4 mundos
+│   │   └── level1.ts … level40.ts # Definiciones individuales de cada nivel
 │   ├── logic/
-│   │   ├── CommandExecutor.ts # Sequential command runner using Phaser timers
-│   │   └── commands.ts        # Enum, metadata (icons, colors)
+│   │   ├── CommandExecutor.ts     # Ejecutor secuencial con soporte LOOP_UNTIL_PLANT
+│   │   ├── commands.ts            # Enum Command + metadatos (iconos, colores)
+│   │   └── textCommandParser.ts   # Parser de comandos en texto español
+│   ├── audio/
+│   │   └── SoundManager.ts        # Audio procedural Web Audio API (música + SFX)
 │   └── constants/
-│       └── gameConfig.ts    # Canvas size, cell size, colors, timing
+│       └── gameConfig.ts          # Tamaño canvas (680×560), celdas (64px), timing, colores
 ├── hooks/
-│   └── useGameBridge.ts     # Shared EventEmitter + typed emit/on helpers
+│   └── useGameBridge.ts           # EventEmitter compartido React ↔ Phaser
+├── services/
+│   └── service.ts                 # Cliente HTTP para la API (auth, users, profile)
 ├── store/
-│   └── gameStore.ts         # Zustand store (queue, isRunning, activeIndex…)
+│   └── gameStore.ts               # Zustand store (cola de comandos, ejecución, intentos)
 └── types/
-    └── game.types.ts        # All shared types: Command, CellType, Direction…
+    └── game.types.ts              # Tipos compartidos: Command, CellType, Direction, LevelDef…
 ```
+
+### Comunicación React ↔ Phaser
+
+Toda la comunicación entre React y Phaser pasa por un **`Phaser.Events.EventEmitter`** compartido — sin acceso directo al DOM.
+
+```
+React  ──emit──►  run-commands, reset-level, load-level, set-mute, set-volume
+Phaser ──emit──►  level-loaded, level-complete, robot-moved, command-executed, command-failed
+```
+
+El emitter se crea en `useGameBridge`, se pasa como prop a `GameWrapper` y se almacena en `game.registry` para que cualquier escena Phaser lo acceda con `this.registry.get('bridge')`.
 
 ---
 
-## 🔌 React ↔ Phaser Communication
-
-All cross-boundary communication goes through a **shared `Phaser.Events.EventEmitter`** — no direct DOM access.
+## Arquitectura del Backend
 
 ```
-React  ──emit──►  run-commands (Command[])
-React  ──emit──►  reset-level
-React  ──emit──►  load-level (index: number)
-
-Phaser ──emit──►  level-loaded  ({ levelId, maxCommands })
-Phaser ──emit──►  level-complete ({ levelId })
-Phaser ──emit──►  robot-moved   (RobotState)
-Phaser ──emit──►  command-executed ({ command, index })
-Phaser ──emit──►  command-failed   ({ command, reason })
+lightbotAPI/
+├── app/
+│   ├── controllers/
+│   │   ├── access_token_controller.ts     # Login (crear token) y logout
+│   │   ├── new_account_controller.ts      # Registro de tutores
+│   │   ├── email_verification_controller.ts # Verificar/reenviar email
+│   │   ├── profile_controller.ts          # Perfil del tutor autenticado
+│   │   └── users_controller.ts            # CRUD de alumnos del tutor
+│   ├── models/
+│   │   ├── tutors.ts                      # Modelo Tutor (auth + relación 1:N users)
+│   │   └── user.ts                        # Modelo User/Alumno (relación N:1 tutor)
+│   ├── validators/                        # Validación con VineJS
+│   ├── transformers/                      # Filtran campos sensibles en respuestas
+│   ├── middleware/                         # Auth, ForceJSON, SilentAuth, ContainerBindings
+│   ├── services/
+│   │   └── email_verification_service.ts  # Nodemailer: genera tokens y envía emails HTML
+│   └── exceptions/
+├── database/
+│   ├── schema.ts                          # Esquemas auto-generados (no editar)
+│   └── migrations/                        # Creación de tablas y verificación de email
+├── start/
+│   ├── routes.ts                          # Definición de rutas /api/v1
+│   ├── kernel.ts                          # Registro de middleware
+│   ├── env.ts                             # Validación de variables de entorno
+│   └── validator.ts                       # Transform global Date → Luxon DateTime
+├── config/
+│   └── auth.ts                            # Guards: api (tokens) y web (sesiones)
+└── providers/
+    └── api_provider.ts                    # Serializer que envuelve respuestas en { data: ... }
 ```
 
-The emitter is created once in `useGameBridge` (via `useRef`), passed to `GameWrapper` as a prop, and stored in `game.registry` so every Phaser scene can access it with `this.registry.get('bridge')`.
+### Endpoints de la API
+
+Todos bajo el prefijo `/api/v1`:
+
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| `POST` | `/auth/signup` | No | Registrar nuevo tutor |
+| `POST` | `/auth/login` | No | Iniciar sesión (devuelve Bearer token) |
+| `POST` | `/auth/logout` | Si | Cerrar sesión (elimina token) |
+| `GET` | `/auth/verify-email?token=...` | No | Verificar email (redirige al frontend) |
+| `POST` | `/auth/resend-verification` | No | Reenviar email de verificación |
+| `GET` | `/account/profile` | Si | Obtener perfil del tutor |
+| `GET` | `/users` | Si | Listar alumnos del tutor |
+| `POST` | `/users` | Si | Crear alumno |
+| `GET` | `/users/:id` | Si | Obtener alumno por ID |
+| `PUT` | `/users/:id` | Si | Actualizar alumno |
+| `DELETE` | `/users/:id` | Si | Eliminar alumno |
+
+### Flujo de autenticación
+
+1. **Registro** → `POST /auth/signup` crea el tutor y envía email con token de verificación
+2. **Verificación** → El tutor hace clic en el enlace del email → `GET /auth/verify-email?token=...`
+3. **Login** → `POST /auth/login` valida credenciales + email verificado → devuelve Bearer token (30 días)
+4. **Peticiones autenticadas** → Header `Authorization: Bearer <token>`
 
 ---
 
-## 🎮 How to Play
+## Arquitectura Mobile
 
-1. Click command buttons in the **Available Commands** palette to add them to the queue (or drag to reorder).
-2. Press **▶ Execute** — the robot follows your instructions step by step.
-3. Toggle all 💡 yellow tiles to win the level.
-4. Press **⏹ Reset** at any time to restart.
+```
+mobile/
+├── app/
+│   ├── _layout.tsx      # Layout raíz Expo Router (Stack sin header)
+│   └── index.tsx         # Pantalla principal → renderiza WebViewGame
+├── src/
+│   ├── config.ts         # URL del juego (dev: localhost / prod: dominio)
+│   └── WebViewGame.tsx   # WebView fullscreen + modo inmersivo + botón atrás Android
+└── android/              # Proyecto nativo Android (generado por Expo prebuild)
+```
+
+La app móvil es un **wrapper WebView** que carga el juego web tal cual dentro de React Native. Esto permite mantener un solo codebase del juego para web y móvil.
 
 ---
 
-## ➕ Adding a New Level
+## Sistema de niveles
 
-Create `src/game/levels/level3.ts`:
+El juego tiene **40 niveles** organizados en **4 mundos**:
+
+| Mundo | Nombre | Niveles | Mecánicas |
+|-------|--------|---------|-----------|
+| 1 | Tierra de Luces | 1–10 | Movimiento básico, giros, encender luces |
+| 2 | Islas del Código | 11–20 | Bucles (`LOOP_UNTIL_PLANT`), plantas |
+| 3 | Galaxia Robot | 21–30 | Variables de color, `COPY_VAR` |
+| 4 | Volcán Digital | 31–40 | Combinación de todas las mecánicas |
+
+### Condiciones de victoria (comprobadas en orden)
+1. Los colores de las variables coinciden con los objetivos
+2. El robot llega a la planta
+3. Todas las luces están encendidas
+
+### Tipos de celda
+`floor`, `light`, `wall`, `plant`, `variable`, `empty`
+
+### Comandos disponibles
+`MOVE_FORWARD`, `TURN_LEFT`, `TURN_RIGHT`, `LIGHT_TOGGLE`, `LOOP_UNTIL_PLANT`, `COPY_VAR`
+
+---
+
+## Cómo jugar
+
+1. Selecciona comandos de la paleta (clic o arrastrar) para construir la cola de instrucciones
+2. Pulsa **Ejecutar** — el robot sigue las instrucciones paso a paso
+3. Enciende todas las luces o cumple la condición de victoria del nivel
+4. Pulsa **Reiniciar** en cualquier momento para volver a empezar
+5. En niveles con modo texto, escribe comandos en español (ej: "avanzar", "girar izquierda", "luz")
+
+---
+
+## Añadir un nuevo nivel
+
+1. Crear `src/game/levels/levelN.ts`:
 
 ```ts
-import { LevelDefinition, Direction } from '../../types/game.types'
+import { LevelDef, Direction } from '../../types/game.types'
 
-const level3: LevelDefinition = {
-  id: 3,
-  name: 'My Level',
+const levelN: LevelDef = {
+  id: N,
+  name: 'Nombre del nivel',
   maxCommands: 10,
+  maxAttempts: 5,
   robotStart: { row: 0, col: 0, direction: Direction.RIGHT },
+  allowedCommands: ['MOVE_FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'LIGHT_TOGGLE'],
   grid: [
-    ['floor', 'light', 'floor'],
-    ['floor', 'floor', 'light'],
+    [{ type: 'floor' }, { type: 'light' }, { type: 'floor' }],
+    [{ type: 'floor' }, { type: 'floor' }, { type: 'light' }],
   ],
 }
 
-export default level3
+export default levelN
 ```
 
-Then register it in `LevelManager.ts`:
-
-```ts
-import level3 from './level3'
-const LEVELS = [level1, level2, level3]
-```
-
-And update `TOTAL_LEVELS = 3` in `App.tsx`.
+2. Registrarlo en `LevelManager.ts` importándolo y añadiéndolo al array `LEVELS`
+3. Actualizar el mundo correspondiente en `LevelSelectScreen.tsx`
 
 ---
 
-## 🧩 Adding a New Command
+## Añadir un nuevo comando
 
-1. Add the enum value to `Command` in `game.types.ts`
-2. Add metadata to `COMMAND_META` in `commands.ts`
-3. Handle the case in `GameScene.applyCommand()`
-4. Add the action method on `Robot` if needed
+1. Añadir el valor al enum `Command` en `game.types.ts`
+2. Añadir metadatos a `COMMAND_META` en `commands.ts`
+3. Implementar el caso en `GameScene.applyCommand()`
+4. Añadir el método de acción en `Robot` si es necesario
+5. Añadir alias en español en `textCommandParser.ts`
+
+---
+
+## Licencia
+
+MIT
+
+## Autor
+
+albertoportfolio

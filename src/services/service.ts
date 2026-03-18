@@ -49,6 +49,14 @@ interface UsersListResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Callback global que se invoca cuando el servidor responde 401 (token inválido/caducado/ausente)
+let onUnauthorizedCallback: (() => void) | null = null
+
+// Registra el callback que se ejecutará ante un 401. Se llama desde App.tsx al montar.
+export function setOnUnauthorized(cb: () => void) {
+  onUnauthorizedCallback = cb
+}
+
 // Genera los headers con Content-Type y Authorization Bearer para peticiones autenticadas
 function authHeaders(token: string): HeadersInit {
   return {
@@ -58,8 +66,12 @@ function authHeaders(token: string): HeadersInit {
 }
 
 // Procesa la respuesta HTTP: lanza Error con mensaje legible si no es ok (incluyendo errores de VineJS)
+// Si el servidor responde 401, invoca el callback de sesión expirada antes de lanzar el error
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
+    if (res.status === 401) {
+      onUnauthorizedCallback?.()
+    }
     const body = await res.json().catch(() => ({ message: res.statusText }))
     // VineJS validation errors come as { errors: [{ message, field }] }
     if (Array.isArray(body.errors) && body.errors.length > 0) {
@@ -111,12 +123,17 @@ export async function login(
 }
 
 // Cierra la sesión del tutor invalidando el token en el servidor
+// Si el token ya expiró (401), invoca el callback de sesión expirada y no lanza error
 export async function logout(token: string): Promise<void> {
   const res = await fetch(`${API_URL}/auth/logout`, {
     method: 'POST',
     headers: authHeaders(token),
   })
   if (!res.ok) {
+    if (res.status === 401) {
+      onUnauthorizedCallback?.()
+      return
+    }
     const error = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error(error.message ?? res.statusText)
   }
@@ -193,6 +210,10 @@ export async function deleteUser(
     headers: authHeaders(token),
   })
   if (!res.ok) {
+    if (res.status === 401) {
+      onUnauthorizedCallback?.()
+      return
+    }
     const error = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error(error.message ?? res.statusText)
   }

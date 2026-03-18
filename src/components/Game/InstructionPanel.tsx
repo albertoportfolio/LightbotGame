@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import Phaser from 'phaser'
+// DND es la dependencia que ayuda a soltar y arrastrar los comandos
 import {
   DndContext,
   DragEndEvent,

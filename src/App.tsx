@@ -14,7 +14,7 @@ import { useUser } from './context/UserContext'
 import { EmailVerificationScreen } from './components/EmailVerificationScreen'
 import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
-import { updateUser } from './services/service'
+import { updateUser, setOnUnauthorized } from './services/service'
 
 // Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
 export const LEVEL_INFO = [
@@ -420,8 +420,23 @@ export default function App() {
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })
   const [hasStarted, setHasStarted] = useState(false)
   const { selectedUser, setSelectedUser } = useUser()
-  const { token } = useAuth()
+  const { token, clearAuth } = useAuth()
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('')
+
+  // TODO(human): Implementa handleUnauthorized — se invoca cuando cualquier llamada API
+  // recibe un 401 (token expirado, inválido o ausente).
+
+  const handleUnauthorized = () => {
+    clearAuth();
+    setSelectedUser(null);
+    setScreen('start')
+    setHasStarted(false)
+  }
+
+  // Registrar el callback de sesión expirada para que service.ts pueda notificar a React
+  useEffect(() => {
+    setOnUnauthorized(handleUnauthorized)
+  }, [clearAuth])
 
   // Detect ?verified=ok from email verification redirect
   useEffect(() => {

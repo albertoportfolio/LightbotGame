@@ -12,7 +12,7 @@ export default class EmailVerificationController {
    * Redirects to the frontend with ?verified=ok or ?verified=error
    */
   async verify({ request, response }: HttpContext) {
-    const frontendUrl = env.get('FRONTEND_URL')
+    const frontendUrl = 'http://localhost:3000'
     const token = request.input('token')
 
     if (!token) {

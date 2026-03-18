@@ -1,5 +1,6 @@
 import { Command } from '../../types/game.types';
 
+// Metadatos visuales de un comando: etiqueta, icono, colores para la UI
 export interface CommandMeta {
   label: string;
   icon: string;
@@ -8,6 +9,7 @@ export interface CommandMeta {
   description: string;
 }
 
+// Diccionario que asocia cada Command con su representación visual (label, icono, color, descripción)
 export const COMMAND_META: Record<Command, CommandMeta> = {
   [Command.MOVE_FORWARD]: {
     label: 'Avanzar',
@@ -53,4 +55,5 @@ export const COMMAND_META: Record<Command, CommandMeta> = {
 },
 };
 
+// Array con todos los comandos disponibles — se usa como fallback cuando un nivel no restringe comandos
 export const ALL_COMMANDS: Command[] = Object.values(Command);

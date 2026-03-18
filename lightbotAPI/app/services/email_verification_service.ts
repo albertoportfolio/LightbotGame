@@ -5,6 +5,7 @@ import type Tutors from '#models/tutors'
 
 
 
+// Configuración del transporte SMTP para enviar correos de verificación vía nodemailer
 const transporter = nodemailer.createTransport({
   host: env.get('SMTP_HOST'),
   port: env.get('SMTP_PORT'),
@@ -19,16 +20,12 @@ const transporter = nodemailer.createTransport({
  
 } as nodemailer.TransportOptions)
 
-/**
- * Generate a cryptographically secure 64-character hex token.
- */
+// Genera un token criptográficamente seguro de 64 caracteres hexadecimales para verificación de email
 export function generateVerificationToken(): string {
   return randomBytes(32).toString('hex')
 }
 
-/**
- * Send a verification email to the tutor with a confirmation link.
- */
+// Envía un correo HTML al tutor con un enlace de verificación que apunta a /api/v1/auth/verify-email
 export async function sendVerificationEmail(tutor: Tutors, token: string): Promise<void> {
   const verifyUrl = `${env.get('APP_URL')}/api/v1/auth/verify-email?token=${token}`
   const from = env.get('SMTP_FROM')

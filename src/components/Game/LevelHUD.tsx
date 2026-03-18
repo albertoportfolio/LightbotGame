@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react'
 import Phaser from 'phaser'
 import { useGameStore } from '../../store/gameStore'
 
+// Props del HUD superior: recibe el bridge para escuchar eventos de ejecución
 interface LevelHUDProps {
   bridge: Phaser.Events.EventEmitter
 }
 
+// HUD del nivel: muestra nombre, instrucciones, comandos usados/máximo, intentos restantes y paso activo
 export function LevelHUD({ bridge }: LevelHUDProps) {
   const { currentLevel, queue, maxCommands, levelName, instructions } = useGameStore()
   const [activeCmd, setActiveCmd] = useState(-1)

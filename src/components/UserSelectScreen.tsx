@@ -8,6 +8,7 @@ interface Props {
   onBack: () => void
 }
 
+// Pantalla de selección de jugador: lista los usuarios del tutor. Si hay solo 1, auto-selecciona y continúa
 export function UserSelectScreen({ onContinue, onBack }: Props) {
   const { token, tutor } = useAuth()
   const { setSelectedUser } = useUser()
@@ -253,6 +254,7 @@ export function UserSelectScreen({ onContinue, onBack }: Props) {
 
 // ─── Formulario de creación reutilizable ─────────────────────────────────────
 
+// Formulario reutilizable para crear un jugador nuevo con nombre
 function CreateForm({
   name,
   onNameChange,

@@ -24,6 +24,7 @@ import { parseTextCommands } from '../../game/logic/textCommandParser'
 
 // ─── Individual command chip ─────────────────────────────────────────────────
 
+// Props de un chip de comando draggeable en la cola
 interface ChipProps {
   command: Command
   id: string
@@ -33,6 +34,7 @@ interface ChipProps {
   onRemove?: () => void
 }
 
+// Chip visual de un comando en la cola: draggeable con dnd-kit, resaltable cuando está activo
 function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: ChipProps) {
   const meta = COMMAND_META[command]
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -78,6 +80,7 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
 
 // ─── Source palette (available commands) ─────────────────────────────────────
 
+// Paleta de comandos disponibles: botones que al hacer click añaden un comando a la cola
 function CommandPalette() {
   const { addCommand, queue, maxCommands, allowedCommands } = useGameStore()
   const isFull = queue.length >= maxCommands
@@ -121,6 +124,7 @@ function CommandPalette() {
 
 // ─── Droppable queue area ─────────────────────────────────────────────────────
 
+// Props del área droppable donde el jugador ordena su cola de comandos
 interface QueueAreaProps {
   slots: Array<{ id: string; command: Command }>
   activeCommandIndex: number
@@ -129,6 +133,7 @@ interface QueueAreaProps {
   onRemove: (index: number) => void
 }
 
+// Área droppable que muestra la cola de comandos + slots vacíos. Los chips se pueden reordenar por drag
 function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove }: QueueAreaProps) {
   const { setNodeRef } = useDroppable({ id: 'queue-droppable' })
 
@@ -175,6 +180,7 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
 //PANEL DE TEXTO
 
 
+// Panel alternativo para niveles en modo texto: el jugador escribe comandos en español en un textarea
 function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, onReset: () => void }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -271,6 +277,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
 
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
+// Props del panel principal de instrucciones
 interface InstructionPanelProps {
   bridge: Phaser.Events.EventEmitter
   onRun: () => void
@@ -279,6 +286,7 @@ interface InstructionPanelProps {
   showNextLevel: boolean
 }
 
+// Panel principal de instrucciones: modo drag-and-drop o modo texto según el nivel. Gestiona DnD, ejecución y reset
 export function InstructionPanel({
   bridge,
   onRun,

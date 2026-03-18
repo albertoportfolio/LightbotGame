@@ -10,6 +10,7 @@ interface Props {
 
 type Tab = 'login' | 'register'
 
+// Pantalla de autenticación: tabs de login/registro, valida credenciales contra la API y guarda el token
 export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
   const { setAuth } = useAuth()
   const [tab, setTab] = useState<Tab>('login')
@@ -231,6 +232,7 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
 
 // ─── Helpers UI ──────────────────────────────────────────────────────────────
 
+// Campo de formulario reutilizable con label, estilo glassmorphism y efecto de foco
 function InputField({
   label,
   type,
@@ -272,6 +274,7 @@ function InputField({
   )
 }
 
+// Botón de submit con estado de carga y estilo gradiente
 function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
   return (
     <button

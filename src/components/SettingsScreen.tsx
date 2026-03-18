@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
+// Estado de las opciones de audio (mute + volumen)
 export interface SettingsState {
   muted: boolean
   volume: number  // 0.0 – 1.0
@@ -14,6 +15,7 @@ interface Props {
 }
 
 // ─── SettingsScreen ───────────────────────────────────────────────────────────
+// Pantalla de opciones: toggle de música, slider de volumen y botón de volver
 export function SettingsScreen({ settings, onToggleMute, onVolumeChange, onBack }: Props) {
   const { muted, volume } = settings
 
@@ -118,10 +120,12 @@ export function SettingsScreen({ settings, onToggleMute, onVolumeChange, onBack 
 
 // ─── Helpers UI ───────────────────────────────────────────────────────────────
 
+// Línea divisoria horizontal semi-transparente
 function Divider() {
   return <div className="w-full h-px" style={{ background: 'rgba(255,255,255,0.1)' }} />
 }
 
+// Sección agrupada con título (ej: "Sonido") que envuelve sus opciones
 function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-4">
@@ -131,6 +135,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
   )
 }
 
+// Fila de opción con icono, título, subtítulo y contenido a la derecha (toggle, slider, etc.)
 function Row({ icon, title, subtitle, children }: {
   icon: string; title: string; subtitle: string; children?: React.ReactNode
 }) {
@@ -148,6 +153,7 @@ function Row({ icon, title, subtitle, children }: {
   )
 }
 
+// Toggle switch animado (on/off) con estilo gradiente
 function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
   return (
     <button

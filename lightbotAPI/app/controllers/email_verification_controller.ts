@@ -4,6 +4,7 @@ import { DateTime } from 'luxon'
 import { generateVerificationToken, sendVerificationEmail } from '#services/email_verification_service'
 import env from '#start/env'
 
+// Controlador de verificación de email: verifica el token y permite reenviar el correo
 export default class EmailVerificationController {
   /**
    * Verify email using the token sent via email.

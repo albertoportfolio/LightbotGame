@@ -3,8 +3,10 @@ import { loginValidator } from '#validators/tutors'
 import type { HttpContext } from '@adonisjs/core/http'
 import TutorTransformer from '#transformers/tutor_transformer'
 
+// Controlador de autenticación por token: login (crear token) y logout (eliminar token)
 export default class AccessTokenController {
 
+  // POST /auth/login — Valida credenciales, comprueba email verificado y genera un token JWT de 30 días
   async store({ request, response, serialize }: HttpContext) {
     const { email, password } = await request.validateUsing(loginValidator)
     const tutor = await Tutors.verifyCredentials(email, password)
@@ -24,6 +26,7 @@ export default class AccessTokenController {
     })
   }
 
+  // POST /auth/logout — Elimina el token de acceso actual del tutor autenticado
   async destroy({ auth }: HttpContext) {
     const tutor = auth.getUserOrFail()
     if (tutor.currentAccessToken) {

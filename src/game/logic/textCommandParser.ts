@@ -1,5 +1,6 @@
 import { Command } from '../../types/game.types'
 
+// Mapeo de palabras en español a su Command correspondiente — usado en modo texto
 const ALIASES: Record<string, Command> = {
   'AVANZA':   Command.MOVE_FORWARD,
   'IZQUIERDA':   Command.TURN_LEFT,
@@ -9,11 +10,13 @@ const ALIASES: Record<string, Command> = {
   'BUCLE':   Command.LOOP_UNTIL_PLANT,
 }
 
+// Resultado de parsear texto: lista de comandos válidos o mensaje de error
 export interface ParseResult {
   commands: Command[]
   error: string | null
 }
 
+// Convierte un string de texto libre ("AVANZA 3, IZQUIERDA, LUZ") en un array de Commands
 export function parseTextCommands(input: string): ParseResult {
   const commands: Command[] = []
   const tokens = input.split(',').map(t => t.trim()).filter(Boolean)

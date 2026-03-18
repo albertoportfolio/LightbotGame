@@ -2,6 +2,7 @@ interface Props {
   onGoToLogin: () => void
 }
 
+// Pantalla de confirmación: se muestra tras verificar el email con éxito. Redirige al login
 export function EmailVerifiedScreen({ onGoToLogin }: Props) {
   return (
     <div

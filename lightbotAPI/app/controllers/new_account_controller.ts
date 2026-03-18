@@ -3,7 +3,9 @@ import { signupValidator } from '#validators/tutors'
 import type { HttpContext } from '@adonisjs/core/http'
 import { generateVerificationToken, sendVerificationEmail } from '#services/email_verification_service'
 
+// Controlador de registro de nuevos tutores
 export default class NewAccountController {
+  // POST /auth/signup — Crea un tutor, genera un token de verificación y envía el email de confirmación
   async store({ request, response }: HttpContext) {
     const { fullName, email, password } = await request.validateUsing(signupValidator)
 

@@ -2,8 +2,10 @@ import Phaser from 'phaser'
 import { Command } from '../../types/game.types'
 import { GAME_CONFIG } from '../constants/gameConfig'
 
+// Límite de seguridad para evitar bucles infinitos en LOOP_UNTIL_PLANT
 const MAX_LOOP_ITERATIONS = 20
 
+// Ejecuta secuencialmente la cola de comandos con delays entre cada paso, gestionando bucles y errores
 export class CommandExecutor {
   private emitter: Phaser.Events.EventEmitter
   private scene: Phaser.Scene
@@ -14,6 +16,7 @@ export class CommandExecutor {
     this.emitter = emitter
   }
 
+  // Devuelve true si hay una ejecución de comandos en curso
   get running() { return this.isRunning }
 
   /**
@@ -88,5 +91,6 @@ export class CommandExecutor {
     this.scene.time.delayedCall(100, runNext)
   }
 
+  // Detiene la ejecución de comandos inmediatamente
   stop() { this.isRunning = false }
 }

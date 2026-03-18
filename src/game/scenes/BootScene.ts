@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 
 const FRAME_SIZE = 64
 
+// Dibuja un frame del sprite del robot (64x64px) con detalle pixel art: cabeza, torso, brazos, piernas, ojos
 function drawRobotFrame(
   gfx: Phaser.GameObjects.Graphics,
   offsetX: number,
@@ -150,6 +151,7 @@ function drawRobotFrame(
   }
 }
 
+// Escena de arranque: genera la textura del robot (4 frames para cada dirección) y pasa a GameScene
 export class BootScene extends Phaser.Scene {
   constructor() {
     super({ key: 'BootScene' })

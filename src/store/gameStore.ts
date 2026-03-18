@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { Command } from '../types/game.types'
 
+// Interfaz del store global de Zustand — contiene el estado de la partida y acciones para modificarlo
 interface GameStore {
   queue: Command[]
   maxCommands: number
@@ -31,6 +32,7 @@ interface GameStore {
   setTextMode: (v: boolean) => void
 }
 
+// Hook de Zustand que expone el estado global del juego a cualquier componente React
 export const useGameStore = create<GameStore>((set, get) => ({
   queue: [],
   maxCommands: 8,

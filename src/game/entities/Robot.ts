@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { Direction, LevelState, RobotState } from '../../types/game.types'
 import { GAME_CONFIG } from '../constants/gameConfig'
 
+// Desplazamiento en fila/columna para cada dirección — se usa en moveForward
 const DIRECTION_DELTAS: Record<Direction, { dRow: number; dCol: number }> = {
   UP:    { dRow: -1, dCol:  0 },
   DOWN:  { dRow:  1, dCol:  0 },
@@ -9,8 +10,10 @@ const DIRECTION_DELTAS: Record<Direction, { dRow: number; dCol: number }> = {
   RIGHT: { dRow:  0, dCol:  1 },
 }
 
+// Orden cíclico de las direcciones — girar a la derecha avanza +1, girar a la izquierda +3 (mod 4)
 const DIRECTION_ORDER: Direction[] = ['UP', 'RIGHT', 'DOWN', 'LEFT']
 
+// Mapeo de dirección al índice de frame del spritesheet del robot
 const DIRECTION_FRAME: Record<Direction, number> = {
   DOWN:  0,
   UP:    1,
@@ -18,6 +21,7 @@ const DIRECTION_FRAME: Record<Direction, number> = {
   LEFT:  3,
 }
 
+// Entidad del robot: gestiona posición, sprite, movimiento, giros, toggle de luces y copia de variables
 export class Robot {
   private sprite: Phaser.GameObjects.Sprite
   private scene: Phaser.Scene
@@ -33,10 +37,12 @@ export class Robot {
     this.sprite.setDisplaySize(GAME_CONFIG.CELL_SIZE - 4, GAME_CONFIG.CELL_SIZE - 4)
   }
 
+  // Devuelve una copia del estado actual del robot (evita mutaciones externas)
   get position(): RobotState {
     return { ...this.state }
   }
 
+  // Mueve el robot una celda en su dirección actual. Retorna false si el movimiento es inválido (muro, vacío, fuera de grid)
   moveForward(levelState: LevelState): boolean {
     const { dRow, dCol } = DIRECTION_DELTAS[this.state.direction]
     const newRow = this.state.row + dRow
@@ -54,6 +60,7 @@ export class Robot {
     return true
   }
 
+  // Gira el robot 90° a la izquierda y actualiza el frame del sprite
   turnLeft(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
     this.state.direction = DIRECTION_ORDER[(idx + 3) % 4]
@@ -61,6 +68,7 @@ export class Robot {
     return true
   }
 
+  // Gira el robot 90° a la derecha y actualiza el frame del sprite
   turnRight(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
     this.state.direction = DIRECTION_ORDER[(idx + 1) % 4]
@@ -93,6 +101,7 @@ copyVar(levelState: LevelState): boolean {
   return true
 }
 
+  // Alterna el estado encendido/apagado de una celda de tipo 'light'. Retorna false si no es una luz
   toggleLight(levelState: LevelState): boolean {
     const cell = levelState.grid[this.state.row][this.state.col]
     if (cell.type !== 'light') return false
@@ -100,6 +109,7 @@ copyVar(levelState: LevelState): boolean {
     return true
   }
 
+  // Convierte coordenadas de cuadrícula (row, col) a píxeles del canvas (x, y)
   private cellToWorld(row: number, col: number): { x: number; y: number } {
     const { GRID_OFFSET_X, GRID_OFFSET_Y, CELL_SIZE } = GAME_CONFIG
     return {
@@ -108,6 +118,7 @@ copyVar(levelState: LevelState): boolean {
     }
   }
 
+  // Anima el sprite del robot hasta la celda destino con un tween suave
   private animateTo(row: number, col: number) {
     const { x, y } = this.cellToWorld(row, col)
     this.scene.tweens.add({
@@ -119,10 +130,12 @@ copyVar(levelState: LevelState): boolean {
     })
   }
 
+  // Actualiza el frame del sprite para reflejar la dirección actual del robot
   draw() {
     this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
   }
 
+  // Reinicia el robot a su estado inicial: posición, dirección y variable de copia
   reset(initialState: RobotState) {
     this.state = { ...initialState }
     this.lastVarCell = null;
@@ -131,6 +144,7 @@ copyVar(levelState: LevelState): boolean {
     this.sprite.setFrame(DIRECTION_FRAME[initialState.direction])
   }
 
+  // Destruye el sprite de Phaser para liberar memoria al cambiar de nivel
   destroy() {
     this.sprite.destroy()
   }

@@ -5,10 +5,12 @@ import { useGameStore } from '../../store/gameStore'
 import { GAME_CONFIG } from '../../game/constants/gameConfig'
 import { Command } from '../../types/game.types'
 
+// Props del wrapper: recibe el EventEmitter puente para conectar React con Phaser
 interface GameWrapperProps {
   bridge: Phaser.Events.EventEmitter
 }
 
+// Componente que monta el canvas de Phaser en el DOM y sincroniza datos del nivel hacia el store de Zustand
 export function GameWrapper({ bridge }: GameWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)

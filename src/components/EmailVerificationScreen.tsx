@@ -6,6 +6,7 @@ interface Props {
   onBackToLogin: () => void
 }
 
+// Pantalla post-registro: informa que se envió un email de verificación y permite reenviar
 export function EmailVerificationScreen({ email, onBackToLogin }: Props) {
   const [resending, setResending] = useState(false)
   const [message, setMessage] = useState('')

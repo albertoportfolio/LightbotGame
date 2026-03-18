@@ -10,6 +10,7 @@ import { GAME_CONFIG } from './constants/gameConfig'
  * The `bridge` EventEmitter is stored in the Phaser registry so
  * every scene can access it without tight coupling.
  */
+// Crea una instancia de Phaser.Game, la monta en el DOM y almacena el bridge en el registry
 export function createPhaserGame(
   parent: HTMLElement,
   bridge: Phaser.Events.EventEmitter

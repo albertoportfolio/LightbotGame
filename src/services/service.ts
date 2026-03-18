@@ -1,3 +1,4 @@
+// Detecta si se ejecuta en emulador Android para usar IP especial en vez de localhost
 const isAndroidEmulator = window.location.hostname === '10.0.2.2'
 
 export const API_URL = isAndroidEmulator
@@ -5,6 +6,7 @@ export const API_URL = isAndroidEmulator
   : 'http://localhost:3333/api/v1'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
+// Datos del tutor (profesor/padre) que gestiona usuarios
 export interface Tutor {
   id: number
   fullName: string | null
@@ -14,6 +16,7 @@ export interface Tutor {
   updatedAt: string | null
 }
 
+// Datos de un jugador (hijo/alumno) asociado a un tutor
 export interface User {
   id: number
   name: string
@@ -23,6 +26,7 @@ export interface User {
   updatedAt: string | null
 }
 
+// Respuesta del endpoint de login: contiene el token JWT y los datos del tutor
 interface AuthResponse {
   data: { tutor: Tutor; token: string }
 }
@@ -45,6 +49,7 @@ interface UsersListResponse {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Genera los headers con Content-Type y Authorization Bearer para peticiones autenticadas
 function authHeaders(token: string): HeadersInit {
   return {
     'Content-Type': 'application/json',
@@ -52,6 +57,7 @@ function authHeaders(token: string): HeadersInit {
   }
 }
 
+// Procesa la respuesta HTTP: lanza Error con mensaje legible si no es ok (incluyendo errores de VineJS)
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const body = await res.json().catch(() => ({ message: res.statusText }))
@@ -66,6 +72,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
 
+// Registra un nuevo tutor enviando nombre, email y contraseña. Devuelve mensaje de verificación
 export async function signup(
   fullName: string | null,
   email: string,
@@ -80,6 +87,7 @@ export async function signup(
   return handleResponse<MessageResponse>(res)
 }
 
+// Reenvía el correo de verificación al email indicado
 export async function resendVerification(email: string): Promise<MessageResponse> {
   const res = await fetch(`${API_URL}/auth/resend-verification`, {
     method: 'POST',
@@ -89,6 +97,7 @@ export async function resendVerification(email: string): Promise<MessageResponse
   return handleResponse<MessageResponse>(res)
 }
 
+// Inicia sesión con email y contraseña. Devuelve token JWT y datos del tutor
 export async function login(
   email: string,
   password: string
@@ -101,6 +110,7 @@ export async function login(
   return handleResponse<AuthResponse>(res)
 }
 
+// Cierra la sesión del tutor invalidando el token en el servidor
 export async function logout(token: string): Promise<void> {
   const res = await fetch(`${API_URL}/auth/logout`, {
     method: 'POST',
@@ -114,6 +124,7 @@ export async function logout(token: string): Promise<void> {
 
 // ─── Profile ─────────────────────────────────────────────────────────────────
 
+// Obtiene el perfil del tutor autenticado
 export async function getProfile(token: string): Promise<ProfileResponse> {
   const res = await fetch(`${API_URL}/account/profile`, {
     method: 'GET',
@@ -124,6 +135,7 @@ export async function getProfile(token: string): Promise<ProfileResponse> {
 
 // ─── Users ───────────────────────────────────────────────────────────────────
 
+// Lista todos los usuarios (jugadores) asociados al tutor autenticado
 export async function getUsers(token: string): Promise<UsersListResponse> {
   const res = await fetch(`${API_URL}/users`, {
     method: 'GET',
@@ -132,6 +144,7 @@ export async function getUsers(token: string): Promise<UsersListResponse> {
   return handleResponse<UsersListResponse>(res)
 }
 
+// Obtiene los datos de un usuario específico por su ID
 export async function getUser(
   token: string,
   id: number
@@ -143,6 +156,7 @@ export async function getUser(
   return handleResponse<UserResponse>(res)
 }
 
+// Crea un nuevo usuario (jugador) con el nombre indicado, asociado al tutor autenticado
 export async function createUser(
   token: string,
   data: { name: string }
@@ -155,6 +169,7 @@ export async function createUser(
   return handleResponse<UserResponse>(res)
 }
 
+// Actualiza nombre y/o nivel actual de un usuario existente
 export async function updateUser(
   token: string,
   id: number,
@@ -168,6 +183,7 @@ export async function updateUser(
   return handleResponse<UserResponse>(res)
 }
 
+// Elimina un usuario permanentemente por su ID
 export async function deleteUser(
   token: string,
   id: number

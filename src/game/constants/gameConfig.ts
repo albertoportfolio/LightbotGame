@@ -1,3 +1,4 @@
+// Constantes globales del juego: tamaño del canvas, grid, tiempos de animación y paleta de colores
 export const GAME_CONFIG = {
   // ─── Canvas ──────────────────────────────────────────────────────────────
   WIDTH:  680,   // used by PhaserGame.ts

@@ -1,13 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
-/**
- * Silent auth middleware can be used as a global middleware to silent check
- * if the user is logged-in or not.
- *
- * The request continues as usual, even when the user is not logged-in.
- */
+// Middleware de autenticación silenciosa: comprueba si hay sesión activa sin bloquear peticiones no autenticadas
 export default class SilentAuthMiddleware {
+  // Verifica el estado de autenticación y continúa sin importar el resultado (no lanza error si no hay sesión)
   async handle(ctx: HttpContext, next: NextFn) {
     await ctx.auth.check()
 

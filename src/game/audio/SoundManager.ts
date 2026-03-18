@@ -12,6 +12,7 @@ export class SoundManager {
 
   // ─── Contexto y nodo maestro ──────────────────────────────────────────────
 
+  // Inicializa (lazy) el AudioContext y el GainNode maestro; reanuda si estaba suspendido
   private getCtx(): AudioContext {
     if (!this.ctx) {
       this.ctx = new AudioContext()
@@ -23,6 +24,7 @@ export class SoundManager {
     return this.ctx
   }
 
+  // Devuelve el GainNode maestro (asegurando que el contexto está creado)
   private getMaster(): GainNode {
     this.getCtx()
     return this.masterGain!
@@ -30,6 +32,7 @@ export class SoundManager {
 
   // ─── Volumen y mute ───────────────────────────────────────────────────────
 
+  // Ajusta el volumen maestro en tiempo real (0.0 a 1.0)
   setVolume(v: number) {
     this._volume = v
     if (this.masterGain && !this.muted) {
@@ -37,6 +40,7 @@ export class SoundManager {
     }
   }
 
+  // Alterna mute/unmute y reanuda la música si se desmutea
   toggleMute() {
   this.muted = !this.muted
   if (this.masterGain) {
@@ -49,10 +53,12 @@ export class SoundManager {
   }
 }
 
+  // Devuelve true si el audio está silenciado
   isMuted() { return this.muted }
 
   // ─── Primitivas ───────────────────────────────────────────────────────────
 
+  // Reproduce un tono (oscillator) con frecuencia, duración, tipo de onda y volumen
   private playTone(
     freq: number, duration: number,
     type: OscillatorType = 'square', vol = 0.2, delay = 0
@@ -72,6 +78,7 @@ export class SoundManager {
     osc.stop(ctx.currentTime + delay + duration + 0.05)
   }
 
+  // Genera ruido blanco filtrado (bandpass) — usado para efectos percusivos
   private playNoise(duration: number, vol = 0.1, delay = 0) {
     if (this.muted) return
     const ctx    = this.getCtx()
@@ -92,6 +99,7 @@ export class SoundManager {
     source.start(ctx.currentTime + delay)
   }
 
+  // Programa un tono para un momento futuro (startTime absoluto) — usado en la melodía de fondo
   private scheduleTone(
     freq: number, duration: number,
     type: OscillatorType, vol: number, startTime: number
@@ -111,6 +119,7 @@ export class SoundManager {
     osc.stop(startTime + duration + 0.05)
   }
 
+  // Programa ruido (hi-hat/percusión) para un momento futuro — usado en el ritmo de la música
   private scheduleNoise(duration: number, vol: number, startTime: number) {
     if (this.muted) return
     const ctx    = this.getCtx()
@@ -133,6 +142,7 @@ export class SoundManager {
 
   // ─── Música de fondo ──────────────────────────────────────────────────────
 
+  // Detiene la música de fondo: cancela el timeout del loop y hace fade out del gain
   stopMusic() {
   this.musicPlaying = false
   if (this.musicTimeout) {
@@ -148,6 +158,7 @@ export class SoundManager {
 
 
 // Y cuando arranque de nuevo, restaura el volumen:
+// Arranca la música de fondo si no está ya sonando y no está muteado
 startMusic() {
   // Cancelar el timeout de levelComplete si arranca música antes
   if (this.levelCompleteTimeout) {
@@ -164,6 +175,7 @@ startMusic() {
   this.playMusicLoop()
 }
 
+  // Loop principal de la música: programa 8 compases de melodía, bajo, arpegio y percusión, y se auto-reprograma
   private playMusicLoop() {
     if (!this.musicPlaying) return
 
@@ -238,32 +250,38 @@ startMusic() {
 
   // ─── Sonidos de juego ─────────────────────────────────────────────────────
 
+  // SFX: sonido corto al avanzar una celda
   move() {
     this.playTone(180, 0.06, 'square', 0.12)
     this.playTone(220, 0.06, 'square', 0.08, 0.06)
   }
 
+  // SFX: sonido al girar el robot
   turn() {
     this.playTone(440, 0.05, 'sine', 0.12)
     this.playTone(330, 0.05, 'sine', 0.10, 0.05)
   }
 
+  // SFX: sonido ascendente al encender una luz o copiar variable exitosamente
   lightOn() {
     this.playTone(660, 0.08, 'sine', 0.25)
     this.playTone(880, 0.12, 'sine', 0.20, 0.08)
   }
 
+  // SFX: sonido descendente al apagar una luz
   lightOff() {
     this.playTone(440, 0.08, 'sine', 0.15)
     this.playTone(330, 0.10, 'sine', 0.10, 0.08)
   }
 
+  // SFX: sonido grave + ruido al fallar un movimiento (choque con muro, etc.)
   error() {
     this.playTone(150, 0.08, 'sawtooth', 0.2)
     this.playTone(120, 0.15, 'sawtooth', 0.2, 0.08)
     this.playNoise(0.1, 0.08)
   }
 
+  // SFX: fanfarria corta al pisar una planta (victoria por planta)
   plantReached() {
     const notes = [440, 550, 660, 770, 880]
     notes.forEach((f, i) => {
@@ -272,11 +290,13 @@ startMusic() {
     })
   }
 
+  // SFX: tick corto al reiniciar una iteración del bucle
   loopTick() {
     this.playTone(280, 0.04, 'square', 0.08)
   }
 
   private levelCompleteTimeout: ReturnType<typeof setTimeout> | null = null
+ // SFX: melodía de victoria que suena encima de la música de fondo
  levelComplete() {
   // ← NO tocar musicPlaying ni musicTimeout
   // El loop sigue corriendo en segundo plano
@@ -301,6 +321,7 @@ startMusic() {
   })
 }
 
+  // SFX: jingle corto de 3 notas al cargar un nivel nuevo
   levelStart() {
     // Solo sonido de jingle, NO arranca música aquí
     this.playTone(330, 0.08, 'square', 0.15, 0.00)
@@ -308,6 +329,7 @@ startMusic() {
     this.playTone(523, 0.15, 'square', 0.15, 0.18)
   }
 
+  // SFX: click de botón de UI
   buttonClick() {
     this.playTone(440, 0.06, 'sine', 0.12)
   }

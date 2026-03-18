@@ -51,14 +51,17 @@ const LEVELS: LevelDef[] = [
   level31, level32, level33, level34, level35, level36, level37, level38, level39, level40,
 ];
 
+// Gestor del catálogo de niveles: carga niveles, construye su estado inicial y comprueba victoria
 export class LevelManager {
   private _currentIndex = 0;
 
+  // Devuelve la definición del nivel actualmente cargado
   get current(): LevelDef { return LEVELS[this._currentIndex]; }
   get currentLevelIndex(): number { return this._currentIndex; }
   get hasNext(): boolean { return this._currentIndex < LEVELS.length - 1; }
   getLevelCount(): number { return LEVELS.length; }
 
+  // Carga un nivel por su índice (0-based) y lo establece como nivel actual
   loadLevel(index: number): LevelDef {
     if (index < 0 || index >= LEVELS.length)
       throw new Error(`Level index ${index} out of range (0–${LEVELS.length - 1})`);
@@ -67,12 +70,14 @@ export class LevelManager {
     return LEVELS[index];
   }
 
+  // Avanza al siguiente nivel. Devuelve null si ya estamos en el último
   loadNext(): LevelDef | null {
     if (!this.hasNext) return null;
     return this.loadLevel(this._currentIndex + 1);
   }
 
 
+// Construye el estado mutable de un nivel a partir de su definición (grid con celdas, robot, colores)
 buildState(def: LevelDef): LevelState {
   const grid: Cell[][] = def.grid.map((row, r) =>
     row.map((type: CellType, c): Cell => {
@@ -87,6 +92,7 @@ buildState(def: LevelDef): LevelState {
 }
 
 
+// Comprueba si se cumplen las condiciones de victoria: colores de variables, planta pisada o todas las luces encendidas
 checkVictory(state: LevelState, def: LevelDef): boolean {
   let hasLights = false;
   let hasPlant  = false;

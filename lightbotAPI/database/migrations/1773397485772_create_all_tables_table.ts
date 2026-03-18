@@ -1,8 +1,10 @@
 import { BaseSchema } from '@adonisjs/lucid/schema'
 
+// Migración inicial: crea las tablas tutors, API_tokens y users con sus relaciones FK
 export default class extends BaseSchema {
+  // Crea las tres tablas principales del sistema en orden de dependencia
   async up() {
-    // Tabla tutors
+    // Tabla tutors — almacena las cuentas de los tutores (padres/profesores)
     this.schema.createTable('tutors', (table) => {
       table.increments('id').notNullable()
       table.string('full_name').nullable()
@@ -12,7 +14,7 @@ export default class extends BaseSchema {
       table.timestamp('updated_at').nullable()
     })
 
-    // Tabla auth_access_tokens
+    // Tabla API_tokens — almacena tokens de acceso Bearer vinculados a un tutor (FK con CASCADE)
     this.schema.createTable('API_tokens', (table) => {
       table.increments('id')
       table.integer('tokenable_id').notNullable().unsigned()
@@ -27,7 +29,7 @@ export default class extends BaseSchema {
       table.timestamp('expires_at').nullable()
     })
 
-    // Tabla users (alumnos)
+    // Tabla users — almacena los alumnos de cada tutor con su nivel actual (FK con CASCADE)
     this.schema.createTable('users', (table) => {
       table.increments('id').notNullable()
       table.string('name').notNullable()
@@ -39,6 +41,7 @@ export default class extends BaseSchema {
     })
   }
 
+  // Revierte la migración eliminando las tablas en orden inverso para respetar las FK
   async down() {
     this.schema.dropTable('users')
     this.schema.dropTable('auth_access_tokens')

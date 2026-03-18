@@ -6,6 +6,7 @@ import { LevelManager } from '../levels/LevelManager'
 import { CommandExecutor } from '../logic/CommandExecutor'
 import { SoundManager } from '../audio/SoundManager'
 
+// Dibuja una estrella de N puntas en el objeto Graphics — usada para decorar celdas de luz
 function drawStar(
   g: Phaser.GameObjects.Graphics,
   cx: number, cy: number,
@@ -21,6 +22,7 @@ function drawStar(
   g.fillPoints(verts, true)
 }
 
+// Dibuja una nube decorativa con 5 círculos superpuestos
 function drawCloud(g: Phaser.GameObjects.Graphics, cx: number, cy: number, scale: number) {
   g.fillStyle(0xffffff, 0.18)
   g.fillCircle(cx, cy, 18 * scale)
@@ -65,6 +67,7 @@ function drawPlantDecal(g: Phaser.GameObjects.Graphics, cx: number, cy: number) 
   g.fillRect(cx - 9 * s, cy + 3 * s, 18 * s, 3 * s)
 }
 
+// Escena principal del juego: renderiza el grid, controla el robot, ejecuta comandos y detecta victoria
 export class GameScene extends Phaser.Scene {
   private bridge!: Phaser.Events.EventEmitter
   private levelManager = new LevelManager()
@@ -87,6 +90,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
 
   constructor() { super({ key: 'GameScene' }) }
 
+  // Inicializa la escena: obtiene el bridge, crea gráficos, carga nivel 0 y registra listeners de eventos
   create() {
     this.bridge = this.registry.get('bridge') as Phaser.Events.EventEmitter
     this.bgGraphics = this.add.graphics()
@@ -105,6 +109,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
 
   }
 
+  // Limpieza al destruir la escena: desregistra eventos y destruye el robot
   shutdown() {
     this.bridge.off('run-commands', this.handleRunCommands, this)
     this.sfx.stopMusic()
@@ -117,6 +122,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.off('start-music', this.handleStartMusic)
   }
 
+  // Dibuja el fondo decorativo: cielo con gradiente, estrellas, luna, colinas y césped
   private drawBackground() {
     const W = GAME_CONFIG.WIDTH
     const H = GAME_CONFIG.HEIGHT
@@ -167,6 +173,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     drawCloud(g, W * 0.5, 48, 0.8)
   }
 
+  // Dibuja decoraciones de primer plano: árboles y flores alrededor del grid
   private drawDecorations() {
     const g = this.decorGraphics
     g.clear()
@@ -196,6 +203,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     })
   }
 
+  // Dibuja un árbol pixel art con tronco y 3 capas de copa
   private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number) {
     g.fillStyle(0x92400e, 1); g.fillRect(x - 3, y - 14, 6, 16)
     g.fillStyle(0x78350f, 1); g.fillRect(x + 1, y - 14, 2, 16)
@@ -205,6 +213,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     g.fillStyle(0xbbf7d0, 0.5); g.fillCircle(x + 3, y - 54, 3)
   }
 
+  // Renderiza toda la cuadrícula: dibuja cada celda según su tipo (floor, wall, light, plant, variable)
   renderGrid() {
   this.gridGraphics.clear()
   this.drawDecorations()
@@ -321,6 +330,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.updateVarLabels()
 }
 
+ // Carga un nivel por índice: construye el estado, crea el robot, renderiza el grid y emite 'level-loaded'
  private loadLevel(index: number) {
   this.wonThisLevel = false
   const def = this.levelManager.loadLevel(index)
@@ -342,6 +352,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   })
 }
 
+  // Crea los textos de Phaser para las etiquetas de variables (letra A/B/C arriba, emoji de color abajo)
   private drawVarLabels() {
   // Destruir labels anteriores
   this.varLetterLabels.forEach(t => t.destroy())
@@ -384,6 +395,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
 }
 
 // Actualiza solo los valores (se llama desde renderGrid)
+// Actualiza los emojis de color de las variables tras cada comando (se llama desde renderGrid)
 private updateVarLabels() {
   const grid = this.levelState.grid
   let idx = 0
@@ -400,12 +412,14 @@ private updateVarLabels() {
   }
 }
 
+// Convierte un VarColor ('red', 'blue', etc.) a su emoji correspondiente para la etiqueta visual
 private varColorEmoji(vc: string): string {
   if (vc === 'red')  return '🔴'
   if (vc === 'blue') return '🔵'
   return '⬜'
 }
 
+  // Handler del evento 'run-commands': ejecuta la cola de comandos, detecta victoria por planta/variables
   private handleRunCommands = (commands: Command[]) => {
   if (this.executor.running) return
   this.executor.execute(commands, (cmd, _index) => {
@@ -465,11 +479,13 @@ if (def.victoryColors) {
   })
 }
 
+  // Handler del evento 'reset-level': para la ejecución y recarga el nivel actual
   private handleReset = () => {
     this.executor.stop()
     this.loadLevel(this.levelManager.currentLevelIndex)
   }
 
+  // Handler del evento 'load-level': carga un nivel nuevo por índice
   private handleLoadLevel = (index: number) => {
     this.executor.stop()
     this.loadLevel(index)
@@ -477,11 +493,13 @@ if (def.victoryColors) {
     
   }
 
+  // Handler del evento 'set-mute': sincroniza el estado de mute con el SoundManager
   private handleSetMute = (muted: boolean) => {
   if (muted === this.sfx.isMuted()) return  // ya está en el estado correcto
   this.sfx.toggleMute()
 }
 
+  // Aplica un comando al robot y reproduce el SFX correspondiente. Retorna true si el comando tuvo éxito
   private applyCommand(cmd: Command): boolean {
     switch (cmd) {
       case Command.MOVE_FORWARD: {

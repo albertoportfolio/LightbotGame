@@ -11,12 +11,15 @@ import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
 
+// Ruta raíz de health-check
 router.get('/', () => {
   return { hello: 'world' }
 })
 
+// Grupo principal /api/v1 — contiene todos los endpoints de la API
 router
   .group(() => {
+    // Grupo /auth — registro, login, logout y verificación de email (público excepto logout)
     router
       .group(() => {
         router.post('signup', [controllers.NewAccount, 'store'])
@@ -28,6 +31,7 @@ router
       .prefix('auth')
       .as('auth')
 
+    // Grupo /account — perfil del tutor autenticado (requiere auth)
     router
       .group(() => {
         router.get('/profile', [controllers.Profile, 'show'])
@@ -36,6 +40,7 @@ router
       .as('profile')
       .use(middleware.auth())
 
+    // Grupo /users — CRUD completo de usuarios/alumnos del tutor autenticado (requiere auth)
     router
       .group(() => {
         router.get('/', [controllers.Users, 'index'])

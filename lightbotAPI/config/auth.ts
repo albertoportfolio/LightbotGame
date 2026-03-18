@@ -3,16 +3,13 @@ import { sessionGuard, sessionUserProvider } from '@adonisjs/auth/session'
 import { tokensGuard, tokensUserProvider } from '@adonisjs/auth/access_tokens'
 import type { InferAuthenticators, InferAuthEvents, Authenticators } from '@adonisjs/auth/types'
 
+// Configuración de autenticación con dos guards: 'api' (tokens Bearer) y 'web' (sesiones)
 const authConfig = defineConfig({
-  /**
-   * Default guard used when no guard is explicitly specified.
-   */
+  // Guard por defecto: 'api' — autenticación stateless por tokens
   default: 'api',
 
   guards: {
-    /**
-     * Token-based guard for stateless API authentication.
-     */
+    // Guard 'api' — usa tokens de acceso almacenados en la tabla API_tokens, vinculados al modelo Tutors
     api: tokensGuard({
       provider: tokensUserProvider({
         tokens: 'accessTokens',
@@ -20,13 +17,8 @@ const authConfig = defineConfig({
       }),
     }),
 
-    /**
-     * Session-based guard for browser authentication.
-     */
+    // Guard 'web' — autenticación por sesión para navegador (sin remember-me tokens)
     web: sessionGuard({
-      /**
-       * Enable persistent login using remember-me tokens.
-       */
       useRememberMeTokens: false,
 
       provider: sessionUserProvider({
@@ -38,10 +30,7 @@ const authConfig = defineConfig({
 
 export default authConfig
 
-/**
- * Inferring types from the configured auth
- * guards.
- */
+// Augmentación de tipos: infiere los tipos de Authenticators y eventos a partir de la configuración
 declare module '@adonisjs/auth/types' {
   export interface Authenticators extends InferAuthenticators<typeof authConfig> {}
 }

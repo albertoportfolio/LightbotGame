@@ -6,6 +6,7 @@ interface LevelInfo {
   description: string
 }
 
+// Props de la pantalla de selección de nivel
 interface LevelSelectScreenProps {
   onSelectLevel: (index: number) => void
   onBack: () => void
@@ -19,6 +20,7 @@ interface LevelSelectScreenProps {
 
 // ─── Mundos ───────────────────────────────────────────────────────────────────
 
+// Definición de los 4 mundos: colores de cielo/suelo, decoraciones y rangos de niveles
 const ZONES = [
   {
     id: 0,
@@ -82,6 +84,7 @@ const ZONES = [
   },
 ]
 
+// Posiciones (x,y) de los 10 nodos de nivel dentro de cada zona — distribuidos en zigzag
 const NODE_POSITIONS = [
   { x: 120, y: 60 },
   { x: 300, y: 35 },
@@ -99,6 +102,7 @@ const ZONE_WIDTH = 1800
 
 // ─── Nube infantil ────────────────────────────────────────────────────────────
 
+// Nube decorativa animada con drift horizontal infinito
 function FunCloud({ x, y, scale = 1, speed = 28, color }: {
   x: number; y: number; scale?: number; speed?: number; color: string
 }) {
@@ -141,6 +145,7 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
 
 // ─── Árbol gordo ──────────────────────────────────────────────────────────────
 
+// Árbol/decoración de suelo: cambia según el mundo (árbol, ola, estrella o fuego)
 function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
   const isSpace = zone.id === 2
   const isOcean = zone.id === 1
@@ -180,6 +185,7 @@ function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
 
 // ─── Decoración flotante ──────────────────────────────────────────────────────
 
+// Emoji decorativo flotante con animación de rebote
 function FloatingDeco({ emoji, x, y, delay, size }: {
   emoji: string; x: number; y: number; delay: number; size: number
 }) {
@@ -199,6 +205,7 @@ function FloatingDeco({ emoji, x, y, delay, size }: {
 
 // ─── Nodo de nivel ────────────────────────────────────────────────────────────
 
+// Nodo circular de un nivel: muestra icono, número, tooltip y estado (completado/activo/bloqueado)
 function LevelNode({
   levelIndex, info, completed, locked, active, zone, onClick,
 }: {
@@ -361,6 +368,7 @@ const SPACE_STARS = [...Array(30)].map(() => ({
   del: Math.random() * 3,
 }))
 
+// Sección visual de un mundo: fondo temático, camino SVG curvo, nodos de nivel y decoraciones
 function ZoneSection({
   zone, completedLevels, nextLevel, onSelectLevel, levelInfo,
 }: {
@@ -577,6 +585,7 @@ function ZoneSection({
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
+// Pantalla principal de selección de niveles: mapa scrolleable horizontal con 4 mundos, header flotante y flechas de navegación
 export function LevelSelectScreen({
   onSelectLevel,
   onBack,

@@ -2,27 +2,15 @@ import { HttpContext } from '@adonisjs/core/http'
 import { BaseSerializer } from '@adonisjs/core/transformers'
 import { type SimplePaginatorMetaKeys } from '@adonisjs/lucid/types/querybuilder'
 
-/**
- * Custom serializer for API responses that ensures consistent JSON structure
- * across all API endpoints. Wraps response data in a 'data' property and handles
- * pagination metadata for Lucid ORM query results.
- */
+// Serializador personalizado que envuelve todas las respuestas API en { data: ... } para consistencia
 class ApiSerializer extends BaseSerializer<{
   Wrap: 'data'
   PaginationMetaData: SimplePaginatorMetaKeys
 }> {
-  /**
-   * Wraps all serialized data under this key in the response object.
-   * Example: { data: [...] } instead of returning raw arrays/objects
-   */
+  // Clave bajo la cual se envuelven los datos serializados: { data: ... }
   wrap: 'data' = 'data'
 
-  /**
-   * Validates and defines pagination metadata structure for paginated responses.
-   * Ensures that pagination info from Lucid queries is properly formatted.
-   *
-   * @throws Error if metadata doesn't match Lucid's pagination structure
-   */
+  // Valida que los metadatos de paginación tengan la estructura esperada por Lucid
   definePaginationMetaData(metaData: unknown): SimplePaginatorMetaKeys {
     if (!this.isLucidPaginatorMetaData(metaData)) {
       throw new Error(
@@ -33,26 +21,17 @@ class ApiSerializer extends BaseSerializer<{
   }
 }
 
-/**
- * Single instance of ApiSerializer used across the application
- */
+// Instancia única del serializador usada en toda la aplicación
 const serializer = new ApiSerializer()
 const serialize = serializer.serialize.bind(serializer) as ApiSerializer['serialize'] & {
   withoutWrapping: ApiSerializer['serializeWithoutWrapping']
 }
 serialize.withoutWrapping = serializer.serializeWithoutWrapping.bind(serializer)
 
-/**
- * Adds the serialize method to all HttpContext instances.
- * Usage in controllers: return ctx.serialize(data)
- * This ensures all API responses follow the same structure with data wrapping.
- */
+// Inyecta ctx.serialize() en todas las instancias de HttpContext para uso en controladores
 HttpContext.instanceProperty('serialize', serialize)
 
-/**
- * Module augmentation to add the serialize method to HttpContext.
- * This allows controllers to use ctx.serialize() for consistent API responses.
- */
+// Augmentación de tipos para que TypeScript reconozca ctx.serialize() en HttpContext
 declare module '@adonisjs/core/http' {
   export interface HttpContext {
     serialize: typeof serialize

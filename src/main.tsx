@@ -1,3 +1,4 @@
+// Punto de entrada de la app: monta React con los providers de Auth y User envolviendo el componente App
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'

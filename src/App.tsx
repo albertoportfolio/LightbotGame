@@ -16,6 +16,7 @@ import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
 import { updateUser } from './services/service'
 
+// Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
 export const LEVEL_INFO = [
   // Mundo 1 — Tierra de Luces (indices 0-9)
   { name: 'Primer Contacto', icon: '💡', description: 'Enciende las 3 luces con los comandos básicos' },         // 0  level1
@@ -67,13 +68,16 @@ export const LEVEL_INFO = [
 
 const TOTAL_LEVELS = 40
 
+// Pantallas posibles de la app — el estado 'screen' controla cuál se renderiza
 type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
 
 
+// Estrella decorativa animada para la pantalla de inicio
 function Star({ style }: { style: React.CSSProperties }) {
   return <div className="absolute text-2xl pointer-events-none select-none animate-bounce" style={style}>⭐</div>
 }
 
+// Pantalla de inicio: logo, botón "JUGAR" y animación de estrellas
 function StartScreen({ onStart }: { onStart: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
@@ -165,6 +169,7 @@ function StartScreen({ onStart }: { onStart: () => void }) {
 
 // ─── LevelCompleteModal ───────────────────────────────────────────────────────
 
+// Modal que aparece al completar un nivel: opciones de siguiente, repetir o volver a niveles
 function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
   hasNext: boolean
   onNext: () => void
@@ -211,6 +216,7 @@ function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
 
 // ─── GameScreen ───────────────────────────────────────────────────────────────
 
+// Props de la pantalla de juego: callbacks de navegación, estado de audio y nivel seleccionado
 interface GameScreenProps {
   onBackToMenu: () => void
   onBackToLevels: () => void
@@ -223,6 +229,7 @@ interface GameScreenProps {
   onLevelCompleted: (index: number) => void
 }
 
+// Pantalla de juego: contiene el canvas de Phaser, el HUD, el panel de instrucciones y el modal de victoria
 function GameScreen({
   onBackToMenu, onBackToLevels, onOpenSettings, onToggleMute,
   muted, volume, isActive, initialLevel, onLevelCompleted,
@@ -407,6 +414,7 @@ function GameScreen({
 
 // ─── App root ─────────────────────────────────────────────────────────────────
 
+// Componente raíz de la aplicación: gestiona la navegación entre pantallas y el estado global de audio/auth
 export default function App() {
   const [screen, setScreen] = useState<Screen>('start')
   const [settings, setSettings] = useState<SettingsState>({ muted: false, volume: 0.8 })

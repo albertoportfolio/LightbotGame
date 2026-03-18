@@ -11,6 +11,7 @@ import { Command } from '../types/game.types'
  *
  * The emitter is created once and kept stable across renders via useRef.
  */
+// Hook que crea y expone un EventEmitter compartido entre React y Phaser + helpers para emitir eventos
 export function useGameBridge() {
   const emitterRef = useRef<Phaser.Events.EventEmitter | null>(null)
 
@@ -22,20 +23,24 @@ export function useGameBridge() {
 
   // ─── React → Phaser ───────────────────────────────────────────────────────
 
+  // Emite 'run-commands' hacia Phaser con la cola de comandos a ejecutar
   const runCommands = useCallback((commands: Command[]) => {
     emitter.emit('run-commands', commands)
   }, [emitter])
 
+  // Emite 'reset-level' hacia Phaser para reiniciar el nivel actual
   const resetLevel = useCallback(() => {
     emitter.emit('reset-level')
   }, [emitter])
 
+  // Emite 'load-level' hacia Phaser con el índice del nivel a cargar
   const loadLevel = useCallback((index: number) => {
     emitter.emit('load-level', index)
   }, [emitter])
 
   // ─── Phaser → React (subscription helpers) ────────────────────────────────
 
+  // Suscribe un callback al evento 'level-complete' de Phaser; devuelve función para desuscribirse
   const onLevelComplete = useCallback(
     (cb: (data: { levelId: number }) => void) => {
       emitter.on('level-complete', cb)
@@ -44,6 +49,7 @@ export function useGameBridge() {
     [emitter]
   )
 
+  // Suscribe un callback al evento 'command-executed' de Phaser
   const onCommandExecuted = useCallback(
     (cb: (data: { command: Command; index: number }) => void) => {
       emitter.on('command-executed', cb)

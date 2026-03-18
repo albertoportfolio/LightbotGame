@@ -17,6 +17,7 @@ interface Props {
 
 type Modal = 'none' | 'create' | 'edit' | 'delete'
 
+// Pantalla de perfil del tutor: muestra info del tutor, lista de usuarios con CRUD (crear/editar/borrar)
 export function TutorProfileScreen({ onBack, onLogout }: Props) {
   const { token, tutor, clearAuth } = useAuth()
   const { selectedUser, setSelectedUser } = useUser()
@@ -439,6 +440,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
+// Tarjeta de usuario con avatar, nombre, nivel y botones de seleccionar/editar/borrar
 function UserCard({
   user,
   isSelected,
@@ -523,6 +525,7 @@ function UserCard({
   )
 }
 
+// Overlay modal con fondo oscuro y blur — envuelve el contenido de cualquier modal
 function ModalOverlay({
   onClose,
   children,
@@ -556,6 +559,7 @@ function ModalOverlay({
   )
 }
 
+// Input reutilizable para modales con label y estilo glassmorphism
 function ModalInput({
   label,
   type = 'text',
@@ -594,6 +598,7 @@ function ModalInput({
   )
 }
 
+// Botón de submit para modales con estado de carga
 function ModalSubmit({ loading, label }: { loading: boolean; label: string }) {
   return (
     <button
@@ -610,6 +615,7 @@ function ModalSubmit({ loading, label }: { loading: boolean; label: string }) {
   )
 }
 
+// Banner rojo reutilizable para mostrar mensajes de error
 function ErrorBanner({ message }: { message: string }) {
   return (
     <div

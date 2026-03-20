@@ -8,14 +8,11 @@ import type Tutors from '#models/tutors'
 // Configuración del transporte SMTP para enviar correos de verificación vía nodemailer
 const transporter = nodemailer.createTransport({
   host: env.get('SMTP_HOST'),
-  port: env.get('SMTP_PORT'),
-  secure: false,
+  port: 465,
+  secure: true,
   auth: {
     user: env.get('SMTP_USER'),
     pass: env.get('SMTP_PASS').release(),
-  },
-  tls: {
-    rejectUnauthorized: false
   }
  
 } as nodemailer.TransportOptions)

@@ -6,7 +6,7 @@ const password = () => vine.string().minLength(8).maxLength(32)
 
 // Validador de registro: nombre, email único en la tabla tutors, password con confirmación
 export const signupValidator = vine.create({
-  fullName: vine.string().nullable(),
+  fullName: vine.string().maxLength(150).nullable(),
   email: email().unique({ table: 'tutors', column: 'email' }),
   password: password(),
   passwordConfirmation: password().sameAs('password'),

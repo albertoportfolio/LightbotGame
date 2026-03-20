@@ -1,6 +1,6 @@
 import User from '#models/user'
 import UserTransformer from '#transformers/user_transformer'
-import { createUserValidator, updateUserValidator } from '#validators/users'
+import { createUserValidator, updateUserValidator, paramsIdValidator } from '#validators/users'
 import type { HttpContext } from '@adonisjs/core/http'
 
 // Controlador CRUD de usuarios (jugadores) asociados al tutor autenticado
@@ -21,16 +21,18 @@ export default class UsersController {
   }
 
   // GET /users/:id — Devuelve un usuario por ID (solo si pertenece al tutor autenticado)
-  async show({ params, serialize, auth }: HttpContext) {
-      const tutor = await auth.authenticate()
-    const user = await User.query().where('id', params.id).andWhere('tutor_id', tutor.id).firstOrFail()
+  async show({ params, request, serialize, auth }: HttpContext) {
+    const { id } = await request.validateUsing(paramsIdValidator, { data: params })
+    const tutor = await auth.authenticate()
+    const user = await User.query().where('id', id).andWhere('tutor_id', tutor.id).firstOrFail()
     return serialize(UserTransformer.transform(user))
   }
 
   // PUT /users/:id — Actualiza nombre y/o nivel de un usuario del tutor autenticado
   async update({ params, request, serialize, auth }: HttpContext) {
+    const { id } = await request.validateUsing(paramsIdValidator, { data: params })
     const tutor = await auth.getUserOrFail()
-    const user = await tutor.related('users').query().where('id', params.id).firstOrFail()
+    const user = await tutor.related('users').query().where('id', id).firstOrFail()
     const payload = await request.validateUsing(updateUserValidator)
     user.merge(payload)
     await user.save()
@@ -38,9 +40,10 @@ export default class UsersController {
   }
 
   // DELETE /users/:id — Elimina permanentemente un usuario del tutor autenticado
-  async destroy({ params, response, auth }: HttpContext) {
+  async destroy({ params, request, response, auth }: HttpContext) {
+    const { id } = await request.validateUsing(paramsIdValidator, { data: params })
     const tutor = await auth.getUserOrFail()
-    const user = await tutor.related('users').query().where('id', params.id).firstOrFail()
+    const user = await tutor.related('users').query().where('id', id).firstOrFail()
     await user.delete()
     return response.noContent()
   }

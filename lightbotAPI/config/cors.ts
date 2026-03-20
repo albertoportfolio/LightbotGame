@@ -19,7 +19,10 @@ const corsConfig = defineConfig({
    */
   // esto sirve solo para desarrollo, no para produccion --> origin: app.inDev ? true : [],
 
-  origin: true,
+  origin: [
+    'http://localhost:3000',      // Tu frontend de desarrollo (React/Vue/Next)
+    'https://www.tu-app-real.com' // Tu dominio real de producción
+  ],
   /**
    * HTTP methods accepted for cross-origin requests.
    */

@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Tutors from '#models/tutors'
 import { DateTime } from 'luxon'
 import { generateVerificationToken, sendVerificationEmail } from '#services/email_verification_service'
+import { verifyEmailValidator, resendVerificationValidator } from '#validators/email_verification'
 import env from '#start/env'
 
 // Controlador de verificación de email: verifica el token y permite reenviar el correo
@@ -13,11 +14,13 @@ export default class EmailVerificationController {
    */
   async verify({ request, response }: HttpContext) {
     const frontendUrl = env.get('FRONTEND_URL')
-    const token = request.input('token')
 
-    if (!token) {
-      return response.redirect(`${frontendUrl}?verified=error`)
-    }
+    try {
+      const { token } = await request.validateUsing(verifyEmailValidator)
+
+      if (!token) {
+        return response.redirect(`${frontendUrl}?verified=error`)
+      }
 
     const tutor = await Tutors.findBy('emailVerificationToken', token)
 
@@ -32,6 +35,9 @@ export default class EmailVerificationController {
     }
 
     return response.redirect(`${frontendUrl}?verified=ok`)
+    } catch {
+      return response.redirect(`${frontendUrl}?verified=error`)
+    }
   }
 
   /**
@@ -39,11 +45,7 @@ export default class EmailVerificationController {
    * POST /api/v1/auth/resend-verification { email }
    */
   async resend({ request, response }: HttpContext) {
-    const email = request.input('email')
-
-    if (!email) {
-      return response.badRequest({ message: 'Email requerido' })
-    }
+    const { email } = await request.validateUsing(resendVerificationValidator)
 
     const tutor = await Tutors.findBy('email', email)
 

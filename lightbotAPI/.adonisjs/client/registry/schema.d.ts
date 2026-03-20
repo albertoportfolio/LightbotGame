@@ -50,21 +50,21 @@ export interface Registry {
       body: {}
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/email_verification').verifyEmailValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['verify']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['verify']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['verify']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'auth.email_verification.resend': {
     methods: ["POST"]
     pattern: '/api/v1/auth/resend-verification'
     types: {
-      body: {}
+      body: ExtractBody<InferInput<(typeof import('#validators/email_verification').resendVerificationValidator)>>
       paramsTuple: []
       params: {}
-      query: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/email_verification').resendVerificationValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['resend']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['resend']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/email_verification_controller').default['resend']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'profile.profile.show': {
@@ -110,19 +110,19 @@ export interface Registry {
       body: {}
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/users').paramsIdValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['show']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
   'users.users.update': {
     methods: ["PUT"]
     pattern: '/api/v1/users/:id'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#validators/users').updateUserValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/users').paramsIdValidator)>|InferInput<(typeof import('#validators/users').updateUserValidator)>>
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#validators/users').updateUserValidator)>>
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').paramsIdValidator)>|InferInput<(typeof import('#validators/users').updateUserValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['update']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
@@ -131,12 +131,12 @@ export interface Registry {
     methods: ["DELETE"]
     pattern: '/api/v1/users/:id'
     types: {
-      body: {}
+      body: ExtractBody<InferInput<(typeof import('#validators/users').paramsIdValidator)>>
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/users').paramsIdValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
-      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
 }

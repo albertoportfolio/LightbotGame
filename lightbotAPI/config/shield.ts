@@ -9,12 +9,19 @@ const shieldConfig = defineConfig({
     /**
      * Enable the Content-Security-Policy header.
      */
-    enabled: false,
+    enabled: true,
 
     /**
      * Per-resource CSP directives.
      */
-    directives: {},
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'"],
+      connectSrc: ["'self'"],
+    },
 
     /**
      * Report violations without blocking resources.
@@ -28,13 +35,13 @@ const shieldConfig = defineConfig({
    */
   csrf: {
     /**
-     * Enable CSRF token verification for state-changing requests.
+     * CSRF disabled: this is a stateless REST API using bearer token auth.
+     * CSRF only applies to cookie/session-based authentication.
      */
     enabled: false,
 
     /**
      * Route patterns to exclude from CSRF checks.
-     * Useful for external webhooks or API endpoints.
      */
     exceptRoutes: [],
 

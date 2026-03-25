@@ -9,6 +9,7 @@ tmp/*
 .env.local
 .env.production.local
 .env.development.local
+config/lightbot-8db7d-firebase-adminsdk-fbsvc-643593ed95.json
 
 # Frontend assets compiled code
 public/assets

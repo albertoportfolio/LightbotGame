@@ -2,6 +2,7 @@ import User from '#models/user'
 import UserTransformer from '#transformers/user_transformer'
 import { createUserValidator, updateUserValidator, paramsIdValidator } from '#validators/users'
 import type { HttpContext } from '@adonisjs/core/http'
+import { DateTime } from 'luxon'
 
 // Controlador CRUD de usuarios (jugadores) asociados al tutor autenticado
 export default class UsersController {
@@ -34,6 +35,9 @@ export default class UsersController {
     const tutor = await auth.getUserOrFail()
     const user = await tutor.related('users').query().where('id', id).firstOrFail()
     const payload = await request.validateUsing(updateUserValidator)
+    if (payload.currentLevel !== undefined) {
+      user.lastPlayedAt = DateTime.now()
+    }
     user.merge(payload)
     await user.save()
     return serialize(UserTransformer.transform(user))

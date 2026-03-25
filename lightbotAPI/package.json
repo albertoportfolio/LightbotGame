@@ -48,6 +48,7 @@
     "@poppinss/ts-exec": "^1.4.4",
     "@types/luxon": "^3.7.1",
     "@types/node": "~24.11.0",
+    "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.11",
     "eslint": "^10.0.2",
     "hot-hook": "^1.0.0",
@@ -67,7 +68,9 @@
     "@tuyau/core": "^1.0.0",
     "@vinejs/vine": "^4.3.0",
     "better-sqlite3": "^12.6.2",
+    "firebase-admin": "^13.7.0",
     "luxon": "^3.7.2",
+    "node-cron": "^4.2.1",
     "nodemailer": "^8.0.2",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2"

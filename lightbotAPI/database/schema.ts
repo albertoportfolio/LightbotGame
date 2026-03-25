@@ -33,7 +33,7 @@ export class ApiTokenSchema extends BaseModel {
 }
 
 export class PushTokenSchema extends BaseModel {
-  static $columns = ['createdAt', 'fcmToken', 'id', 'tutorId', 'updatedAt'] as const
+  static $columns = ['createdAt', 'fcmToken', 'id', 'lastReminderAt', 'tutorId', 'updatedAt'] as const
   $columns = PushTokenSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -41,6 +41,8 @@ export class PushTokenSchema extends BaseModel {
   declare fcmToken: string
   @column({ isPrimary: true })
   declare id: number
+  @column.dateTime()
+  declare lastReminderAt: DateTime | null
   @column()
   declare tutorId: number
   @column.dateTime({ autoCreate: true, autoUpdate: true })
@@ -69,7 +71,7 @@ export class TutorSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['createdAt', 'currentLevel', 'id', 'name', 'tutorId', 'updatedAt'] as const
+  static $columns = ['createdAt', 'currentLevel', 'id', 'lastPlayedAt', 'name', 'tutorId', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -77,6 +79,8 @@ export class UserSchema extends BaseModel {
   declare currentLevel: number | null
   @column({ isPrimary: true })
   declare id: number
+  @column.dateTime()
+  declare lastPlayedAt: DateTime | null
   @column()
   declare name: string
   @column()

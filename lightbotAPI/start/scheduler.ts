@@ -9,11 +9,11 @@ function buildReminderMessage(
   _tutorName: string,
   _inactiveUserNames: string[]
 ): { title: string; body: string } {
-  return { title: 'TU ROBOT TE NECESITA', body: 'aprende a programar desbloqueando nuevos niveles' }
+  return { title: 'TU ROBOT TE NECESITA', body: 'aprende a programar desbloqueando nuevos niveles!' }
 }
 
 // Cron diario a las 10:00 — busca tutores con usuarios inactivos y envía recordatorios
-cron.schedule('*/10 * * * * *', async () => {
+cron.schedule('0 10 * * *', async () => {
   logger.info('[Scheduler] Checking for inactive users...')
 
   const twoDaysAgo = DateTime.now().minus({ days: 2 }).toSQL()

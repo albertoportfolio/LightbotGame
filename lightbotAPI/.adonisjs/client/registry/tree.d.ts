@@ -29,4 +29,9 @@ export interface ApiDefinition {
       destroy: typeof routes['users.users.destroy']
     }
   }
+  notifications: {
+    notifications: {
+      register: typeof routes['notifications.notifications.register']
+    }
+  }
 }

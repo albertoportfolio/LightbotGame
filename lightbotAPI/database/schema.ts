@@ -32,6 +32,21 @@ export class ApiTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class PushTokenSchema extends BaseModel {
+  static $columns = ['createdAt', 'fcmToken', 'id', 'tutorId', 'updatedAt'] as const
+  $columns = PushTokenSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare fcmToken: string
+  @column({ isPrimary: true })
+  declare id: number
+  @column()
+  declare tutorId: number
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class TutorSchema extends BaseModel {
   static $columns = ['createdAt', 'email', 'emailVerificationToken', 'emailVerifiedAt', 'fullName', 'id', 'password', 'updatedAt'] as const
   $columns = TutorSchema.$columns

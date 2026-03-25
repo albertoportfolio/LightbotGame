@@ -1,3 +1,4 @@
+google-services.json
 node_modules/
 .expo/
 dist/
@@ -12,3 +13,28 @@ android/
 ios/
 .env.local
 .env.*.local
+
+
+# Archivos de configuración de Firebase (EL QUE FILTRASTE)
+# Ponemos varias rutas por si acaso
+android/app/google-services.json
+ios/GoogleService-Info.plist
+
+# Secretos y variables de entorno
+.env
+.env.local
+.env.*.local
+
+# Certificados y llaves (Seguridad máxima)
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Carpetas nativas
+# SI USAS EXPO GO (Managed Workflow): Déjalas ignoradas.
+# SI USAS EXPO DEV CLIENT / PREBUILD: Borra estas dos líneas de abajo.
+ android/ 
+ ios/

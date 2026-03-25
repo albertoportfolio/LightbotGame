@@ -14,7 +14,7 @@ import { useUser } from './context/UserContext'
 import { EmailVerificationScreen } from './components/EmailVerificationScreen'
 import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
-import { updateUser, setOnUnauthorized } from './services/service'
+import { updateUser, setOnUnauthorized, registerPushToken } from './services/service'
 
 // Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
 export const LEVEL_INFO = [
@@ -423,9 +423,6 @@ export default function App() {
   const { token, clearAuth } = useAuth()
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState('')
 
-  // TODO(human): Implementa handleUnauthorized — se invoca cuando cualquier llamada API
-  // recibe un 401 (token expirado, inválido o ausente).
-
   const handleUnauthorized = () => {
     clearAuth();
     setSelectedUser(null);
@@ -437,6 +434,27 @@ export default function App() {
   useEffect(() => {
     setOnUnauthorized(handleUnauthorized)
   }, [clearAuth])
+
+  // Si estamos en React Native, enviar el token FCM al backend cuando hay sesión activa
+  useEffect(() => {
+    if (!token || !(window as any).__REACT_NATIVE__) return
+
+    const sendFcmToken = () => {
+      const fcmToken = (window as any).__FCM_TOKEN__
+      if (fcmToken) {
+        registerPushToken(token, fcmToken).catch(err =>
+          console.warn('Error registering push token:', err)
+        )
+      }
+    }
+
+    // Intentar enviar inmediatamente (el token FCM puede ya estar disponible)
+    sendFcmToken()
+
+    // Escuchar si el token llega después (inyectado desde React Native)
+    window.addEventListener('fcm-token-ready', sendFcmToken)
+    return () => window.removeEventListener('fcm-token-ready', sendFcmToken)
+  }, [token])
 
   // Detect ?verified=ok from email verification redirect
   useEffect(() => {

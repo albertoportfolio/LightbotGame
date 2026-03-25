@@ -139,4 +139,16 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/users_controller').default['destroy']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'notifications.notifications.register': {
+    methods: ["POST"]
+    pattern: '/api/v1/notifications/register'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/push_token').registerPushTokenValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/push_token').registerPushTokenValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/notifications_controller').default['register']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/notifications_controller').default['register']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
 }

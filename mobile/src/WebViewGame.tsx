@@ -4,10 +4,40 @@ import { WebView } from 'react-native-webview';
 import { useFocusEffect } from 'expo-router';
 import { GAME_URL } from './config';
 import * as NavigationBar from 'expo-navigation-bar'
+import { getMessaging, getToken, onTokenRefresh, requestPermission } from '@react-native-firebase/messaging'
 
 // Componente principal: envuelve el juego web en un WebView a pantalla completa con soporte para botón atrás de Android
 export default function WebViewGame() {
   const webViewRef = useRef<WebView>(null);
+
+  // Solicita permisos de notificaciones, obtiene el token FCM y lo inyecta en el WebView
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined
+
+    async function setupFCM() {
+      try {
+        const msg = getMessaging()
+        await requestPermission(msg)
+        const token = await getToken(msg)
+        webViewRef.current?.injectJavaScript(
+          `window.__FCM_TOKEN__ = ${JSON.stringify(token)}; window.dispatchEvent(new Event('fcm-token-ready')); true;`
+        )
+
+        // Si Firebase renueva el token, re-inyectarlo en el WebView
+        unsubscribe = onTokenRefresh(msg, newToken => {
+          webViewRef.current?.injectJavaScript(
+            `window.__FCM_TOKEN__ = ${JSON.stringify(newToken)}; window.dispatchEvent(new Event('fcm-token-ready')); true;`
+          )
+        })
+      } catch (err) {
+        console.warn('FCM setup error:', err)
+      }
+    }
+    setupFCM()
+
+    return () => unsubscribe?.()
+  }, [])
+
   // Oculta la barra de navegación de Android para modo inmersivo (pantalla completa)
    useEffect(() => {
     NavigationBar.setVisibilityAsync('hidden')
@@ -44,6 +74,7 @@ export default function WebViewGame() {
         bounces={false}
         overScrollMode="never"
         startInLoadingState
+        injectedJavaScriptBeforeContentLoaded="window.__REACT_NATIVE__ = true; true;"
         renderLoading={() => (
           <View style={styles.loading}>
             <ActivityIndicator size="large" color="#64ffda" />

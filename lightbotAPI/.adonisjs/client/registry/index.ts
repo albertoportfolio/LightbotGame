@@ -72,6 +72,12 @@ const routes = {
     tokens: [{"old":"/api/v1/users/:id","type":0,"val":"api","end":""},{"old":"/api/v1/users/:id","type":0,"val":"v1","end":""},{"old":"/api/v1/users/:id","type":0,"val":"users","end":""},{"old":"/api/v1/users/:id","type":1,"val":"id","end":""}],
     types: placeholder as Registry['users.users.destroy']['types'],
   },
+  'notifications.notifications.register': {
+    methods: ["POST"],
+    pattern: '/api/v1/notifications/register',
+    tokens: [{"old":"/api/v1/notifications/register","type":0,"val":"api","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"v1","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"notifications","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"register","end":""}],
+    types: placeholder as Registry['notifications.notifications.register']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }

@@ -52,5 +52,14 @@ router
       .prefix('users')
       .as('users')
       .use(middleware.auth())
+
+    // Grupo /notifications — registro de tokens push FCM (requiere auth)
+    router
+      .group(() => {
+        router.post('/register', [controllers.Notifications, 'register'])
+      })
+      .prefix('notifications')
+      .as('notifications')
+      .use(middleware.auth())
   })
   .prefix('/api/v1')

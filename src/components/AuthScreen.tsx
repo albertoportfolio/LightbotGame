@@ -41,7 +41,7 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
       setAuth(res.data.token, res.data.tutor)
       onAuthSuccess()
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión')
+      setError('Error al iniciar sesión')
     } finally {
       setLoading(false)
     }

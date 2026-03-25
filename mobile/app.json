@@ -13,17 +13,20 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lightbot.mobile"
+      "bundleIdentifier": "com.lightbot.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e"
       },
-      "package": "com.lightbot.mobile"
+      "googleServicesFile": "./google-services.json",
+      "package": "com.lightbot.app"
     },
     "plugins": [
       "expo-router",
       "expo-asset",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
       [
         "expo-build-properties",
         {

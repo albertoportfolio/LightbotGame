@@ -15,6 +15,7 @@ export type ScannedRoutes = {
     'users.users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'notifications.notifications.register': { paramsTuple?: []; params?: {} }
   }
   GET: {
     'auth.email_verification.verify': { paramsTuple?: []; params?: {} }
@@ -34,6 +35,7 @@ export type ScannedRoutes = {
     'auth.access_token.destroy': { paramsTuple?: []; params?: {} }
     'auth.email_verification.resend': { paramsTuple?: []; params?: {} }
     'users.users.store': { paramsTuple?: []; params?: {} }
+    'notifications.notifications.register': { paramsTuple?: []; params?: {} }
   }
   PUT: {
     'users.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

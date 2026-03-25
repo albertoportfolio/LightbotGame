@@ -1,9 +1,9 @@
 // Detecta si se ejecuta en emulador Android para usar IP especial en vez de localhost
-const isAndroidEmulator = window.location.hostname === '10.0.2.2'
-
-export const API_URL = isAndroidEmulator
-  ? 'http://10.0.2.2:3333/api/v1'
-  : 'http://localhost:3333/api/v1'
+const API_HOST = window.location.hostname
+      
+      
+      
+       export const API_URL = `http://${API_HOST}:3333/api/v1`
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 // Datos del tutor (profesor/padre) que gestiona usuarios
@@ -137,6 +137,21 @@ export async function logout(token: string): Promise<void> {
     const error = await res.json().catch(() => ({ message: res.statusText }))
     throw new Error(error.message ?? res.statusText)
   }
+}
+
+// ─── Push Notifications ──────────────────────────────────────────────────────
+
+// Registra el token FCM de notificaciones push para la sesión actual del tutor
+export async function registerPushToken(
+  token: string,
+  fcmToken: string
+): Promise<void> {
+  const res = await fetch(`${API_URL}/notifications/register`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ fcmToken }),
+  })
+  await handleResponse<{ message: string }>(res)
 }
 
 // ─── Profile ─────────────────────────────────────────────────────────────────

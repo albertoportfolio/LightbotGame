@@ -1,23 +1,7 @@
-# Dependencias (EAS las instala solo)
 node_modules/
-
-# Archivos locales de Android/iOS (EAS hace su propio prebuild)
 android/
 ios/
-
-# Temporales y logs
 .expo/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Archivos pesados de diseño o backups que no necesite la App
-*.psd
-*.zip
-
-dist/
-build/
-web-build/
-.next/
-out/
 .gradle/
+build/
+bin/

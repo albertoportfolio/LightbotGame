@@ -24,10 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
-        "foregroundImage": "./assets/icon.png",
-        "compileSdkVersion": 34,
-      "targetSdkVersion": 34,
-      "buildToolsVersion": "34.0.0"
+        "foregroundImage": "./assets/icon.png"
       },
       
       "googleServicesFile": "./google-services.json",
@@ -42,7 +39,10 @@
         "expo-build-properties",
         {
           "android": {
-            "kotlinVersion": "1.9.25"
+            "kotlinVersion": "1.9.25",
+            "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0"
           }
         }
       ]

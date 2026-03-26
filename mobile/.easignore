@@ -1,7 +1,21 @@
+# Ignorar TODO lo pesado
 node_modules/
 android/
 ios/
 .expo/
 .gradle/
+.git/
 build/
+dist/
 bin/
+
+# Extensiones de archivos pesados
+*.zip
+*.tar.gz
+*.mp4
+*.exe
+*.apk
+*.aab
+*.jks
+*.p8
+*.p12

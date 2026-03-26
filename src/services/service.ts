@@ -2,8 +2,8 @@
 const API_HOST = window.location.hostname
       
       
-     // export const API_URL = 'https://lightbot.duckdns.org/api/v1'
-       export const API_URL = `http://${API_HOST}:3333/api/v1`
+      export const API_URL = 'https://lightbot.duckdns.org/api/v1'
+      // export const API_URL = `http://${API_HOST}:3333/api/v1`
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 // Datos del tutor (profesor/padre) que gestiona usuarios

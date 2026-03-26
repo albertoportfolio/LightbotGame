@@ -1,0 +1,180 @@
+================================================================================
+  DOCUMENTACION — NOTIFICACIONES PUSH (FCM)
+  Proyecto: Lightbot
+================================================================================
+
+1. RESUMEN
+----------
+El sistema de notificaciones push usa Firebase Cloud Messaging (FCM) para enviar
+recordatorios a tutores cuyos usuarios (jugadores) llevan 2+ dias sin jugar.
+Solo funciona en la app movil (React Native + WebView). La web de escritorio
+no recibe notificaciones push.
+
+
+2. ARQUITECTURA GENERAL
+-----------------------
+
+  [App Movil]                  [Web App (WebView)]              [Backend AdonisJS]
+  React Native                 React (SPA)                      API + Scheduler
+  ┌──────────────┐             ┌──────────────────┐             ┌──────────────────┐
+  │ Firebase SDK │──FCM token─>│ window.__FCM_TOKEN__│──POST──>│ POST /notifications│
+  │ (messaging)  │             │ App.tsx useEffect │  /register │ /register         │
+  └──────────────┘             └──────────────────┘             │                  │
+                                                                │ push_tokens (DB) │
+                                                                └────────┬─────────┘
+                                                                         │
+                                                              cron 10:00 AM diario
+                                                                         │
+                                                                         v
+                                                                ┌──────────────────┐
+                                                                │ Firebase Admin SDK│
+                                                                │ sendNotification()│
+                                                                └──────────────────┘
+
+
+3. FLUJO DE REGISTRO DEL TOKEN FCM
+-----------------------------------
+
+Paso 1 — React Native obtiene el token FCM
+  Archivo: mobile/src/WebViewGame.tsx (lineas 14-39)
+
+  - Al montar el componente WebViewGame, se ejecuta setupFCM():
+    a) Solicita permisos de notificacion: requestPermission(msg)
+    b) Obtiene el token FCM de Firebase: getToken(msg)
+    c) Inyecta el token en el WebView:
+       window.__FCM_TOKEN__ = "<token>"
+       window.dispatchEvent(new Event('fcm-token-ready'))
+  - Si Firebase renueva el token, onTokenRefresh() lo re-inyecta automaticamente.
+
+Paso 2 — El WebView marca que estamos en React Native
+  Archivo: mobile/src/WebViewGame.tsx (linea 77)
+
+  - Antes de cargar el contenido web, inyecta:
+    window.__REACT_NATIVE__ = true
+  - Esto permite que la web app detecte si corre dentro de la app movil.
+
+Paso 3 — La web app envia el token FCM al backend
+  Archivo: src/App.tsx (lineas 438-457)
+
+  - useEffect que se ejecuta cuando cambia el token de auth.
+  - Condiciones para ejecutarse:
+    a) token de auth existe (el tutor hizo login)
+    b) window.__REACT_NATIVE__ es true (estamos en la app movil)
+  - Si ambas se cumplen:
+    a) Lee window.__FCM_TOKEN__
+    b) Si existe, llama a registerPushToken(token, fcmToken)
+  - Tambien escucha el evento 'fcm-token-ready' por si el token FCM
+    llega despues de que el useEffect ya se ejecuto.
+
+Paso 4 — El backend guarda el token FCM
+  Archivo: lightbotAPI/app/controllers/notifications_controller.ts
+
+  - Endpoint: POST /api/v1/notifications/register
+  - Requiere autenticacion (middleware auth)
+  - Valida el body con registerPushTokenValidator (campo: fcmToken)
+  - Usa updateOrCreate: si el tutor ya tiene un token, lo actualiza;
+    si no, crea uno nuevo. Solo 1 token por tutor.
+  - Tabla: push_tokens (tutorId, fcmToken, lastReminderAt)
+
+  Archivo: lightbotAPI/app/models/push_token.ts
+  - Modelo PushToken con relacion belongsTo a Tutors
+
+
+4. FLUJO DE ENVIO DE NOTIFICACIONES (SCHEDULER)
+------------------------------------------------
+
+  Archivo: lightbotAPI/start/scheduler.ts
+
+  - Cron job programado: '0 10 * * *' (todos los dias a las 10:00 AM)
+  - Logica:
+    a) Busca push_tokens donde lastReminderAt es NULL o tiene mas de 2 dias
+    b) Para cada token, carga el tutor con sus usuarios (preload)
+    c) Filtra usuarios inactivos (lastPlayedAt > 2 dias o nunca jugaron)
+    d) Solo notifica si TODOS los usuarios del tutor estan inactivos
+       (si al menos uno jugo recientemente, no envia notificacion)
+    e) Construye el mensaje con buildReminderMessage()
+    f) Envia la notificacion via Firebase Admin SDK
+    g) Actualiza lastReminderAt para evitar spam
+
+  Mensaje actual:
+    Titulo: "TU ROBOT TE NECESITA"
+    Cuerpo: "aprende a programar desbloqueando nuevos niveles!"
+
+
+5. SERVICIO FIREBASE ADMIN
+---------------------------
+
+  Archivo: lightbotAPI/app/services/firebase_service.ts
+
+  - Inicializacion lazy (una sola vez) con la clave de servicio
+  - Funcion sendNotification(token, title, body):
+    Envia un mensaje push al dispositivo especifico via FCM.
+
+
+6. BASE DE DATOS
+-----------------
+
+  Tabla: push_tokens
+  Migracion: lightbotAPI/database/migrations/1773397485774_create_push_tokens_table.ts
+
+  Columnas:
+  - id (autoincrement)
+  - tutorId (FK -> tutors.id, CASCADE on delete)
+  - fcmToken (string)
+  - lastReminderAt (datetime, nullable)
+  - createdAt, updatedAt (timestamps)
+
+  Nota: Si se borra un tutor, su push_token se elimina automaticamente (CASCADE).
+
+
+7. RUTA DE LA API
+------------------
+
+  Archivo: lightbotAPI/start/routes.ts
+
+  POST /api/v1/notifications/register
+    - Auth: requerida (Bearer token)
+    - Body: { fcmToken: string }
+    - Respuesta: { message: "Push token registered" }
+
+
+8. SERVICIO EN EL FRONTEND
+----------------------------
+
+  Archivo: src/services/service.ts (lineas 142-155)
+
+  export async function registerPushToken(token: string, fcmToken: string): Promise<void>
+    - Envia POST a /api/v1/notifications/register
+    - Headers: Authorization Bearer + Content-Type JSON
+    - Body: { fcmToken }
+
+
+9. CONDICIONES PARA QUE FUNCIONE
+----------------------------------
+
+  Para que un tutor reciba notificaciones push:
+  1. Debe haber iniciado sesion desde la app movil al menos una vez
+  2. La app debe tener permisos de notificacion concedidos
+  3. El token FCM debe haberse registrado exitosamente en el backend
+  4. TODOS los usuarios del tutor deben llevar 2+ dias sin jugar
+  5. No se le debe haber enviado un recordatorio en las ultimas 48 horas
+
+  La web de escritorio NUNCA registra tokens FCM porque:
+  - window.__REACT_NATIVE__ no existe (es undefined/falsy)
+  - El useEffect en App.tsx tiene un early return si no es React Native
+
+
+10. ARCHIVOS CLAVE
+-------------------
+
+  | Archivo                                          | Proposito                              |
+  |--------------------------------------------------|----------------------------------------|
+  | mobile/src/WebViewGame.tsx                        | Setup FCM + inyeccion de token         |
+  | src/App.tsx (useEffect lineas 438-457)            | Envio del token FCM al backend         |
+  | src/services/service.ts (registerPushToken)       | Llamada HTTP al endpoint de registro   |
+  | lightbotAPI/app/controllers/notifications_controller.ts | Endpoint de registro          |
+  | lightbotAPI/app/validators/push_token.ts          | Validacion del body                    |
+  | lightbotAPI/app/models/push_token.ts              | Modelo ORM de push_tokens              |
+  | lightbotAPI/start/scheduler.ts                    | Cron diario de recordatorios           |
+  | lightbotAPI/app/services/firebase_service.ts      | Envio de push via Firebase Admin       |
+  | lightbotAPI/config/lightbot-8db7d-firebase-...    | Clave de servicio Firebase             |

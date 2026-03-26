@@ -10,7 +10,7 @@
     "scheme": "lightbot",
     "splash": {
       "backgroundColor": "#1a1a2e",
-      "image": "./assets/icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain"
     },
     "notification": {
@@ -23,8 +23,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1a1a2e"
-        
+        "backgroundColor": "#1a1a2e",
+        "foregroundImage": "./assets/icon.png"
       },
       
       "googleServicesFile": "./google-services.json",

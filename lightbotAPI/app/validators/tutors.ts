@@ -17,3 +17,8 @@ export const loginValidator = vine.create({
   email: email(),
   password: vine.string(),
 })
+
+// Validador de actualización de perfil: solo permite modificar el nombre
+export const updateProfileValidator = vine.create({
+  fullName: vine.string().maxLength(150),
+})

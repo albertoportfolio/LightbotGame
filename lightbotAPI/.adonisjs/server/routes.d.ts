@@ -10,6 +10,8 @@ export type ScannedRoutes = {
     'auth.email_verification.verify': { paramsTuple?: []; params?: {} }
     'auth.email_verification.resend': { paramsTuple?: []; params?: {} }
     'profile.profile.show': { paramsTuple?: []; params?: {} }
+    'profile.profile.update': { paramsTuple?: []; params?: {} }
+    'profile.profile.destroy': { paramsTuple?: []; params?: {} }
     'users.users.index': { paramsTuple?: []; params?: {} }
     'users.users.store': { paramsTuple?: []; params?: {} }
     'users.users.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -38,9 +40,11 @@ export type ScannedRoutes = {
     'notifications.notifications.register': { paramsTuple?: []; params?: {} }
   }
   PUT: {
+    'profile.profile.update': { paramsTuple?: []; params?: {} }
     'users.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
+    'profile.profile.destroy': { paramsTuple?: []; params?: {} }
     'users.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }

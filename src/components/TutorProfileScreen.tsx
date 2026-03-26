@@ -7,6 +7,8 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  updateProfile,
+  deleteAccount,
   type User,
 } from '../services/service'
 
@@ -15,11 +17,11 @@ interface Props {
   onLogout: () => void
 }
 
-type Modal = 'none' | 'create' | 'edit' | 'delete'
+type Modal = 'none' | 'create' | 'edit' | 'delete' | 'editProfile' | 'deleteAccount'
 
 // Pantalla de perfil del tutor: muestra info del tutor, lista de usuarios con CRUD (crear/editar/borrar)
 export function TutorProfileScreen({ onBack, onLogout }: Props) {
-  const { token, tutor, clearAuth } = useAuth()
+  const { token, tutor, setAuth, clearAuth } = useAuth()
   const { selectedUser, setSelectedUser } = useUser()
 
   const [users, setUsers] = useState<User[]>([])
@@ -33,6 +35,10 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
   const [formLevel, setFormLevel] = useState('')
   const [formLoading, setFormLoading] = useState(false)
   const [formError, setFormError] = useState('')
+
+  // Profile edit / delete account fields
+  const [profileName, setProfileName] = useState('')
+  const [confirmText, setConfirmText] = useState('')
 
   // Load users on mount
   useEffect(() => {
@@ -158,6 +164,61 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
     setSelectedUser(user)
   }
 
+  // ── Profile edit / delete account ──
+
+  const openEditProfile = () => {
+    setProfileName(tutor?.fullName || '')
+    setFormError('')
+    setModal('editProfile')
+  }
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!token) return
+    setFormLoading(true)
+    setFormError('')
+    try {
+      const res = await updateProfile(token, { fullName: profileName })
+      // Update the tutor in AuthContext and localStorage
+      setAuth(token, res.data)
+      setModal('none')
+    } catch (err: any) {
+      setFormError(err.message || 'Error al actualizar el nombre')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
+  const openDeleteAccount = () => {
+    setConfirmText('')
+    setFormError('')
+    setModal('deleteAccount')
+  }
+
+  // TODO(human): Implement shouldAllowDelete — decide whether the confirmation input is valid
+  const shouldAllowDelete = (): boolean => {
+    if(confirmText === tutor?.email) {
+      return true
+    }
+    return false
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!token || !shouldAllowDelete()) return
+    setFormLoading(true)
+    setFormError('')
+    try {
+      await deleteAccount(token)
+      setSelectedUser(null)
+      clearAuth()
+      onLogout()
+    } catch (err: any) {
+      setFormError(err.message || 'Error al eliminar la cuenta')
+    } finally {
+      setFormLoading(false)
+    }
+  }
+
   return (
     <div
       className="relative flex flex-col items-center overflow-y-auto py-8"
@@ -236,27 +297,49 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
             >
               {tutor.initials}
             </div>
-            <div className="flex flex-col min-w-0">
-              <span className="text-white font-bold text-base truncate">
-                {tutor.fullName || 'Sin nombre'}
-              </span>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-white font-bold text-base truncate">
+                  {tutor.fullName || 'Sin nombre'}
+                </span>
+                <button
+                  onClick={openEditProfile}
+                  className="w-6 h-6 flex items-center justify-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-all text-xs flex-shrink-0"
+                  title="Editar nombre"
+                >
+                  ✏️
+                </button>
+              </div>
               <span className="text-white/50 text-sm truncate">{tutor.email}</span>
             </div>
           </div>
         )}
 
-        {/* Logout button */}
-        <button
-          onClick={handleLogout}
-          className="w-full py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-          style={{
-            background: 'rgba(252,129,129,0.15)',
-            border: '1px solid rgba(252,129,129,0.3)',
-            color: '#fc8181',
-          }}
-        >
-          Cerrar sesión
-        </button>
+        {/* Account action buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={handleLogout}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+            style={{
+              background: 'rgba(252,129,129,0.15)',
+              border: '1px solid rgba(252,129,129,0.3)',
+              color: '#fc8181',
+            }}
+          >
+            Cerrar sesión
+          </button>
+          <button
+            onClick={openDeleteAccount}
+            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
+            style={{
+              background: 'rgba(220,38,38,0.15)',
+              border: '1px solid rgba(220,38,38,0.3)',
+              color: '#ef4444',
+            }}
+          >
+            Eliminar cuenta
+          </button>
+        </div>
 
         {/* Divider */}
         <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
@@ -388,6 +471,93 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
             />
             <ModalSubmit loading={formLoading} label="Guardar" />
           </form>
+        </ModalOverlay>
+      )}
+
+      {/* Edit profile name modal */}
+      {modal === 'editProfile' && (
+        <ModalOverlay onClose={() => setModal('none')}>
+          <h3
+            className="font-black text-lg"
+            style={{
+              background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Modificar Nombre
+          </h3>
+          {formError && <ErrorBanner message={formError} />}
+          <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4">
+            <ModalInput
+              label="Nombre completo"
+              value={profileName}
+              onChange={setProfileName}
+              placeholder="Tu nombre"
+              required
+            />
+            <ModalSubmit loading={formLoading} label="Guardar" />
+          </form>
+        </ModalOverlay>
+      )}
+
+      {/* Delete account confirm modal */}
+      {modal === 'deleteAccount' && (
+        <ModalOverlay onClose={() => setModal('none')}>
+          <h3
+            className="font-black text-lg"
+            style={{
+              background: 'linear-gradient(135deg, #fc8181, #f56565)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}
+          >
+            Eliminar Cuenta
+          </h3>
+          {formError && <ErrorBanner message={formError} />}
+          <p className="text-white/60 text-sm">
+            Esta acción eliminará permanentemente tu cuenta, todos tus usuarios y su progreso.
+            <strong className="text-white"> No se puede deshacer.</strong>
+          </p>
+          <p className="text-white/60 text-sm">
+            Escribe <strong className="text-red-400">{tutor?.email}</strong> para confirmar:
+          </p>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder={tutor?.email || ''}
+            className="w-full px-4 py-3 rounded-xl text-white text-sm font-medium outline-none transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+            }}
+            onFocus={(e) => (e.target.style.borderColor = 'rgba(252,129,129,0.5)')}
+            onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={() => setModal('none')}
+              className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm"
+              style={{
+                background: 'rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.2)',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={formLoading || !shouldAllowDelete()}
+              className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, #fc8181, #f56565)',
+                color: '#fff',
+              }}
+            >
+              {formLoading ? 'Eliminando...' : 'Eliminar cuenta'}
+            </button>
+          </div>
         </ModalOverlay>
       )}
 

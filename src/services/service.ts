@@ -2,7 +2,7 @@
 const API_HOST = window.location.hostname
       
       
-      
+     // export const API_URL = 'https://lightbot.duckdns.org/api/v1'
        export const API_URL = `http://${API_HOST}:3333/api/v1`
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -163,6 +163,35 @@ export async function getProfile(token: string): Promise<ProfileResponse> {
     headers: authHeaders(token),
   })
   return handleResponse<ProfileResponse>(res)
+}
+
+// Actualiza el nombre del tutor autenticado
+export async function updateProfile(
+  token: string,
+  data: { fullName: string }
+): Promise<ProfileResponse> {
+  const res = await fetch(`${API_URL}/account/profile`, {
+    method: 'PUT',
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  })
+  return handleResponse<ProfileResponse>(res)
+}
+
+// Elimina permanentemente la cuenta del tutor y todos sus datos asociados
+export async function deleteAccount(token: string): Promise<void> {
+  const res = await fetch(`${API_URL}/account/profile`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  if (!res.ok) {
+    if (res.status === 401) {
+      onUnauthorizedCallback?.()
+      return
+    }
+    const error = await res.json().catch(() => ({ message: res.statusText }))
+    throw new Error(error.message ?? res.statusText)
+  }
 }
 
 // ─── Users ───────────────────────────────────────────────────────────────────

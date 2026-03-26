@@ -11,7 +11,7 @@ const DEV_HOST = Platform.select({
 const DEV_URL = `http://${DEV_HOST}:3000`;
 
 // URL de producción donde está desplegado el juego web
-const PROD_URL = 'http://localhost:3000';
+const PROD_URL = 'https://lightbot.duckdns.org';
 
 const isDev = __DEV__;
 

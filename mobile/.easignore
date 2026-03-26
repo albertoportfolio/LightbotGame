@@ -1,11 +1,12 @@
 # Ignorar TODO lo pesado
 node_modules/
-android/
-ios/
+android/app/build/
+android/.gradle/
+android/build/
+ios/build/
 .expo/
 .gradle/
 .git/
-build/
 dist/
 bin/
 

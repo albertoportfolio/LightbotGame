@@ -20,7 +20,8 @@
         "buildType": "apk"
       },
       "env": {
-       "ANDROID_GOOGLE_SERVICES_JSON": "@ANDROID_GOOGLE_SERVICES_JSON"
+        "ANDROID_GOOGLE_SERVICES_JSON": "@ANDROID_GOOGLE_SERVICES_JSON",
+        "EXPO_NO_CACHE": "1"
       }
     }
   },

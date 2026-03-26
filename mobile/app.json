@@ -24,7 +24,10 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
-        "foregroundImage": "./assets/icon.png"
+        "foregroundImage": "./assets/icon.png",
+        "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0"
       },
       
       "googleServicesFile": "./google-services.json",

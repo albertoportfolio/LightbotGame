@@ -8,11 +8,7 @@
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "lightbot",
-    "splash": {
-      "backgroundColor": "#1a1a2e",
-      "image": "./assets/splash.png",
-      "resizeMode": "contain"
-    },
+    
     "notification": {
       "icon": "./assets/notification-icon.png",
       "color": "#ffffff"
@@ -22,9 +18,14 @@
       "bundleIdentifier": "com.lightbot.app"
     },
     "android": {
+      "splash": {
+      "backgroundColor": "#1a1a2e",
+      "image": "./assets/adaptive-icon.png",
+      "resizeMode": "contain"
+    },
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
-        "foregroundImage": "./assets/icon.png"
+        "foregroundImage": "./assets/adaptive-icon.png"
       },
       
       "googleServicesFile": "./google-services.json",

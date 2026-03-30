@@ -3,31 +3,44 @@
     "name": "Lightbot",
     "slug": "lightbot-mobile",
     "version": "1.0.0",
+    "description": "Juego educativo de programacion donde los jugadores construyen secuencias de comandos para guiar un robot por un tablero, encender luces y resolver puzzles logicos.",
     "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "lightbot",
-    
+
     "notification": {
       "icon": "./assets/notification-icon.png",
       "color": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.lightbot.app"
+      "bundleIdentifier": "com.lightbot.app",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "Esta app no rastrea tu actividad. Solo usamos datos para guardar tu progreso."
+      }
     },
-    "android": {
-      "splash": {
+    "splash": {
       "backgroundColor": "#1a1a2e",
       "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain"
     },
+    "android": {
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "splash": {
+        "backgroundColor": "#1a1a2e",
+        "image": "./assets/adaptive-icon.png",
+        "resizeMode": "contain"
+      },
       "adaptiveIcon": {
         "backgroundColor": "#1a1a2e",
         "foregroundImage": "./assets/adaptive-icon.png"
       },
-      
       "googleServicesFile": "./google-services.json",
       "package": "com.lightbot.app"
     },

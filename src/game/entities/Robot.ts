@@ -85,7 +85,6 @@ copyVar(levelState: LevelState): boolean {
 
   if (!this.lastVarCell) {
     this.lastVarCell = { row, col }
-    console.log(`COPY_VAR primera visita: registrando (${row},${col}) color=${currentCell.varColor}`)
     return true
   }
 
@@ -93,8 +92,6 @@ copyVar(levelState: LevelState): boolean {
   if (prev.row === row && prev.col === col) return false
 
   const prevCell = levelState.grid[prev.row][prev.col]
-  console.log(`COPY_VAR: (${prev.row},${prev.col})=${prevCell.varColor} ← (${row},${col})=${currentCell.varColor}`)
-
   prevCell.varColor = currentCell.varColor
   this.lastVarCell = { row, col }
 

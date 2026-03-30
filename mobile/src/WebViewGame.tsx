@@ -1,5 +1,5 @@
-import React, { useRef, useCallback, useEffect } from 'react';
-import { StyleSheet, View, ActivityIndicator, StatusBar, BackHandler } from 'react-native';
+import React, { useRef, useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View, ActivityIndicator, StatusBar, BackHandler, Text, TouchableOpacity } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useFocusEffect } from 'expo-router';
 import { GAME_URL } from './config';
@@ -9,6 +9,7 @@ import { getMessaging, getToken, onTokenRefresh, requestPermission } from '@reac
 // Componente principal: envuelve el juego web en un WebView a pantalla completa con soporte para botón atrás de Android
 export default function WebViewGame() {
   const webViewRef = useRef<WebView>(null);
+  const [error, setError] = useState(false);
 
   // Solicita permisos de notificaciones, obtiene el token FCM y lo inyecta en el WebView
   useEffect(() => {
@@ -59,29 +60,45 @@ export default function WebViewGame() {
     }, [])
   );
 
+  const handleRetry = () => {
+    setError(false);
+    webViewRef.current?.reload();
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-      <WebView
-        ref={webViewRef}
-        source={{ uri: GAME_URL }}
-        style={styles.webview}
-        javaScriptEnabled
-        domStorageEnabled
-        mediaPlaybackRequiresUserAction={false}
-        allowsInlineMediaPlayback
-        scrollEnabled={false}
-        bounces={false}
-        overScrollMode="never"
-        startInLoadingState
-        injectedJavaScriptBeforeContentLoaded="window.__REACT_NATIVE__ = true; true;"
-        renderLoading={() => (
-          <View style={styles.loading}>
-            <ActivityIndicator size="large" color="#64ffda" />
-          </View>
-        )}
-        onError={({ nativeEvent }) => console.warn('WebView error:', nativeEvent)}
-      />
+      {error ? (
+        <View style={styles.errorScreen}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorTitle}>No se pudo cargar el juego</Text>
+          <Text style={styles.errorMsg}>Comprueba tu conexión a internet e inténtalo de nuevo.</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={handleRetry}>
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <WebView
+          ref={webViewRef}
+          source={{ uri: GAME_URL }}
+          style={styles.webview}
+          javaScriptEnabled
+          domStorageEnabled
+          mediaPlaybackRequiresUserAction={false}
+          allowsInlineMediaPlayback
+          scrollEnabled={false}
+          bounces={false}
+          overScrollMode="never"
+          startInLoadingState
+          injectedJavaScriptBeforeContentLoaded="window.__REACT_NATIVE__ = true; true;"
+          renderLoading={() => (
+            <View style={styles.loading}>
+              <ActivityIndicator size="large" color="#64ffda" />
+            </View>
+          )}
+          onError={() => setError(true)}
+        />
+      )}
     </View>
   );
 }
@@ -100,5 +117,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#1a1a2e',
+  },
+  errorScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1a1a2e',
+    padding: 32,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorMsg: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryBtn: {
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 16,
+    backgroundColor: '#63b3ed',
+  },
+  retryText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

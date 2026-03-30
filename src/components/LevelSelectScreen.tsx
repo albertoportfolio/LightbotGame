@@ -108,6 +108,7 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
 }) {
   return (
     <div
+      aria-hidden="true"
       className="absolute pointer-events-none"
       style={{
         left: x, top: y,
@@ -152,7 +153,7 @@ function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
   const isVolcano = zone.id === 3
 
   return (
-    <div className="absolute pointer-events-none" style={{ bottom: 44, left: x }}>
+    <div aria-hidden="true" className="absolute pointer-events-none" style={{ bottom: 44, left: x }}>
       {isVolcano ? (
         <div style={{ fontSize: 28, lineHeight: 1 }}>🔥</div>
       ) : isSpace ? (
@@ -191,6 +192,7 @@ function FloatingDeco({ emoji, x, y, delay, size }: {
 }) {
   return (
     <div
+      aria-hidden="true"
       className="absolute pointer-events-none select-none"
       style={{
         left: x, top: y, fontSize: size,
@@ -262,7 +264,7 @@ function LevelNode({
           style={{ top: -18, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}
         >
           {[0, 0.08, 0.16].map((d, i) => (
-            <span key={i} style={{ fontSize: 12, animation: `starWiggle 1.4s ease-in-out ${d}s infinite` }}>⭐</span>
+            <span key={i} aria-hidden="true" style={{ fontSize: 12, animation: `starWiggle 1.4s ease-in-out ${d}s infinite` }}>⭐</span>
           ))}
         </div>
       )}
@@ -292,6 +294,7 @@ function LevelNode({
         onClick={onClick}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
+        aria-label={locked ? `Nivel ${levelIndex + 1}, bloqueado` : `Nivel ${levelIndex + 1}: ${info.name}`}
         style={{
           width: 68, height: 68,
           borderRadius: '50%',
@@ -325,7 +328,7 @@ function LevelNode({
             transform: 'rotate(-20deg)',
           }} />
         )}
-        <span style={{ fontSize: 24, filter: locked ? 'grayscale(1)' : 'none', lineHeight: 1 }}>
+        <span aria-hidden="true" style={{ fontSize: 24, filter: locked ? 'grayscale(1)' : 'none', lineHeight: 1 }}>
           {locked ? '🔒' : info.icon}
         </span>
         <span style={{
@@ -760,6 +763,7 @@ export function LevelSelectScreen({
         <div className="flex items-center gap-1.5">
           <button
             onClick={onToggleMute}
+            aria-label={muted ? 'Activar sonido' : 'Silenciar'}
             className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',
@@ -771,6 +775,7 @@ export function LevelSelectScreen({
           </button>
           <button
             onClick={onOpenSettings}
+            aria-label="Ajustes"
             className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',
@@ -782,6 +787,7 @@ export function LevelSelectScreen({
           </button>
           <button
             onClick={onOpenProfile}
+            aria-label="Perfil"
             className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',

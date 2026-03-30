@@ -457,15 +457,6 @@ private varColorEmoji(vc: string): string {
       })
       return true
     }
-const def = this.levelManager.current
-if (def.victoryColors) {
-  const grid = this.levelState.grid
-  console.log('--- checkVictory llamado ---')
-  for (const [key, expected] of Object.entries(def.victoryColors)) {
-    const [r, c] = key.split(',').map(Number)
-    console.log(`  ${key}: tiene=${grid[r][c].varColor} necesita=${expected} match=${grid[r][c].varColor === expected}`)
-  }
-}
     if (!this.wonThisLevel && this.levelManager.checkVictory(this.levelState, this.levelManager.current)) {
       this.wonThisLevel = true
       const def = this.levelManager.current

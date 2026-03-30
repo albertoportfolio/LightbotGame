@@ -195,12 +195,8 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
     setModal('deleteAccount')
   }
 
-  // TODO(human): Implement shouldAllowDelete — decide whether the confirmation input is valid
   const shouldAllowDelete = (): boolean => {
-    if(confirmText === tutor?.email) {
-      return true
-    }
-    return false
+    return confirmText === tutor?.email
   }
 
   const handleDeleteAccount = async () => {

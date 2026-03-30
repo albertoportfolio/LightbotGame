@@ -109,7 +109,7 @@ function StartScreen({ onStart, onPrivacy }: { onStart: () => void; onPrivacy: (
           maxWidth: 780, width: '92%', maxHeight: '92dvh',
         }}>
         {/* Robot */}
-        <div className="text-7xl flex-shrink-0" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
+        <div className="text-7xl flex-shrink-0" role="img" aria-label="Robot" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
 
         {/* Contenido */}
         <div className="flex flex-col gap-4 flex-1 min-w-0">
@@ -136,13 +136,14 @@ function StartScreen({ onStart, onPrivacy }: { onStart: () => void; onPrivacy: (
           </div>
 
           <button onClick={handleClick}
+            aria-label="Jugar"
             style={{
               background: pressed ? 'linear-gradient(135deg, #2b6cb0, #276749)' : 'linear-gradient(135deg, #63b3ed, #48bb78)',
               boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 16px rgba(99,179,237,0.4)' : '0 5px 0 #1a365d, 0 0 24px rgba(99,179,237,0.5)',
               transform: pressed ? 'translateY(3px)' : 'translateY(0)', transition: 'all 0.1s ease',
             }}
             className="px-8 py-4 rounded-2xl font-black text-white text-xl tracking-wide w-full">
-            {pressed ? '¡Cargando! 🚀' : '▶  JUGAR'}
+            {pressed ? <><span aria-hidden="true">🚀</span> ¡Cargando!</> : <><span aria-hidden="true">▶</span>  JUGAR</>}
           </button>
 
           <div className="flex gap-16 justify-center">
@@ -153,7 +154,7 @@ function StartScreen({ onStart, onPrivacy }: { onStart: () => void; onPrivacy: (
               { icon: '💡', text: '¡Enciende!' },
             ].map(({ icon, text }) => (
               <div key={text} className="flex flex-col items-center gap-0.5 text-white/50 text-xs font-medium">
-                <span className="text-lg">{icon}</span>
+                <span className="text-lg" aria-hidden="true">{icon}</span>
                 <span>{text}</span>
               </div>
             ))}
@@ -183,7 +184,7 @@ function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
   onLevels: () => void
 }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50"
+    <div className="fixed inset-0 flex items-center justify-center z-50" role="dialog" aria-label="Nivel completado"
       style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
       <div className="relative flex flex-col items-center gap-5 px-10 py-10 rounded-3xl text-center"
         style={{
@@ -191,8 +192,8 @@ function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
           border: '2px solid rgba(246,224,94,0.4)',
           boxShadow: '0 0 60px rgba(246,224,94,0.2)', maxWidth: 380, width: '90%',
         }}>
-        <div className="text-5xl">🏆</div>
-        <div className="flex gap-1 text-3xl">{'⭐'.repeat(3)}</div>
+        <div className="text-5xl" role="img" aria-label="Trofeo">🏆</div>
+        <div className="flex gap-1 text-3xl" aria-hidden="true">{'⭐'.repeat(3)}</div>
         <h2 className="font-black text-3xl"
           style={{ background: 'linear-gradient(135deg, #f6e05e, #fc8181)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {hasNext ? '¡Nivel Superado!' : '¡Lo lograste todo!'}
@@ -441,6 +442,31 @@ export default function App() {
     setOnUnauthorized(handleUnauthorized)
   }, [clearAuth])
 
+  // Sync pending offline level updates when app loads with a valid token
+  useEffect(() => {
+    if (!token) return
+    const pending: { userId: number; currentLevel: number }[] =
+      JSON.parse(localStorage.getItem('pendingLevelUpdates') || '[]')
+    if (pending.length === 0) return
+
+    const sync = async () => {
+      const failed: typeof pending = []
+      for (const entry of pending) {
+        try {
+          await updateUser(token, entry.userId, { currentLevel: entry.currentLevel })
+        } catch {
+          failed.push(entry)
+        }
+      }
+      if (failed.length === 0) {
+        localStorage.removeItem('pendingLevelUpdates')
+      } else {
+        localStorage.setItem('pendingLevelUpdates', JSON.stringify(failed))
+      }
+    }
+    sync()
+  }, [token])
+
   // Si estamos en React Native, enviar el token FCM al backend cuando hay sesión activa
   useEffect(() => {
     if (!token || !(window as any).__REACT_NATIVE__) return
@@ -448,9 +474,7 @@ export default function App() {
     const sendFcmToken = () => {
       const fcmToken = (window as any).__FCM_TOKEN__
       if (fcmToken) {
-        registerPushToken(token, fcmToken).catch(err =>
-          console.warn('Error registering push token:', err)
-        )
+        registerPushToken(token, fcmToken).catch(() => {})
       }
     }
 
@@ -521,13 +545,14 @@ export default function App() {
   const handleLevelCompleted = async (index: number) => {
   if (!token || !selectedUser || index < selectedUser.currentLevel) return
   const newLevel = index + 1
-  console.log('actualizando nivel:', selectedUser.id, newLevel)
+  setSelectedUser({ ...selectedUser, currentLevel: newLevel })
   try {
-    const result = await updateUser(token, selectedUser.id, { currentLevel: newLevel })
-    console.log('resultado:', result)
-    setSelectedUser({ ...selectedUser, currentLevel: newLevel })
-  } catch (err) {
-    console.error('error al actualizar:', err)
+    await updateUser(token, selectedUser.id, { currentLevel: newLevel })
+  } catch {
+    // Offline: queue the update for later sync
+    const pending = JSON.parse(localStorage.getItem('pendingLevelUpdates') || '[]')
+    pending.push({ userId: selectedUser.id, currentLevel: newLevel })
+    localStorage.setItem('pendingLevelUpdates', JSON.stringify(pending))
   }
 }
 

@@ -9,9 +9,21 @@ interface UserState {
 
 const UserContext = createContext<UserState | null>(null)
 
-// Provider que mantiene en memoria el usuario (jugador) seleccionado por el tutor
+// Provider que persiste en localStorage el usuario (jugador) seleccionado por el tutor
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [selectedUser, setSelectedUserState] = useState<User | null>(() => {
+    const saved = localStorage.getItem('selectedUser')
+    return saved ? JSON.parse(saved) : null
+  })
+
+  const setSelectedUser = (user: User | null) => {
+    setSelectedUserState(user)
+    if (user) {
+      localStorage.setItem('selectedUser', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('selectedUser')
+    }
+  }
 
   return (
     <UserContext.Provider value={{ selectedUser, setSelectedUser }}>

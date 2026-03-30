@@ -111,7 +111,6 @@ checkVictory(state: LevelState, def: LevelDef): boolean {
     if (!def.victoryColors) return false;
     for (const [key, expectedColor] of Object.entries(def.victoryColors)) {
       const [r, c] = key.split(',').map(Number);
-      console.log(`Celda ${key}: tiene=${state.grid[r][c].varColor} necesita=${expectedColor}`);
       if (state.grid[r][c].varColor !== expectedColor) return false;
     }
     return true;

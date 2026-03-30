@@ -27,9 +27,19 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
   const [regPassword, setRegPassword] = useState('')
   const [regConfirm, setRegConfirm] = useState('')
 
+  // COPPA consent fields
+  const [acceptAge, setAcceptAge] = useState(false)
+  const [acceptChildData, setAcceptChildData] = useState(false)
+
+  const canRegister = (): boolean => {
+    return acceptAge && acceptChildData && regPassword === regConfirm && !!regEmail
+  }
+
   const switchTab = (t: Tab) => {
     setTab(t)
     setError('')
+    setAcceptAge(false)
+    setAcceptChildData(false)
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -215,7 +225,20 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
               required
               minLength={8}
             />
-            <SubmitButton loading={loading} label="Crear cuenta" />
+            {/* COPPA: age and parental consent */}
+            <div className="flex flex-col gap-3">
+              <ConsentCheckbox
+                checked={acceptAge}
+                onChange={setAcceptAge}
+                label="Confirmo que soy mayor de 18 años"
+              />
+              <ConsentCheckbox
+                checked={acceptChildData}
+                onChange={setAcceptChildData}
+                label="Como tutor/docente, confirmo que tengo autorización parental o tutela legal para gestionar los datos de los estudiantes que añada a mi cuenta"
+              />
+            </div>
+            <SubmitButton loading={loading} label="Crear cuenta" disabled={!canRegister()} />
           </form>
         )}
 
@@ -274,12 +297,29 @@ function InputField({
   )
 }
 
+// Checkbox de consentimiento con label
+function ConsentCheckbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <label className="flex items-start gap-2.5 cursor-pointer group">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 w-4 h-4 rounded accent-sky-400 flex-shrink-0"
+      />
+      <span className="text-white/50 text-xs leading-relaxed group-hover:text-white/70 transition-colors">
+        {label}
+      </span>
+    </label>
+  )
+}
+
 // Botón de submit con estado de carga y estilo gradiente
-function SubmitButton({ loading, label }: { loading: boolean; label: string }) {
+function SubmitButton({ loading, label, disabled }: { loading: boolean; label: string; disabled?: boolean }) {
   return (
     <button
       type="submit"
-      disabled={loading}
+      disabled={loading || disabled}
       className="w-full py-3 rounded-2xl font-black text-white text-lg transition-all active:scale-95 disabled:opacity-50"
       style={{
         background: 'linear-gradient(135deg, #63b3ed, #48bb78)',

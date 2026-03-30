@@ -14,6 +14,7 @@ import { useUser } from './context/UserContext'
 import { EmailVerificationScreen } from './components/EmailVerificationScreen'
 import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
+import { PrivacyPolicyScreen } from './components/PrivacyPolicyScreen'
 import { updateUser, setOnUnauthorized, registerPushToken } from './services/service'
 
 // Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
@@ -69,7 +70,7 @@ export const LEVEL_INFO = [
 const TOTAL_LEVELS = 40
 
 // Pantallas posibles de la app — el estado 'screen' controla cuál se renderiza
-type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
+type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy'
 
 
 // Estrella decorativa animada para la pantalla de inicio
@@ -78,7 +79,7 @@ function Star({ style }: { style: React.CSSProperties }) {
 }
 
 // Pantalla de inicio: logo, botón "JUGAR" y animación de estrellas
-function StartScreen({ onStart }: { onStart: () => void }) {
+function StartScreen({ onStart, onPrivacy }: { onStart: () => void; onPrivacy: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
@@ -157,6 +158,11 @@ function StartScreen({ onStart }: { onStart: () => void }) {
               </div>
             ))}
           </div>
+
+          <button onClick={onPrivacy}
+            className="text-white/40 hover:text-white/70 transition-colors text-xs underline underline-offset-2 mt-1 text-align-right self-end">
+            Politica de Privacidad
+          </button>
         </div>
       </div>
     </div>
@@ -534,7 +540,9 @@ export default function App() {
         }
       `}</style>
 
-      {screen === 'start' && <StartScreen onStart={handleStart} />}
+      {screen === 'start' && <StartScreen onStart={handleStart} onPrivacy={() => setScreen('privacy')} />}
+
+      {screen === 'privacy' && <PrivacyPolicyScreen onBack={() => setScreen('start')} />}
 
       {screen === 'auth' && (
         <AuthScreen

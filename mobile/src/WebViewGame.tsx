@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, StatusBar, BackHandler, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, StatusBar, BackHandler, Text, TouchableOpacity, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
+import type { ShouldStartLoadRequest } from 'react-native-webview/lib/WebViewTypes';
 import { useFocusEffect } from 'expo-router';
 import { GAME_URL } from './config';
 import * as NavigationBar from 'expo-navigation-bar'
@@ -31,7 +32,7 @@ export default function WebViewGame() {
           )
         })
       } catch (err) {
-        console.warn('FCM setup error:', err)
+        // FCM setup failed silently
       }
     }
     setupFCM()
@@ -65,6 +66,13 @@ export default function WebViewGame() {
     webViewRef.current?.reload();
   };
 
+  // Intercepta navegación a URLs externas (ej: política de privacidad) y las abre en el navegador del sistema
+  const handleNavigation = (event: ShouldStartLoadRequest) => {
+    if (event.url.startsWith(GAME_URL)) return true
+    Linking.openURL(event.url)
+    return false
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar hidden />
@@ -96,6 +104,7 @@ export default function WebViewGame() {
               <ActivityIndicator size="large" color="#64ffda" />
             </View>
           )}
+          onShouldStartLoadWithRequest={handleNavigation}
           onError={() => setError(true)}
         />
       )}

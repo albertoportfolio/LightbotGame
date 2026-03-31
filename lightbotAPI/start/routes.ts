@@ -10,10 +10,35 @@
 import { middleware } from '#start/kernel'
 import router from '@adonisjs/core/services/router'
 import { controllers } from '#generated/controllers'
+import env from '#start/env'
 
 // Ruta raíz de health-check
 router.get('/', () => {
   return { hello: 'world' }
+})
+
+// Política de privacidad — página HTML pública (requerida por Play Store y App Store)
+router.get('/privacy', async ({ request, response }) => {
+  request.request.headers.accept = 'text/html'
+  const { readFile } = await import('node:fs/promises')
+  const { join } = await import('node:path')
+  let html = await readFile(join(import.meta.dirname, '..', 'public', 'privacy.html'), 'utf-8')
+  const back = request.input('back', env.get('FRONTEND_URL'))
+  html = html.replaceAll('{{BACK_URL}}', back)
+  response.header('Content-Type', 'text/html; charset=utf-8')
+  return response.send(html)
+})
+
+// Términos y condiciones — página HTML pública
+router.get('/terms', async ({ request, response }) => {
+  request.request.headers.accept = 'text/html'
+  const { readFile } = await import('node:fs/promises')
+  const { join } = await import('node:path')
+  let html = await readFile(join(import.meta.dirname, '..', 'public', 'terms.html'), 'utf-8')
+  const back = request.input('back', env.get('FRONTEND_URL'))
+  html = html.replaceAll('{{BACK_URL}}', back)
+  response.header('Content-Type', 'text/html; charset=utf-8')
+  return response.send(html)
 })
 
 // Grupo principal /api/v1 — contiene todos los endpoints de la API

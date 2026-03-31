@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Politica de Privacidad — Enciende las Luces</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 1.5rem;
+      padding: 2rem;
+      box-shadow: 0 0 60px rgba(100, 150, 255, 0.2);
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 900;
+      background: linear-gradient(135deg, #63b3ed, #f6e05e);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.25rem;
+    }
+    .updated { text-align: center; color: rgba(255,255,255,0.4); font-size: 0.75rem; margin-bottom: 1.5rem; }
+    h2 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    section { margin-bottom: 1.25rem; }
+    p { color: rgba(255,255,255,0.75); font-size: 0.875rem; line-height: 1.6; }
+    ul { list-style: disc inside; margin-top: 0.5rem; color: rgba(255,255,255,0.6); font-size: 0.875rem; line-height: 1.8; }
+    ul strong { color: rgba(255,255,255,0.85); }
+    .note { color: rgba(255,255,255,0.45); font-size: 0.75rem; margin-top: 0.5rem; }
+    .contact-email { text-align: center; font-weight: 700; font-size: 1rem; color: #63b3ed; margin-top: 0.75rem; }
+    .back-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1rem;
+      padding: 0.625rem 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6);
+      font-size: 0.875rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: color 0.2s;
+      text-align: center;
+    }
+    .back-btn:hover { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a class="back-btn" style="width:auto;display:inline-block;margin-bottom:0.75rem;text-decoration:none;" href="{{BACK_URL}}">← Volver</a>
+    <h1>Politica de Privacidad</h1>
+    <p class="updated">Ultima actualizacion: 30 de marzo de 2026</p>
+
+    <section>
+      <h2>1. Datos que recopilamos</h2>
+      <p>Para el funcionamiento de la aplicacion y la API, recopilamos los siguientes datos:</p>
+      <ul>
+        <li><strong>Correo electronico:</strong> utilizado para crear y gestionar tu cuenta.</li>
+        <li><strong>Nombre del usuario:</strong> para personalizar la experiencia dentro de la aplicacion.</li>
+        <li><strong>Direccion IP y datos de navegacion:</strong> recopilados automaticamente para mejorar la experiencia del WebView y garantizar la seguridad del servicio.</li>
+        <li><strong>Token de notificaciones push (FCM):</strong> para enviarte notificaciones relevantes sobre tu progreso.</li>
+        <li><strong>Progreso en el juego:</strong> nivel actual y datos de avance, almacenados en nuestros servidores.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Finalidad del tratamiento</h2>
+      <p>Utilizamos tus datos para los siguientes fines:</p>
+      <ul>
+        <li>Permitir el inicio de sesion y la autenticacion de usuarios.</li>
+        <li>Guardar y sincronizar tu progreso entre dispositivos.</li>
+        <li>Enviar notificaciones push relacionadas con la aplicacion.</li>
+        <li>Mejorar el rendimiento y la experiencia de uso de la aplicacion.</li>
+        <li>Garantizar la seguridad e integridad del servicio.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Servicios de terceros</h2>
+      <p>La aplicacion utiliza los siguientes servicios de terceros que pueden recopilar informacion:</p>
+      <ul>
+        <li><strong>Google Play Services:</strong> necesario para el funcionamiento de la aplicacion en dispositivos Android.</li>
+        <li><strong>Firebase Cloud Messaging (FCM):</strong> utilizado para el envio de notificaciones push.</li>
+      </ul>
+      <p class="note">Te recomendamos revisar las politicas de privacidad de estos servicios para conocer como manejan tu informacion.</p>
+    </section>
+
+    <section>
+      <h2>4. Derechos del usuario</h2>
+      <p>Como usuario, tienes derecho a:</p>
+      <ul>
+        <li>Acceder a los datos personales que tenemos sobre ti.</li>
+        <li>Solicitar la correccion de datos inexactos.</li>
+        <li>Solicitar la eliminacion de tu cuenta y todos los datos asociados.</li>
+        <li>Retirar tu consentimiento en cualquier momento.</li>
+      </ul>
+      <p class="note">Para ejercer cualquiera de estos derechos, contactanos a traves del correo indicado abajo.</p>
+    </section>
+
+    <section>
+      <h2>5. Contacto</h2>
+      <p>Si tienes preguntas, dudas o solicitudes relacionadas con esta politica de privacidad o el manejo de tus datos personales, puedes escribirnos a:</p>
+      <!-- TODO(human): Replace with your real contact email -->
+      <p class="contact-email">correo@ejemplo.com</p>
+    </section>
+
+    <a class="back-btn" style="text-decoration:none;" href="{{BACK_URL}}">← Volver al inicio</a>
+  </div>
+</body>
+</html>

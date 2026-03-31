@@ -45,25 +45,23 @@ export const LEVEL_INFO = [
   { name: 'El Doble Intercambio', icon: '♻️', description: 'Dos swaps simultáneos con una sola variable temporal' },  // 21 level22
   { name: 'Paraíso de Letras', icon: '🎨', description: 'Cuatro variables, cuatro colores — ordénalos todos' },       // 22 level23
   { name: 'Laberinto de Variables', icon: '🧩', description: 'Navega el laberinto cambiando variables por el camino' }, // 23 level24
-  { name: 'El Laberinto Luminoso', icon: '💡', description: 'Enciende luces navegando el laberinto' },                 // 24 level2
-  { name: 'La Cadena', icon: '⛓️', description: 'Copia A en B, y B original en C' },                 // 24 level2
-  { name: 'El Triangulo', icon: '🔺', description: 'Rota los colores: A→B, B→C, C→A usando el temporal' },                 // 24 level2
-  { name: 'El Espejo', icon: '🪞', description: 'Completa el puzzle del espejo usando variables' },                 // 24 level2
-  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' }, // 24 level29
-  { name: 'El Gran Puzzle', icon: '🧩', description: 'Completa el puzzle de variables' },                 // 24 level2
-  
-  // 5
-  // Mundo 4 — Volcán Digital (indices 24-26)
-  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },       // 24 level31
-  { name: 'Recta Final', icon: '🏁', description: 'El camino más largo — ¿puedes optimizar tu solución?' },       // 25 level32
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
-  { name: 'Recta de Letras', icon: '🚀', description: 'Texto libre y variables: el desafío definitivo' },         // 26 level33
+  { name: 'Laberinto Luminoso', icon: '💡', description: 'Navega el laberinto y enciende las 3 luces' },                    // 24 level25
+  { name: 'La Cadena', icon: '⛓️', description: 'Copia A en B, y B original en C' },                                      // 25 level26
+  { name: 'El Triangulo', icon: '🔺', description: 'Rota los colores: A→B, B→C, C→A usando el temporal' },                // 26 level27
+  { name: 'El Espejo', icon: '🪞', description: 'Copia los colores del lado izquierdo al derecho' },                       // 27 level28
+  { name: 'El Gran Intercambio', icon: '🔄', description: 'Intercambia los colores de A y B usando C como temporal' },     // 28 level29
+  { name: 'El Gran Puzzle', icon: '🧩', description: 'Haz que las esquinas sean rojas y los bordes azules' },              // 29 level30
+  // Mundo 4 — Volcán Digital (indices 30-39)
+  { name: 'Manda con Palabras', icon: '📝', description: 'Escribe comandos en texto para mover el robot' },               // 30 level31
+  { name: 'Recta Final', icon: '🏁', description: 'Usa un bucle para llegar a la planta' },                               // 31 level32
+  { name: 'Recta de Letras', icon: '🔤', description: 'Texto y variables: intercambia A y C usando B' },                  // 32 level33
+  { name: 'Luces en Fila', icon: '💡', description: 'Enciende las 3 luces en linea recta con texto' },                    // 33 level34
+  { name: 'Escalera de Palabras', icon: '🪜', description: 'Baja la escalera encendiendo luces con texto' },              // 34 level35
+  { name: 'La U de Texto', icon: '↩️', description: 'Recorre la U y enciende las 4 esquinas' },                           // 35 level36
+  { name: 'Bucle y Luces', icon: '🔁', description: 'Usa un bucle para encender todas las luces' },                       // 36 level37
+  { name: 'Zigzag de Palabras', icon: '⚡', description: 'Navega el zigzag con giros precisos' },                         // 37 level38
+  { name: 'Doble Fila', icon: '🔀', description: 'Recorre dos filas de luces esquivando muros' },                         // 38 level39
+  { name: 'El Desafio Final', icon: '🏆', description: 'Laberinto con 4 luces — solo 2 intentos' },                       // 39 level40
 ]
 
 const TOTAL_LEVELS = 40

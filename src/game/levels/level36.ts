@@ -1,30 +1,28 @@
 import { LevelDef } from '../../types/game.types';
 import { Command } from '../../types/game.types';
 
-// Legend: 'floor' | 'empty' | 'light' | 'wall'
-// Robot starts at (row=0, col=0) facing RIGHT
-// Goal: toggle all 3 'light' cells
+// ─── Nivel 36: La U de Texto ─────────────────────────────────────────────
+//
+// Grid 3×3 con centro vacio. 4 luces en las esquinas.
+// El robot recorre la U encendiendo cada esquina.
+//
+// Solucion (12 cmds):
+// LUZ AVANZA AVANZA LUZ IZQUIERDA AVANZA AVANZA LUZ IZQUIERDA AVANZA AVANZA LUZ
+
 const level36: LevelDef = {
   id: 36,
-  name: 'Recta de Letras',
-  maxCommands: 6,
-  maxAttempts: 4,
-  textMode: true,  //propiedad para indicar que este nivel es de texto
-  instructions: 'Utiliza comandos de texto y haz que A y C cambien de color usando B como intermediario.',
-  robotStart: { row: 0, col: 0, direction: 'RIGHT' },
-   allowedCommands: [Command.MOVE_FORWARD, Command.COPY_VAR, Command.TURN_LEFT, Command.TURN_RIGHT],
+  name: 'La U de Texto',
+  maxCommands: 13,
+  maxAttempts: 3,
+  textMode: true,
+  instructions: 'Recorre la U y enciende las 4 luces de las esquinas.',
+  robotStart: { row: 0, col: 0, direction: 'DOWN' },
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   grid: [
-    ['floor', 'variable', 'floor', 'variable', 'floor', 'variable', 'floor'],
+    ['light', 'floor', 'light'],
+    ['floor', 'empty', 'floor'],
+    ['light', 'floor', 'light'],
   ],
-  varColors: {
-    '0,1': 'red',    // A
-    '0,3': 'none',   // B
-    '0,5': 'blue',    // C 
-  },
-  victoryColors: {
-    '0,5': 'red',  
-    '0,1': 'blue',  
-  },
 };
 
 export default level36;

@@ -1,49 +1,29 @@
 import { LevelDef } from '../../types/game.types';
 import { Command } from '../../types/game.types';
-import level24 from './level24';
 
-// ─── Nivel 8: Paraiso de letras ─────────────────────────────────────────
+// ─── Nivel 25: Laberinto Luminoso ─────────────────────────────────────────
 //
-// Grid 8 filas × 7 columnas.
-// Robot empieza en (0,0) — centro del grid.
+// Grid 5×5. Robot empieza en (0,0) mirando a la derecha.
+// Navega el laberinto esquivando muros y enciende las 3 luces.
 //
-// Variables:
-//   A=rojo   (0,5)
-//   B=Rojo   (5,0)
-//   C=Azul   (5,5) 
-// El objetivo es hacer que C y B sean iguales utilizando un bucle solo:
-// Victoria: A=blue, B=red, C=red ✓✓✓✓
+// Solucion (15 cmds):
+// → → LUZ ↓ ↓ → → → LUZ ↓ ↓ ← LUZ
 
 const level25: LevelDef = {
-    id: 25,
-    name: 'Laberinto de Variables',
-    maxCommands: 12,
-    maxAttempts: 2,
-    instructions: 'Haz que A sea Azul y D sea rojo',
-    allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.COPY_VAR, Command.LOOP_UNTIL_PLANT],
-    robotStart: { row: 0, col: 0, direction: 'RIGHT' },
-    grid: [
-        // col:  0          1       2       3          4       5       6
-       ['variable', 'floor', 'floor', 'floor', 'floor', 'floor', 'variable'],  // fila 0
-       ['floor', 'floor', 'floor', 'empty', 'floor', 'floor', 'floor'],  // fila 1
-       ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'],  // fila 2
-       ['floor', 'floor', 'empty', 'variable', 'empty', 'floor', 'floor'],  // fila 3
-       ['floor', 'floor', 'floor', 'empty', 'floor', 'floor', 'floor'],  // fila 4
-       ['floor', 'floor', 'floor', 'floor', 'floor', 'floor', 'floor'],  // fila 5
-       ['variable', 'floor', 'floor', 'floor', 'floor', 'floor', 'variable'],  // fila 6
-
-    ],
-    varColors: {
-        '0,0': 'red',    // A
-        '0,6': 'red',   // B
-        '6,0': 'blue',    // D
-        '6,6': 'blue',   // E
-        '3,3': 'red',   // C
-    },
-    victoryColors: {
-        '0,0': 'blue',   // A debe terminar azul
-        '6,0': 'red',    // D debe terminar rojo  
-    },
+  id: 25,
+  name: 'Laberinto Luminoso',
+  maxCommands: 16,
+  maxAttempts: 3,
+  instructions: 'Navega el laberinto y enciende las 3 luces',
+  robotStart: { row: 0, col: 0, direction: 'RIGHT' },
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
+  grid: [
+    ['floor', 'light', 'floor', 'floor', 'empty'],
+    ['floor', 'wall',  'wall',  'floor', 'empty'],
+    ['floor', 'floor', 'floor', 'light', 'empty'],
+    ['empty', 'empty', 'floor', 'wall',  'empty'],
+    ['empty', 'empty', 'light', 'floor', 'empty'],
+  ],
 };
 
 export default level25;

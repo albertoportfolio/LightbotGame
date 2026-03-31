@@ -1,30 +1,28 @@
 import { LevelDef } from '../../types/game.types';
 import { Command } from '../../types/game.types';
 
-// Legend: 'floor' | 'empty' | 'light' | 'wall'
-// Robot starts at (row=0, col=0) facing RIGHT
-// Goal: toggle all 3 'light' cells
+// ─── Nivel 35: Escalera de Palabras ───────────────────────────────────────
+//
+// Grid 3×4. Escalera diagonal con luces en cada peldano.
+// Ensena el patron: AVANZA LUZ DERECHA AVANZA IZQUIERDA (repetido).
+//
+// Solucion (12 cmds):
+// AVANZA LUZ DERECHA AVANZA IZQUIERDA AVANZA LUZ DERECHA AVANZA IZQUIERDA AVANZA LUZ
+
 const level35: LevelDef = {
   id: 35,
-  name: 'Recta de Letras',
-  maxCommands: 6,
+  name: 'Escalera de Palabras',
+  maxCommands: 13,
   maxAttempts: 4,
-  textMode: true,  //propiedad para indicar que este nivel es de texto
-  instructions: 'Utiliza comandos de texto y haz que A y C cambien de color usando B como intermediario.',
+  textMode: true,
+  instructions: 'Baja la escalera encendiendo las luces con comandos de texto.',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
-   allowedCommands: [Command.MOVE_FORWARD, Command.COPY_VAR, Command.TURN_LEFT, Command.TURN_RIGHT],
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   grid: [
-    ['floor', 'variable', 'floor', 'variable', 'floor', 'variable', 'floor'],
+    ['floor', 'light', 'empty', 'empty'],
+    ['floor', 'floor', 'light', 'empty'],
+    ['empty', 'floor', 'floor', 'light'],
   ],
-  varColors: {
-    '0,1': 'red',    // A
-    '0,3': 'none',   // B
-    '0,5': 'blue',    // C 
-  },
-  victoryColors: {
-    '0,5': 'red',  
-    '0,1': 'blue',  
-  },
 };
 
 export default level35;

@@ -1,30 +1,28 @@
 import { LevelDef } from '../../types/game.types';
 import { Command } from '../../types/game.types';
 
-// Legend: 'floor' | 'empty' | 'light' | 'wall'
-// Robot starts at (row=0, col=0) facing RIGHT
-// Goal: toggle all 3 'light' cells
+// ─── Nivel 38: Zigzag de Palabras ────────────────────────────────────────
+//
+// Grid 3×3. Camino en zigzag con 2 luces en los extremos.
+// Requiere giros precisos para navegar el zigzag.
+//
+// Solucion (10 cmds):
+// AVANZA AVANZA LUZ DERECHA AVANZA AVANZA DERECHA AVANZA AVANZA LUZ
+
 const level38: LevelDef = {
   id: 38,
-  name: 'Recta de Letras',
-  maxCommands: 6,
-  maxAttempts: 4,
-  textMode: true,  //propiedad para indicar que este nivel es de texto
-  instructions: 'Utiliza comandos de texto y haz que A y C cambien de color usando B como intermediario.',
+  name: 'Zigzag de Palabras',
+  maxCommands: 11,
+  maxAttempts: 3,
+  textMode: true,
+  instructions: 'Navega el zigzag con texto y enciende las 2 luces.',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
-   allowedCommands: [Command.MOVE_FORWARD, Command.COPY_VAR, Command.TURN_LEFT, Command.TURN_RIGHT],
+  allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],
   grid: [
-    ['floor', 'variable', 'floor', 'variable', 'floor', 'variable', 'floor'],
+    ['floor', 'floor', 'light'],
+    ['empty', 'empty', 'floor'],
+    ['light', 'floor', 'floor'],
   ],
-  varColors: {
-    '0,1': 'red',    // A
-    '0,3': 'none',   // B
-    '0,5': 'blue',    // C 
-  },
-  victoryColors: {
-    '0,5': 'red',  
-    '0,1': 'blue',  
-  },
 };
 
 export default level38;

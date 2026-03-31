@@ -1,30 +1,25 @@
 import { LevelDef } from '../../types/game.types';
 import { Command } from '../../types/game.types';
 
-// Legend: 'floor' | 'empty' | 'light' | 'wall'
-// Robot starts at (row=0, col=0) facing RIGHT
-// Goal: toggle all 3 'light' cells
+// ─── Nivel 34: Luces en Fila ──────────────────────────────────────────────
+//
+// Grid 1×7. Tres luces separadas por casillas vacias.
+// Introduccion suave al texto: solo AVANZA y LUZ.
+//
+// Solucion (8 cmds): AVANZA LUZ AVANZA AVANZA LUZ AVANZA AVANZA LUZ
+
 const level34: LevelDef = {
   id: 34,
-  name: 'Recta de Letras',
-  maxCommands: 6,
-  maxAttempts: 4,
-  textMode: true,  //propiedad para indicar que este nivel es de texto
-  instructions: 'Utiliza comandos de texto y haz que A y C cambien de color usando B como intermediario.',
+  name: 'Luces en Fila',
+  maxCommands: 9,
+  maxAttempts: 5,
+  textMode: true,
+  instructions: 'Escribe comandos de texto para encender las 3 luces en linea recta.',
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },
-   allowedCommands: [Command.MOVE_FORWARD, Command.COPY_VAR, Command.TURN_LEFT, Command.TURN_RIGHT],
+  allowedCommands: [Command.MOVE_FORWARD, Command.LIGHT_TOGGLE],
   grid: [
-    ['floor', 'variable', 'floor', 'variable', 'floor', 'variable', 'floor'],
+    ['floor', 'light', 'floor', 'light', 'floor', 'light', 'floor'],
   ],
-  varColors: {
-    '0,1': 'red',    // A
-    '0,3': 'none',   // B
-    '0,5': 'blue',    // C 
-  },
-  victoryColors: {
-    '0,5': 'red',  
-    '0,1': 'blue',  
-  },
 };
 
 export default level34;

@@ -1,0 +1,1033 @@
+================================================================================
+  DOCUMENTACIÓN COMPLETA DE LA LÓGICA PHASER - LIGHTBOT
+================================================================================
+
+Proyecto: Lightbot - Juego educativo de programación de robot
+Motor: Phaser 3 + React 18 + TypeScript
+Fecha de generación: 2026-04-01
+
+================================================================================
+  ÍNDICE
+================================================================================
+
+1.  Arquitectura General
+2.  Estructura de Archivos Phaser
+3.  Tipos y Definiciones (game.types.ts)
+4.  Puente React-Phaser (useGameBridge.ts)
+5.  Fábrica del Juego (PhaserGame.ts)
+6.  Constantes Globales (gameConfig.ts)
+7.  Escena de Arranque (BootScene.ts)
+8.  Escena Principal (GameScene.ts)
+9.  Entidad Robot (Robot.ts)
+10. Ejecutor de Comandos (CommandExecutor.ts)
+11. Metadatos de Comandos (commands.ts)
+12. Parser de Texto (textCommandParser.ts)
+13. Gestor de Niveles (LevelManager.ts)
+14. Sistema de Audio (SoundManager.ts)
+15. Sistema de Niveles (level1.ts - level40.ts)
+16. Flujo de Datos Completo
+17. Algoritmos Clave
+18. Sistema de Renderizado
+19. Mecánicas del Juego
+
+================================================================================
+  1. ARQUITECTURA GENERAL
+================================================================================
+
+El juego usa dos runtimes separados (React y Phaser) conectados mediante un
+EventEmitter compartido almacenado en el registry de Phaser.
+
+Flujo de comunicación:
+
+  React → Phaser:
+    - run-commands      (ejecutar cola de comandos)
+    - reset-level       (reiniciar nivel actual)
+    - load-level        (cargar un nivel específico)
+    - set-mute          (silenciar/activar audio)
+    - set-volume        (ajustar volumen)
+    - start-music       (iniciar música de fondo)
+    - stop-music        (detener música de fondo)
+
+  Phaser → React:
+    - level-loaded      (nivel cargado con restricciones)
+    - robot-moved       (robot se movió)
+    - command-executed  (comando ejecutado)
+    - command-failed    (comando falló)
+    - level-complete    (nivel completado)
+
+================================================================================
+  2. ESTRUCTURA DE ARCHIVOS PHASER
+================================================================================
+
+src/
+├── types/game.types.ts              (77 líneas)   - Tipos TypeScript
+├── hooks/useGameBridge.ts           (101 líneas)  - Puente React↔Phaser
+└── game/
+    ├── PhaserGame.ts                (47 líneas)   - Fábrica del juego
+    ├── constants/gameConfig.ts      (37 líneas)   - Constantes globales
+    ├── audio/SoundManager.ts        (336 líneas)  - Audio procedural
+    ├── entities/Robot.ts            (148 líneas)  - Entidad robot
+    ├── scenes/
+    │   ├── BootScene.ts             (182 líneas)  - Generación de assets
+    │   └── GameScene.ts             (522 líneas)  - Lógica principal
+    ├── logic/
+    │   ├── CommandExecutor.ts       (96 líneas)   - Ejecutor secuencial
+    │   ├── commands.ts              (59 líneas)   - Metadatos de comandos
+    │   └── textCommandParser.ts     (46 líneas)   - Parser de texto español
+    └── levels/
+        ├── LevelManager.ts          (134 líneas)  - Catálogo de niveles
+        └── level1.ts - level40.ts   (40 archivos) - Definiciones de niveles
+
+Total código core: ~1,775 líneas
+
+================================================================================
+  3. TIPOS Y DEFINICIONES (src/types/game.types.ts - 77 líneas)
+================================================================================
+
+Tipos de Celda (CellType):
+  'floor'     - Suelo transitable
+  'empty'     - Espacio vacío (no transitable)
+  'light'     - Luz que puede encenderse/apagarse
+  'wall'      - Muro (no transitable)
+  'plant'     - Planta (objetivo de llegada)
+  'variable'  - Variable de color manipulable
+
+Colores de Variable (VarColor):
+  'red' | 'blue' | 'purple' | 'none'
+
+Celda (Cell):
+  {
+    type: CellType        - Tipo de celda
+    lit: boolean          - Si la luz está encendida (solo para 'light')
+    varColor?: VarColor   - Color de variable (solo para 'variable')
+  }
+
+Direcciones (Direction):
+  'UP' | 'RIGHT' | 'DOWN' | 'LEFT'
+
+Comandos (Command - Enum):
+  MOVE_FORWARD      - Avanzar una celda en la dirección actual
+  TURN_LEFT         - Girar 90° a la izquierda
+  TURN_RIGHT        - Girar 90° a la derecha
+  LIGHT_TOGGLE      - Encender/apagar luz en la celda actual
+  LOOP_UNTIL_PLANT  - Repetir comandos hasta llegar a planta
+  COPY_VAR          - Copiar color de variable
+
+Estado del Robot (RobotState):
+  {
+    row: number           - Fila actual en la cuadrícula
+    col: number           - Columna actual en la cuadrícula
+    direction: Direction  - Dirección a la que mira
+  }
+
+Definición de Nivel (LevelDef):
+  {
+    id: number                               - ID único (1-40)
+    name: string                             - Nombre del nivel (español)
+    robotStart: RobotState                   - Posición inicial del robot
+    grid: CellType[][]                       - Mapa del nivel
+    maxCommands: number                      - Límite de comandos
+    maxAttempts: number                      - Intentos máximos
+    instructions?: string                    - Pista del nivel
+    allowedCommands?: Command[]              - Comandos permitidos
+    textMode?: boolean                       - Habilitar entrada por texto
+    varColors?: Record<"r,c", VarColor>      - Colores iniciales de variables
+    victoryColors?: Record<"r,c", VarColor>  - Colores objetivo para ganar
+  }
+
+Estado de Nivel en Ejecución (LevelState):
+  {
+    grid: Cell[][]          - Cuadrícula mutable en tiempo real
+    robot: RobotState       - Posición actual del robot
+    isComplete: boolean     - Flag de victoria
+  }
+
+Eventos del Juego (GameEvents):
+  Interfaz TypeScript que define los 7 tipos de eventos del EventEmitter.
+
+================================================================================
+  4. PUENTE REACT-PHASER (src/hooks/useGameBridge.ts - 101 líneas)
+================================================================================
+
+Hook de React que proporciona comunicación bidireccional con Phaser.
+
+Implementación:
+  - Usa useRef para mantener una instancia estable del emitter entre renders
+  - Crea un Phaser.Events.EventEmitter de forma lazy en la primera llamada
+  - Todos los callbacks devuelven funciones de desuscripción
+  - El emitter se almacena en el registry de Phaser para acceso entre escenas
+
+API de Emisión (React → Phaser):
+
+  runCommands(commands: Command[])
+    Envía la cola de comandos al ejecutor de Phaser.
+
+  resetLevel()
+    Reinicia el nivel actual al estado inicial.
+
+  loadLevel(index: number)
+    Carga un nivel específico por índice (0-39).
+
+  setMute(muted: boolean)
+    Activa o desactiva el silencio.
+
+  setVolume(v: number)
+    Ajusta el volumen maestro (0.0 - 1.0).
+
+  stopMusic()
+    Detiene la música de fondo.
+
+  startMusic()
+    Inicia la música de fondo.
+
+API de Escucha (Phaser → React):
+
+  onLevelComplete((data) => {...})
+    Se dispara cuando el jugador completa el nivel.
+
+  onCommandExecuted((data) => {...})
+    Se dispara cuando un comando individual termina.
+
+  onLevelLoaded((data) => {...})
+    Se dispara cuando un nivel se carga con sus restricciones.
+
+================================================================================
+  5. FÁBRICA DEL JUEGO (src/game/PhaserGame.ts - 47 líneas)
+================================================================================
+
+Función: createPhaserGame(parent, bridge)
+
+Crea y configura la instancia de Phaser.Game.
+
+Configuración:
+  - Canvas: 680×560 píxeles
+  - Escalado: modo FIT automático
+  - Escenas: BootScene → GameScene (secuencial)
+  - Fondo: azul oscuro (#1a1a2e)
+  - Input: Captura de teclado deshabilitada (React maneja las teclas)
+
+Proceso:
+  1. Crea Phaser.Game con modo de escala FIT
+  2. Inyecta el EventEmitter bridge en game.registry
+  3. Las escenas acceden al bridge mediante this.registry.get('bridge')
+
+================================================================================
+  6. CONSTANTES GLOBALES (src/game/constants/gameConfig.ts - 37 líneas)
+================================================================================
+
+Disposición del Canvas:
+  WIDTH: 680              - Ancho del viewport
+  HEIGHT: 560             - Alto del viewport
+  CELL_SIZE: 64           - Tamaño de cada celda en píxeles
+  GRID_OFFSET_X: 24       - Padding horizontal de la cuadrícula
+  GRID_OFFSET_Y: 24       - Padding vertical de la cuadrícula
+
+Tiempos de Animación:
+  MOVE_DURATION_MS: 280   - Duración del tween de movimiento del robot
+  COMMAND_DELAY_MS: 380   - Pausa entre comandos consecutivos
+
+Paleta de Colores (formato 0xRRGGBB):
+  Celdas:
+    FLOOR:     0x2d3748   - Suelo gris-azul
+    WALL:      0x1a202c   - Muro oscuro
+    LIGHT_ON:  0xf6e05e   - Luz encendida (amarillo)
+    LIGHT_OFF: 0x1a365d   - Luz apagada (azul oscuro)
+  Robot:
+    Body:      0x63b3ed   - Cuerpo azul claro
+    Indicator: 0xffffff   - Indicador de dirección blanco
+  Fondo:
+    Tonos oscuros de azul y verde
+
+================================================================================
+  7. ESCENA DE ARRANQUE (src/game/scenes/BootScene.ts - 182 líneas)
+================================================================================
+
+Propósito: Generar proceduralmente los sprites del robot (sin assets externos).
+
+Ciclo de Vida:
+  preload() → Vacío (no hay assets externos)
+  create()  → Genera spritesheet, registra frames, inicia GameScene
+
+Generación del Sprite del Robot:
+
+  Función drawRobotFrame(gfx, offsetX, direction):
+    Renderiza un frame de 64×64px del robot de forma procedural.
+    Se generan 4 frames para cada dirección.
+
+    Elementos visuales (pixel art):
+      - Sombra elíptica bajo los pies
+      - Piernas (rectángulo redondeado naranja oscuro)
+      - Pies con brillo
+      - Brazos con manos (círculos)
+      - Torso (cuerpo principal, naranja con reflejo)
+      - Panel frontal/trasero:
+        * Frente (dir 0): panel de control con botones rojo/verde
+        * Atrás (dir 1): panel con menos detalle
+        * Lados (dir 2,3): un solo panel visible
+      - Cabeza (amarilla) con ojos según dirección:
+        * Frente: dos ojos grandes con brillo cian
+        * Atrás: marca sutil oscura (sin ojos visibles)
+        * Lados: un ojo visible
+      - Antena con bola brillante en la punta
+      - Boca (solo frente) con dientes
+
+  Registro de Textura:
+    gfx.generateTexture('robot', 256, 64)  → Spritesheet de 256×64
+
+    Frame 0: Dirección ABAJO  (offset 0)
+    Frame 1: Dirección ARRIBA (offset 64)
+    Frame 2: Dirección DERECHA (offset 128)
+    Frame 3: Dirección IZQUIERDA (offset 192)
+
+================================================================================
+  8. ESCENA PRINCIPAL (src/game/scenes/GameScene.ts - 522 líneas)
+================================================================================
+
+Propósito: Bucle principal del juego, renderizado, gestión de estado y
+           condiciones de victoria.
+
+--- Campos Privados ---
+
+  bridge: Phaser.Events.EventEmitter   - Comunicación con React
+  levelManager: LevelManager           - Catálogo de niveles
+  levelState: LevelState               - Estado actual de cuadrícula + robot
+  robot: Robot                         - Entidad robot
+  executor: CommandExecutor            - Ejecutor de comandos
+  bgGraphics: Phaser.GameObjects.Graphics      - Capa de fondo
+  decorGraphics: Phaser.GameObjects.Graphics   - Capa de decoraciones
+  gridGraphics: Phaser.GameObjects.Graphics    - Capa de cuadrícula
+  wonThisLevel: boolean                - Flag de victoria
+  sfx: SoundManager                    - Sistema de audio
+  varLetterLabels: Text[]              - Etiquetas de letras de variables
+  varValueLabels: Text[]               - Etiquetas de color de variables
+
+--- Métodos del Ciclo de Vida ---
+
+  create():
+    1. Recupera el bridge del registry
+    2. Crea objetos Graphics
+    3. Inicializa CommandExecutor
+    4. Dibuja el fondo
+    5. Carga el nivel 0
+    6. Registra listeners de eventos
+
+  shutdown():
+    1. Desregistra todos los event listeners
+    2. Destruye el sprite del robot
+    3. Detiene la música
+
+--- Métodos de Renderizado ---
+
+  drawBackground():
+    - Gradiente de cielo (púrpura oscuro → azul → negro)
+    - Campo de estrellas (60 estrellas blancas, opacidad variable)
+    - Luna (color crema con sombras de cráteres)
+    - Colinas (elipses púrpura oscuro, en capas)
+    - Césped (rectángulo verde con patrón de dientes)
+    - Nubes decorativas (5 círculos superpuestos)
+
+  drawDecorations():
+    - 4 árboles pixel-art en los bordes
+    - 5 flores (rosa, amarilla, verde, roja, púrpura) con tallos
+
+  drawTree(gfx, x, y):
+    - Tronco marrón (2 rectángulos con offset)
+    - 3 capas de triángulo (verde oscuro → medio → claro)
+    - Círculo de reflejo
+
+  renderGrid():
+    Limpia y redibuja toda la cuadrícula. Renderizado por tipo de celda:
+
+    wall (muro):
+      Rectángulo redondeado gris con efecto 3D (borde, reflejo, sombra)
+
+    plant (planta):
+      Base marrón con decal de planta verde (tallo + 3 hojas en maceta)
+
+    variable:
+      Rectángulo redondeado coloreado (rojo/azul/púrpura/gris) con
+      borde brillante
+
+    light (luz):
+      - Encendida: brillo cian, centro de estrella blanca, 8 rayos radiales
+      - Apagada: púrpura oscuro con estrella sutil
+
+    floor (suelo):
+      Verde con textura de césped (círculos, sin borde de reflejo)
+
+    Llama updateVarLabels() al final.
+
+  drawVarLabels():
+    Crea objetos de texto para cada celda 'variable':
+    - Etiquetas de letras: A, B, C... (fijas, texto blanco, trazo negro)
+    - Etiquetas de color: emoji (🔴 rojo, 🔵 azul, ⬜ ninguno)
+
+  updateVarLabels():
+    Actualiza el texto emoji según los valores actuales de varColor.
+
+--- Gestión de Niveles ---
+
+  loadLevel(index):
+    1. Resetea flag de victoria
+    2. Carga definición del nivel vía LevelManager
+    3. Construye estado mutable
+    4. Destruye robot antiguo, crea nuevo en posición inicial
+    5. Renderiza cuadrícula y etiquetas de variables
+    6. Reproduce jingle de inicio
+    7. Inicia música de fondo (si no está silenciado)
+    8. Emite 'level-loaded' con restricciones
+
+--- Ejecución de Comandos ---
+
+  handleRunCommands(commands):
+    1. Previene ejecuciones simultáneas
+    2. Pasa callback al CommandExecutor
+    3. El callback aplica cada comando vía applyCommand()
+    4. Re-renderiza la cuadrícula después de cada comando
+    5. Verificaciones de victoria:
+       a. Robot en celda 'plant' → victoria inmediata
+       b. Variables coinciden con victoryColors → victoria
+       c. Todas las luces encendidas → victoria
+    6. Emite eventos 'robot-moved' y 'level-complete'
+    7. Reproduce SFX apropiados
+
+  applyCommand(cmd):
+    MOVE_FORWARD  → robot.moveForward(); SFX move/error
+    TURN_LEFT     → robot.turnLeft(); SFX turn
+    TURN_RIGHT    → robot.turnRight(); SFX turn
+    LIGHT_TOGGLE  → robot.toggleLight(); SFX lightOn/lightOff
+    COPY_VAR      → robot.copyVar(); SFX lightOn/error
+    Retorna boolean de éxito.
+
+--- Lógica de Victoria ---
+
+  Orden de prioridad:
+    1. Si robot está en celda 'plant' → victoria inmediata
+    2. Si hay variables Y los colores coinciden con victoryColors → victoria
+    3. Si hay luces Y todas encendidas → victoria
+    4. En otro caso → continúa ejecución
+
+--- Manejadores de Eventos ---
+
+  handleReset():    Detiene executor, recarga nivel actual
+  handleLoadLevel(): Detiene executor, carga nuevo nivel
+  handleSetMute():  Alterna estado de silencio
+
+================================================================================
+  9. ENTIDAD ROBOT (src/game/entities/Robot.ts - 148 líneas)
+================================================================================
+
+Propósito: Robot con mecánicas de movimiento, rotación y acciones.
+
+--- Estado Interno ---
+
+  sprite: Phaser.GameObjects.Sprite   - Representación visual
+  state: RobotState                    - Posición y dirección actual
+  lastVarCell: {row, col} | null       - Última variable visitada (para COPY_VAR)
+
+--- Sistema de Direcciones ---
+
+  DIRECTION_DELTAS:
+    UP:    { dRow: -1, dCol:  0 }
+    DOWN:  { dRow:  1, dCol:  0 }
+    LEFT:  { dRow:  0, dCol: -1 }
+    RIGHT: { dRow:  0, dCol:  1 }
+
+  DIRECTION_ORDER: ['UP', 'RIGHT', 'DOWN', 'LEFT']
+    Usado para calcular rotaciones (índice circular)
+
+  DIRECTION_FRAME:
+    DOWN: 0, UP: 1, RIGHT: 2, LEFT: 3
+    Mapeo a frames del spritesheet
+
+--- Métodos Principales ---
+
+  moveForward(levelState) → boolean
+    1. Calcula nueva posición: newRow = row + dRow, newCol = col + dCol
+    2. Verificación de límites: si fuera del grid → false
+    3. Verificación de celda:
+       - Si 'empty' → false
+       - Si 'wall' → false
+    4. Si válido:
+       - Actualiza state.row/col
+       - Programa animación vía tween de Phaser (280ms, ease cúbico)
+       - Retorna true
+
+  turnLeft() → boolean
+    idx = DIRECTION_ORDER.indexOf(actual)
+    siguiente = DIRECTION_ORDER[(idx + 3) % 4]   // -1 mod 4
+    Actualiza frame del sprite. Siempre retorna true.
+
+  turnRight() → boolean
+    idx = DIRECTION_ORDER.indexOf(actual)
+    siguiente = DIRECTION_ORDER[(idx + 1) % 4]
+    Actualiza frame del sprite. Siempre retorna true.
+
+  toggleLight(levelState) → boolean
+    Si la celda actual es 'light': alterna cell.lit → true/false
+    Si no es 'light': retorna false
+
+  copyVar(levelState) → boolean
+    1. Verifica que la celda actual sea tipo 'variable' (sino → false)
+    2. Primera visita a cualquier variable:
+       - Almacena {row, col} como lastVarCell
+       - Retorna true
+    3. Visitas posteriores:
+       - Si es la misma celda que lastVarCell → false
+       - Copia varColor de celda actual → varColor de lastVarCell
+       - Actualiza lastVarCell al punto actual
+       - Retorna true
+
+  animateTo(row, col) → void
+    Tween de movimiento de Phaser con ease cúbico, duración 280ms.
+
+  reset(initialState) → void
+    Restaura estado inicial, limpia lastVarCell.
+
+  destroy() → void
+    Limpia el sprite.
+
+================================================================================
+  10. EJECUTOR DE COMANDOS (src/game/logic/CommandExecutor.ts - 96 líneas)
+================================================================================
+
+Propósito: Ejecución secuencial de comandos con soporte de bucles y límites
+           de seguridad.
+
+--- Estado Interno ---
+
+  isRunning: boolean                    - Flag de estado de ejecución
+  emitter: Phaser.Events.EventEmitter  - Para emitir eventos
+  scene: Phaser.Scene                  - Referencia a la escena
+
+--- Algoritmo Principal: execute(commands, callback) ---
+
+  Máquina de estados:
+    1. Establece isRunning = true
+    2. Inicializa index = 0, loopCount = 0
+    3. Entra en bucle runNext()
+
+  Para cada comando:
+
+    Si es LOOP_UNTIL_PLANT:
+      ├─ Llama callback(LOOP_UNTIL_PLANT) → retorna true si está en planta
+      ├─ Si true: SALE de la ejecución (bucle completado)
+      ├─ Si false:
+      │  ├─ Incrementa loopCount
+      │  ├─ Si loopCount >= 20 (MAX_LOOP_ITERATIONS):
+      │  │   └─ Emite error, detiene ejecución
+      │  ├─ Resetea index = 0 (reinicia desde el principio)
+      │  └─ Programa runNext() después de COMMAND_DELAY_MS
+      │
+
+    Si es comando normal:
+      ├─ Llama callback(cmd) → ejecuta acción del robot
+      ├─ Emite 'command-executed'
+      ├─ Si callback retorna false:
+      │  ├─ Emite 'command-failed'
+      │  └─ Detiene ejecución
+      ├─ Incrementa index
+      └─ Programa runNext() después de COMMAND_DELAY_MS
+
+--- Tiempos ---
+
+  Retardo inicial: 100ms antes del primer comando
+  Entre comandos: 380ms (COMMAND_DELAY_MS)
+  Resultado: Animación de robot suave y visible
+
+--- Seguridad ---
+
+  MAX_LOOP_ITERATIONS = 20
+  Si LOOP_UNTIL_PLANT se repite más de 20 veces, aborta la ejecución.
+  Previene bucles infinitos.
+
+--- Método stop() ---
+
+  stop() { isRunning = false }
+  Detiene la ejecución de forma elegante.
+
+================================================================================
+  11. METADATOS DE COMANDOS (src/game/logic/commands.ts - 59 líneas)
+================================================================================
+
+Propósito: Metadatos visuales de los comandos para renderizado en la UI.
+
+Interfaz CommandMeta:
+  {
+    label: string       - Texto de visualización (español)
+    icon: string        - Símbolo/emoji
+    color: string       - Color del texto (CSS)
+    bgColor: string     - Color de fondo (hex)
+    description: string - Texto de ayuda
+  }
+
+Registro de Comandos (COMMAND_META):
+
+  MOVE_FORWARD:
+    label: 'Avanzar', icon: '▲', color: '#fff', bgColor: '#2b6cb0'
+
+  TURN_LEFT:
+    label: 'Girar ←', icon: '↺', color: '#fff', bgColor: '#276749'
+
+  TURN_RIGHT:
+    label: 'Girar →', icon: '↻', color: '#fff', bgColor: '#744210'
+
+  LIGHT_TOGGLE:
+    label: 'Luz', icon: '★', color: '#1a202c', bgColor: '#b7791f'
+
+  LOOP_UNTIL_PLANT:
+    label: 'Bucle', icon: '🔁', color: '#fff', bgColor: '#065f46'
+
+  COPY_VAR:
+    label: 'Copiar', icon: '📋', color: '#fff', bgColor: '#6d28d9'
+
+ALL_COMMANDS: Array con los 6 comandos en orden.
+
+================================================================================
+  12. PARSER DE TEXTO (src/game/logic/textCommandParser.ts - 46 líneas)
+================================================================================
+
+Propósito: Convertir comandos de texto en español a enum Command.
+
+Función: parseTextCommands(input: string)
+
+Formato de Entrada:
+  "AVANZA 3, IZQUIERDA, LUZ"
+  Los espacios separan comando de cantidad.
+  Las comas separan comandos.
+
+Aliases (español → enum):
+  'AVANZA'     → MOVE_FORWARD
+  'IZQUIERDA'  → TURN_LEFT
+  'DERECHA'    → TURN_RIGHT
+  'LUZ'        → LIGHT_TOGGLE
+  'COPIAR'     → COPY_VAR
+  'BUCLE'      → LOOP_UNTIL_PLANT
+
+Algoritmo de Parsing:
+  1. Divide por comas, recorta espacios
+  2. Para cada token:
+     - Extrae nombre del comando (primera palabra, mayúsculas)
+     - Extrae cantidad de repeticiones (segunda palabra como entero, default 1)
+     - Valida: repeticiones ∈ [1, 20]
+     - Añade al array de salida 'cantidad' veces
+  3. Valida: al menos un comando
+  4. Retorna { commands, error: null } o { commands: [], error: "mensaje" }
+
+Casos de Error:
+  - Comando desconocido: "Comando desconocido: ..."
+  - Cantidad inválida: "Número de pasos inválido..."
+  - Entrada vacía: "Escribe al menos un comando"
+
+================================================================================
+  13. GESTOR DE NIVELES (src/game/levels/LevelManager.ts - 134 líneas)
+================================================================================
+
+Propósito: Catálogo de niveles y construcción de estado.
+
+Datos Estáticos:
+
+  LEVELS: LevelDef[] = [level1, ..., level40]   // 40 niveles en 4 mundos
+
+  Mundos:
+    1. Tierra de Luces     (niveles 0-9)   - Mecánicas básicas
+    2. Islas del Código     (niveles 10-19) - Intermedio
+    3. Galaxia Robot        (niveles 20-29) - Avanzado
+    4. Volcán Digital       (niveles 30-39) - Experto
+
+API:
+
+  current → LevelDef
+    Obtiene el nivel cargado actualmente.
+
+  currentLevelIndex → number
+    Obtiene el índice base-0.
+
+  hasNext → boolean
+    Verifica si existen más niveles.
+
+  getLevelCount() → number
+    Cantidad total de niveles (40).
+
+  loadLevel(index) → LevelDef
+    Carga nivel por índice; lanza error si está fuera de rango.
+
+  loadNext() → LevelDef | null
+    Avanza al siguiente; retorna null si está al final.
+
+Construcción de Estado: buildState(def)
+
+  Para cada celda en def.grid:
+    ├─ Crea Cell mutable { type, lit: false, varColor? }
+    ├─ Si la celda variable tiene varColor inicial en def.varColors:
+    │  └─ Lo aplica (búsqueda por clave string "row,col")
+    └─ En otro caso: varColor = 'none'
+
+  Retorna LevelState { grid, robot: {...def.robotStart}, isComplete: false }
+
+Verificación de Victoria: checkVictory(state, def)
+
+  Detecta contenido de la cuadrícula:
+    hasVar   = ¿hay celdas 'variable'?
+    hasPlant = ¿hay celdas 'plant'?
+    hasLights = ¿hay celdas 'light'?
+
+  Condiciones de victoria (prioridad):
+    1. Si hasVar: verifica si todas las variables coinciden con def.victoryColors
+       └─ Victoria ← TODAS coinciden
+    2. Si hasPlant: retorna false (victoria por planta se maneja en GameScene)
+    3. Si hasLights: verifica si TODAS están encendidas (cell.lit === true)
+       └─ Victoria ← TODAS encendidas
+    4. Sino: retorna false
+
+================================================================================
+  14. SISTEMA DE AUDIO (src/game/audio/SoundManager.ts - 336 líneas)
+================================================================================
+
+Propósito: Síntesis de audio procedural usando Web Audio API.
+           No se usan archivos de audio externos.
+
+--- Control Maestro ---
+
+  ctx: AudioContext              - Contexto Web Audio
+  masterGain: GainNode           - Control de volumen maestro
+  muted: boolean                 - Estado de silencio
+  musicPlaying: boolean          - Flag de bucle de música
+  _volume: number = 0.8          - Volumen maestro (0-1)
+
+--- Métodos Primitivos ---
+
+  playTone(freq, duration, type='square', vol, delay)
+    Crea oscilador con envolvente de ataque/liberación.
+    Tipos: 'square' | 'sine' | 'sawtooth'
+
+  playNoise(duration, vol, delay)
+    Genera ruido blanco con filtro pasa-banda.
+    Usado para efectos de percusión.
+
+  scheduleTone(freq, duration, type, vol, startTime)
+    Programa tono para reproducirse en tiempo absoluto de Web Audio.
+    Usado para secuenciación del bucle musical.
+
+  scheduleNoise(duration, vol, startTime)
+    Programa ruido en tiempo absoluto con filtro pasa-alto.
+
+--- Sistema Musical ---
+
+  startMusic()
+    Inicia la pista de fondo en bucle.
+
+  stopMusic()
+    Detiene el bucle, fade out.
+
+  playMusicLoop()
+    Frase musical de 8 compases.
+
+    Tempo: 120 BPM (pulso = 0.5s)
+    Duración: ~6.4 segundos
+
+    Capas paralelas:
+      1. Melodía (onda cuadrada): rango 523-880 Hz
+         - Frase de 2 compases repetida, 2 variaciones
+         - Notas con duraciones variadas (completa, media, cuarto)
+
+      2. Bajo (diente de sierra): rango 98-165 Hz
+         - Notas staccato (patrón encendido-apagado)
+         - Progresión de acordes
+
+      3. Arpegio (onda triangular): armónico
+         - Pulsos de semicorchea (8 por tiempo)
+         - Dos patrones alternando cada 4 compases
+
+      4. Percusión (ruido filtrado pasa-alto):
+         - Kick: pulso de negra (tiempo)
+         - Hi-hat: pulso de corchea (2x velocidad del kick)
+
+    Auto-bucle: programa el siguiente ciclo 100ms antes de que termine.
+
+--- Efectos de Sonido (SFX) ---
+
+  move()
+    Beep de dos tonos: 180Hz + 220Hz
+
+  turn()
+    Descenso de tono: 440Hz → 330Hz
+
+  lightOn()
+    Acorde ascendente: 660Hz → 880Hz
+
+  lightOff()
+    Acorde descendente: 440Hz → 330Hz
+
+  error()
+    Cluster de diente de sierra + ruido
+
+  plantReached()
+    Fanfarria ascendente de 5 notas
+
+  loopTick()
+    Pulso corto de onda cuadrada
+
+  levelComplete()
+    Progresión de acordes sobre la música
+
+  levelStart()
+    Jingle de inicio de 3 notas
+
+  buttonClick()
+    Tono único de seno
+
+--- Control de Volumen ---
+
+  setVolume(v: number)
+    Ajuste de volumen en tiempo real vía setTargetAtTime.
+
+  toggleMute()
+    Fade suave a/desde 0, reanuda música al quitar silencio.
+
+--- Algoritmos Clave ---
+
+  Envolvente Ataque/Liberación:
+    linearRampToValueAtTime + exponentialRampToValueAtTime
+
+  Programación:
+    Usa Web Audio currentTime para programación precisa.
+
+  Filtrado:
+    Filtros Biquad para pasa-banda (ruido) y pasa-alto (hi-hat).
+
+================================================================================
+  15. SISTEMA DE NIVELES (src/game/levels/level1.ts - level40.ts)
+================================================================================
+
+40 archivos de definición de nivel organizados en 4 mundos.
+
+Sistema de Numeración por Capítulos:
+  Capítulo 1: level1.ts  - level3.ts   (niveles básicos)
+  Capítulo 2: level11.ts - level14.ts  (niveles intermedios)
+  Capítulo 3: level21.ts - level24.ts  (niveles avanzados)
+  Capítulo 4: level31.ts - level33.ts  (niveles expertos)
+
+Cada archivo exporta una constante LevelDef con:
+
+  Campos comunes:
+    id: number                    - Identificador único (1-40)
+    name: string                  - Nombre para mostrar (español)
+    robotStart: {row, col, dir}   - Estado inicial del robot
+    grid: CellType[][]            - Disposición del mapa
+    maxCommands: number           - Límite de comandos en UI
+    maxAttempts: number           - Intentos permitidos
+
+  Campos opcionales:
+    instructions?: string         - Pista específica del nivel
+    allowedCommands?: Command[]   - Restricción de comandos disponibles
+    textMode?: boolean            - Habilitar entrada por texto
+    varColors?: Record            - Colores iniciales de variables
+    victoryColors?: Record        - Colores objetivo de variables
+
+Progresión de ejemplo:
+
+  Nivel  | Tipo            | Mecánica               | Grid | MaxCmd
+  -------|-----------------|------------------------|------|-------
+  1      | Luz             | Movimiento + toggle    | 4×5  | 5
+  5      | Luz             | Puzzle de esquina      | 5×6  | 4
+  20     | Planta + Bucle  | Espiral con LOOP       | 6×6  | 8
+  40     | Luz + Laberinto | Modo texto             | 3×5  | 16
+
+Formato de datos de nivel (ejemplo: level1):
+
+  grid: [
+    ['empty', 'empty', 'empty', 'light', 'empty'],
+    ['empty', 'empty', 'empty', 'floor', 'empty'],
+    ['floor', 'floor', 'floor', 'floor', 'empty'],
+    ['empty', 'empty', 'empty', 'empty', 'empty'],
+  ]
+  Robot inicia en (fila=2, col=0) mirando DERECHA
+  2 luces para encender para ganar
+
+================================================================================
+  16. FLUJO DE DATOS COMPLETO
+================================================================================
+
+--- Diagrama de Flujo ---
+
+  Componente React
+      ↓
+  useGameBridge (EventEmitter)
+      ↓
+  GameScene (recibe eventos vía bridge)
+      ├─ LevelManager (carga definiciones de nivel)
+      ├─ Robot (entidad con estado)
+      ├─ CommandExecutor (procesa comandos)
+      ├─ SoundManager (síntesis de audio)
+      └─ renderGrid() → emite 'robot-moved'
+      ↓
+  React recibe eventos, actualiza UI
+
+--- Bucle de Juego ---
+
+  1. Jugador pulsa "Ejecutar" → React emite 'run-commands' vía bridge
+  2. GameScene recibe evento → pasa al CommandExecutor
+  3. Bucle del CommandExecutor:
+     a. Obtiene siguiente comando
+     b. Llama callback de GameScene para aplicar comando
+     c. Callback actualiza estado del robot/cuadrícula
+     d. GameScene re-renderiza cuadrícula
+     e. Verifica condiciones de victoria
+     f. Emite 'robot-moved' de vuelta a React
+     g. Espera COMMAND_DELAY_MS (380ms)
+  4. En victoria: emite 'level-complete'
+  5. React actualiza la UI
+
+================================================================================
+  17. ALGORITMOS CLAVE
+================================================================================
+
+--- Movimiento del Robot (Robot.moveForward) ---
+
+  Entrada: LevelState (referencia a la cuadrícula)
+  Salida: boolean (éxito)
+
+  1. Calcular nueva posición: newRow = row + dRow, newCol = col + dCol
+  2. Verificar límites: si newRow/newCol fuera del grid → false
+  3. Verificar tipo de celda:
+     - Si 'empty' → false
+     - Si 'wall' → false
+  4. Si válido:
+     - Actualizar this.state.row/col
+     - Programar animación vía tween de Phaser
+     - Retornar true
+
+--- Copia de Color de Variable (Robot.copyVar) ---
+
+  La celda actual debe ser tipo 'variable' (sino → false)
+
+  Primera visita a cualquier variable:
+    - Almacenar {row, col} como lastVarCell
+    - Retornar true (primera visita exitosa)
+
+  Visitas posteriores:
+    - Si es la misma celda que lastVarCell → false (sin copia)
+    - Copiar varColor de celda actual → varColor de lastVarCell
+    - Actualizar puntero lastVarCell a celda actual
+    - Retornar true
+
+--- Rotación de Dirección ---
+
+  Dirección actual en DIRECTION_ORDER: ['UP', 'RIGHT', 'DOWN', 'LEFT']
+
+  turnLeft:
+    idx = indexOf(actual)
+    siguiente = DIRECTION_ORDER[(idx + 3) % 4]  // -1 mod 4
+
+  turnRight:
+    idx = indexOf(actual)
+    siguiente = DIRECTION_ORDER[(idx + 1) % 4]
+
+--- Transformación Celda-a-Mundo ---
+
+  cellToWorld(row, col):
+    x = GRID_OFFSET_X + col * CELL_SIZE + CELL_SIZE/2
+    y = GRID_OFFSET_Y + row * CELL_SIZE + CELL_SIZE/2
+
+  Ejemplo: (fila=1, col=2) con OFFSET (24,24) y SIZE 64
+    x = 24 + 2*64 + 32 = 184
+    y = 24 + 1*64 + 32 = 120
+
+--- Bucle Musical Web Audio ---
+
+  Tempo: 120 BPM (pulso = 0.5s, compás = 2s)
+  Duración: 8 compases (16s)
+
+  Capas paralelas programadas vía Web Audio currentTime:
+    1. Melodía: onda cuadrada, rango 523-880 Hz
+    2. Bajo: diente de sierra, rango 98-165 Hz
+    3. Arpegio: onda triangular, patrones alternos
+    4. Percusión: ruido filtrado (kick + hi-hat)
+
+  Auto-bucle: programa siguiente ciclo 100ms antes de terminar.
+
+--- Jerarquía de Detección de Victoria ---
+
+  Robot en celda planta
+    ↓ SÍ → Victoria instantánea
+    ↓ NO
+  Variables coinciden con colores objetivo
+    ↓ SÍ → Victoria
+    ↓ NO
+  Todas las luces encendidas
+    ↓ SÍ → Victoria
+    ↓ NO
+  La ejecución continúa
+
+--- Árbol de Ejecución de Comandos ---
+
+  LOOP_UNTIL_PLANT
+    ↓ ¿Robot en planta?
+    ├─ SÍ → Salir del bucle, detener ejecución
+    └─ NO
+        ├─ Incrementar contador de bucle
+        ├─ Si contador >= 20 → Error, detener
+        └─ Resetear índice a 0, reiniciar
+
+  Comando Normal (MOVE_FORWARD, TURN_*, LIGHT_TOGGLE, COPY_VAR)
+    ↓ Ejecutar callback
+    ├─ Retorna true → Éxito, continuar
+    └─ Retorna false → Fallo, detener ejecución
+
+================================================================================
+  18. SISTEMA DE RENDERIZADO
+================================================================================
+
+--- Capas Gráficas (De abajo a arriba) ---
+
+  1. Fondo (bgGraphics)
+     - Gradiente de cielo
+     - Estrellas
+     - Luna
+     - Colinas
+     - Césped con patrón de dientes
+
+  2. Decoraciones (decorGraphics)
+     - Árboles
+     - Flores
+
+  3. Cuadrícula (gridGraphics)
+     - Celdas por tipo (muro, suelo, planta, variable, luz)
+     - Etiquetas de variables (letras + emojis)
+
+  4. Robot (sprite)
+     - Renderizado encima de la cuadrícula
+     - Frames específicos por dirección
+
+--- Sistema de Colores ---
+
+  Muros:     Gris (0x334155) con bordes redondeados
+  Suelo:     Verde (0x22c55e) con textura de césped
+  Luces:
+    - Encendida: Cian (0x22d3ee) con estrella blanca + rayos
+    - Apagada: Púrpura oscuro (0x2e1065) con estrella tenue
+  Plantas:   Base marrón (0x78350f) con decal verde
+  Variables: Codificadas por color:
+    - Rojo:    0xef4444
+    - Azul:    0x3b82f6
+    - Púrpura: 0x8b5cf6
+    - Gris:    0x374151
+
+================================================================================
+  19. MECÁNICAS DEL JUEGO
+================================================================================
+
+  Mecánica        | Implementación              | Reglas
+  ----------------|-----------------------------|----------------------------------
+  Movimiento      | Robot.moveForward()         | Falla en muro/vacío/fuera de límites
+  Rotación        | turnLeft()/turnRight()       | Instantánea, sin animación
+  Toggle Luz      | Robot.toggleLight()          | Solo funciona en celdas 'light'
+  Copiar Variable | Robot.copyVar()              | Requiere celda variable, rastrea última
+  Bucle           | CommandExecutor detecta LOOP | Máximo 20 iteraciones de seguridad
+  Victoria        | LevelManager.checkVictory()  | Múltiples condiciones por nivel
+  Modo Texto      | textCommandParser            | Aliases en español, "AVANZA 3" = 3x MOVE
+
+================================================================================
+  FIN DE LA DOCUMENTACIÓN
+================================================================================

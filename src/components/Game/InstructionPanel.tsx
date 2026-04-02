@@ -7,6 +7,7 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  useDraggable,
   useSensor,
   useSensors,
   useDroppable,
@@ -81,40 +82,63 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
 
 // ─── Source palette (available commands) ─────────────────────────────────────
 
-// Paleta de comandos disponibles: botones que al hacer click añaden un comando a la cola
+// Botón arrastrable de la paleta: usa useDraggable para poder soltarlo en la cola
+interface PaletteButtonProps {
+  command: Command
+  isFull: boolean
+  onAdd: () => void
+}
+
+function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) {
+  const meta = COMMAND_META[command]
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `palette-${command}`,
+    data: { command, source: 'palette' },
+    disabled: isFull,
+  })
+
+  return (
+    <button
+      ref={setNodeRef}
+      disabled={isFull}
+      onClick={onAdd}
+      style={{ backgroundColor: meta.bgColor, opacity: isDragging ? 0.4 : 1 }}
+      {...attributes}
+      {...listeners}
+      className={`
+        flex flex-col items-center justify-center
+        w-14 h-14 rounded-xl text-white border-2 border-white/20
+        transition-all hover:border-white/50 hover:scale-105 cursor-grab
+        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
+      `}
+      title={meta.label}
+    >
+      <span className="text-2xl leading-none">{meta.icon}</span>
+      <span className="text-[9px] mt-1 opacity-70 font-normal text-center leading-tight">
+        {meta.label}
+      </span>
+    </button>
+  )
+}
+
+// Paleta de comandos disponibles: botones que al hacer click o arrastrar añaden un comando a la cola
 function CommandPalette() {
   const { addCommand, queue, maxCommands, allowedCommands } = useGameStore()
   const isFull = queue.length >= maxCommands
-
-  const visibleCommands = allowedCommands ?? ALL_COMMANDS  // ← filtro
+  const visibleCommands = allowedCommands ?? ALL_COMMANDS
 
   return (
     <div className="mb-4">
       <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos Disponibles</p>
       <div className="flex flex-wrap gap-2">
-        {visibleCommands.map((cmd) => {   // ← usar visibleCommands
-          const meta = COMMAND_META[cmd]
-          return (
-            <button
-              key={cmd}
-              disabled={isFull}
-              onClick={() => addCommand(cmd)}
-              style={{ backgroundColor: meta.bgColor }}
-              className={`
-                flex flex-col items-center justify-center
-                w-14 h-14 rounded-xl text-white border-2 border-white/20
-                transition-all hover:border-white/50 hover:scale-105
-                disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
-              `}
-              title={meta.label}
-            >
-              <span className="text-2xl leading-none">{meta.icon}</span>
-              <span className="text-[9px] mt-1 opacity-70 font-normal text-center leading-tight">
-                {meta.label}
-              </span>
-            </button>
-          )
-        })}
+        {visibleCommands.map((cmd) => (
+          <DraggablePaletteButton
+            key={cmd}
+            command={cmd}
+            isFull={isFull}
+            onAdd={() => addCommand(cmd)}
+          />
+        ))}
       </div>
       {isFull && (
         <p className="text-xs text-red-400 mt-1">NO PUEDES AÑADIR MAS COMANDOS! ({maxCommands} max)</p>
@@ -301,11 +325,14 @@ export function InstructionPanel({
     isRunning,
     activeCommandIndex,
     setQueue,
+    addCommand,
     removeCommand,
     clearQueue,
     setIsRunning,
     setActiveCommandIndex,
   } = useGameStore()
+
+  const isFull = queue.length >= maxCommands
 
   // Attach stable IDs to queue items for dnd-kit
   const [slotIds, setSlotIds] = useState<string[]>([])
@@ -376,8 +403,19 @@ export function InstructionPanel({
     (e: DragEndEvent) => {
       setDraggingId(null)
       const { active, over } = e
-      if (!over || active.id === over.id) return
+      const activeId = active.id as string
 
+      // Drop desde la paleta → añadir comando al final de la cola
+      if (activeId.startsWith('palette-')) {
+        const cmd = active.data.current?.command as Command
+        if (cmd && over && !isFull) {
+          addCommand(cmd)
+        }
+        return
+      }
+
+      // Reordenar dentro de la cola
+      if (!over || active.id === over.id) return
       const oldIndex = slots.findIndex(s => s.id === active.id)
       const newIndex = slots.findIndex(s => s.id === over.id)
       if (oldIndex === -1 || newIndex === -1) return
@@ -387,7 +425,7 @@ export function InstructionPanel({
       setQueue(newQueue)
       setSlotIds(newIds)
     },
-    [slots, queue, slotIds, setQueue]
+    [slots, queue, slotIds, setQueue, addCommand, isFull]
   )
 
   // ─── Run / Reset ──────────────────────────────────────────────────────────
@@ -411,8 +449,10 @@ export function InstructionPanel({
     onReset()
   }
 
-  const draggingCommand = draggingId
-    ? (slots.find(s => s.id === draggingId)?.command ?? null)
+  const draggingCommand: Command | null = draggingId
+    ? draggingId.startsWith('palette-')
+      ? (draggingId.replace('palette-', '') as Command)
+      : (slots.find(s => s.id === draggingId)?.command ?? null)
     : null
 
 
@@ -481,7 +521,7 @@ if (textMode) {
       </div>
 
       {/* Drag overlay so cursor shows the dragged chip */}
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {draggingCommand ? (
           <div
             style={{ backgroundColor: COMMAND_META[draggingCommand].bgColor }}

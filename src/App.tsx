@@ -14,7 +14,9 @@ import { useUser } from './context/UserContext'
 import { EmailVerificationScreen } from './components/EmailVerificationScreen'
 import { EmailVerifiedScreen } from './components/EmailVerifiedScreen'
 import { useAuth } from './context/AuthContext'
-import { updateUser, setOnUnauthorized, registerPushToken, API_BASE } from './services/service'
+import { updateUser, setOnUnauthorized, registerPushToken } from './services/service'
+import { PrivacyPolicyScreen } from './components/PrivacyPolicyScreen'
+import { TermsScreen } from './components/TermsScreen'
 
 // Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
 export const LEVEL_INFO = [
@@ -67,7 +69,7 @@ export const LEVEL_INFO = [
 const TOTAL_LEVELS = 40
 
 // Pantallas posibles de la app — el estado 'screen' controla cuál se renderiza
-type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile'
+type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy' | 'terms'
 
 
 // Estrella decorativa animada para la pantalla de inicio
@@ -76,7 +78,7 @@ function Star({ style }: { style: React.CSSProperties }) {
 }
 
 // Pantalla de inicio: logo, botón "JUGAR" y animación de estrellas
-function StartScreen({ onStart }: { onStart: () => void }) {
+function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onPrivacy: () => void; onTerms: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
@@ -158,15 +160,11 @@ function StartScreen({ onStart }: { onStart: () => void }) {
           </div>
 
           <div className="flex gap-3 justify-end mt-1">
-            <button onClick={() => {
-                window.location.href = `${API_BASE}/privacy?back=${encodeURIComponent(window.location.origin)}`
-              }}
+            <button onClick={onPrivacy}
               className="text-white/40 hover:text-white/70 transition-colors text-xs underline underline-offset-2">
               Politica de Privacidad
             </button>
-            <button onClick={() => {
-                window.location.href = `${API_BASE}/terms?back=${encodeURIComponent(window.location.origin)}`
-              }}
+            <button onClick={onTerms}
               className="text-white/40 hover:text-white/70 transition-colors text-xs underline underline-offset-2">
               Terminos y Condiciones
             </button>
@@ -493,6 +491,25 @@ export default function App() {
     return () => window.removeEventListener('fcm-token-ready', sendFcmToken)
   }, [token])
 
+  // Sync screen state with URL on mount
+  useEffect(() => {
+    const path = window.location.pathname
+    if (path === '/privacy') setScreen('privacy')
+    else if (path === '/terms') setScreen('terms')
+  }, [])
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      if (path === '/privacy') setScreen('privacy')
+      else if (path === '/terms') setScreen('terms')
+      else setScreen('start')
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
   // Detect ?verified=ok from email verification redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
@@ -572,7 +589,19 @@ export default function App() {
         }
       `}</style>
 
-      {screen === 'start' && <StartScreen onStart={handleStart} />}
+      {screen === 'start' && (
+        <StartScreen
+          onStart={handleStart}
+          onPrivacy={() => { window.history.pushState({}, '', '/privacy'); setScreen('privacy') }}
+          onTerms={() => { window.history.pushState({}, '', '/terms'); setScreen('terms') }}
+        />
+      )}
+      {screen === 'privacy' && (
+        <PrivacyPolicyScreen onBack={() => { window.history.pushState({}, '', '/'); setScreen('start') }} />
+      )}
+      {screen === 'terms' && (
+        <TermsScreen onBack={() => { window.history.pushState({}, '', '/'); setScreen('start') }} />
+      )}
 
       {screen === 'auth' && (
         <AuthScreen

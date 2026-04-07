@@ -35,7 +35,7 @@ export function TermsScreen({ onBack }: TermsScreenProps) {
 
           <section>
             <h2 className="font-bold text-white mb-1">1. Aceptacion de los terminos</h2>
-            <p>Al descargar, instalar o utilizar la aplicacion "Enciende las Luces" (en adelante, "la App"), aceptas estos Terminos y Condiciones en su totalidad. Si no estas de acuerdo, no utilices la App.</p>
+            <p>Al descargar, instalar o utilizar la aplicacion "MAESTRO BOT" (en adelante, "la App"), aceptas estos Terminos y Condiciones en su totalidad. Si no estas de acuerdo, no utilices la App.</p>
           </section>
 
           <section>

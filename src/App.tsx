@@ -108,7 +108,7 @@ function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onP
           maxWidth: 780, width: '92%', maxHeight: '92dvh',
         }}>
         {/* Robot */}
-        <div className="text-7xl flex-shrink-0" role="img" aria-label="Robot" style={{ filter: 'drop-shadow(0 0 16px #63b3ed)' }}>🤖</div>
+        <img src="/assets/img/icon.png" alt="Robot" className="flex-shrink-0" style={{ width: 96, height: 96, filter: 'drop-shadow(0 0 16px #63b3ed)', imageRendering: 'pixelated' }} />
 
         {/* Contenido */}
         <div className="flex flex-col gap-4 flex-1 min-w-0">
@@ -120,7 +120,7 @@ function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onP
                 background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
               }}>
-              ENCIENDE LAS LUCES
+              MAESTRO BOT
             </h1>
             <p style={{textAlign: 'center'}} className="text-white/70 text-sm mt-0.5">¡Programa al robot y enciende las luces!</p>
           </div>

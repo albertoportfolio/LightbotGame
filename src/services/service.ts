@@ -263,3 +263,32 @@ export async function deleteUser(
     throw new Error(error.message ?? res.statusText)
   }
 }
+
+// ─── Payments ────────────────────────────────────────────────────────────────
+
+interface CheckoutSessionResponse {
+  checkoutUrl: string
+}
+
+// Crea una sesión de Stripe Checkout para procesar donaciones
+// amount: cantidad en centavos (ej: 1000 para €10.00)
+export async function createCheckoutSession(
+  token: string,
+  amountInCents: number
+): Promise<CheckoutSessionResponse> {
+  const res = await fetch(`${API_URL}/payments/checkout`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ amountInCents, currency: 'eur' }),
+  })
+  return handleResponse<CheckoutSessionResponse>(res)
+}
+
+// Notifica al backend que la donación fue exitosa para que envíe el email de agradecimiento
+export async function confirmDonation(token: string, amountEur: string): Promise<void> {
+  await fetch(`${API_URL}/payments/confirm`, {
+    method: 'POST',
+    headers: authHeaders(token),
+    body: JSON.stringify({ amountEur }),
+  })
+}

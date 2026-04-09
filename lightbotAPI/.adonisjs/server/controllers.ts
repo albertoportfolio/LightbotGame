@@ -8,6 +8,7 @@ export const controllers = {
   EmailVerification: () => import('#controllers/email_verification_controller'),
   NewAccount: () => import('#controllers/new_account_controller'),
   Notifications: () => import('#controllers/notifications_controller'),
+  Payments: () => import('#controllers/payments_controller'),
   Profile: () => import('#controllers/profile_controller'),
   Users: () => import('#controllers/users_controller'),
 }

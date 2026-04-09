@@ -18,6 +18,8 @@ export type ScannedRoutes = {
     'users.users.update': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'users.users.destroy': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'notifications.notifications.register': { paramsTuple?: []; params?: {} }
+    'payments.payments.checkout': { paramsTuple?: []; params?: {} }
+    'payments.webhook': { paramsTuple?: []; params?: {} }
   }
   GET: {
     'auth.email_verification.verify': { paramsTuple?: []; params?: {} }
@@ -38,6 +40,8 @@ export type ScannedRoutes = {
     'auth.email_verification.resend': { paramsTuple?: []; params?: {} }
     'users.users.store': { paramsTuple?: []; params?: {} }
     'notifications.notifications.register': { paramsTuple?: []; params?: {} }
+    'payments.payments.checkout': { paramsTuple?: []; params?: {} }
+    'payments.webhook': { paramsTuple?: []; params?: {} }
   }
   PUT: {
     'profile.profile.update': { paramsTuple?: []; params?: {} }

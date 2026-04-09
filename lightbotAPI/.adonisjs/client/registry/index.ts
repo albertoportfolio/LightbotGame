@@ -90,6 +90,18 @@ const routes = {
     tokens: [{"old":"/api/v1/notifications/register","type":0,"val":"api","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"v1","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"notifications","end":""},{"old":"/api/v1/notifications/register","type":0,"val":"register","end":""}],
     types: placeholder as Registry['notifications.notifications.register']['types'],
   },
+  'payments.payments.checkout': {
+    methods: ["POST"],
+    pattern: '/api/v1/payments/checkout',
+    tokens: [{"old":"/api/v1/payments/checkout","type":0,"val":"api","end":""},{"old":"/api/v1/payments/checkout","type":0,"val":"v1","end":""},{"old":"/api/v1/payments/checkout","type":0,"val":"payments","end":""},{"old":"/api/v1/payments/checkout","type":0,"val":"checkout","end":""}],
+    types: placeholder as Registry['payments.payments.checkout']['types'],
+  },
+  'payments.webhook': {
+    methods: ["POST"],
+    pattern: '/api/v1/payments/webhook',
+    tokens: [{"old":"/api/v1/payments/webhook","type":0,"val":"api","end":""},{"old":"/api/v1/payments/webhook","type":0,"val":"v1","end":""},{"old":"/api/v1/payments/webhook","type":0,"val":"payments","end":""},{"old":"/api/v1/payments/webhook","type":0,"val":"webhook","end":""}],
+    types: placeholder as Registry['payments.webhook']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }

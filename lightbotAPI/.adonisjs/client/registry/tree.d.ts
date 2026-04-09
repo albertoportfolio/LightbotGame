@@ -36,4 +36,10 @@ export interface ApiDefinition {
       register: typeof routes['notifications.notifications.register']
     }
   }
+  payments: {
+    payments: {
+      checkout: typeof routes['payments.payments.checkout']
+    }
+    webhook: typeof routes['payments.webhook']
+  }
 }

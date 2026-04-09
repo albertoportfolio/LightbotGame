@@ -175,4 +175,28 @@ export interface Registry {
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/notifications_controller').default['register']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'payments.payments.checkout': {
+    methods: ["POST"]
+    pattern: '/api/v1/payments/checkout'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/payments').checkoutValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/payments').checkoutValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments_controller').default['checkout']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments_controller').default['checkout']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'payments.webhook': {
+    methods: ["POST"]
+    pattern: '/api/v1/payments/webhook'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#controllers/payments_controller').default['webhook']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#controllers/payments_controller').default['webhook']>>>
+    }
+  }
 }

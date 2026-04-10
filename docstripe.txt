@@ -1,0 +1,347 @@
+================================================================================
+  DOCUMENTACIÓN: INTEGRACIÓN CON STRIPE — MAESTRO BOT
+================================================================================
+
+Fecha: 2026-04-10
+Proyecto: lightbot / MAESTRO BOT
+
+────────────────────────────────────────────────────────────────────────────────
+  1. VISIÓN GENERAL
+────────────────────────────────────────────────────────────────────────────────
+
+El sistema de donaciones usa Stripe Checkout, que es la solución hosted de Stripe
+(página de pago alojada en los servidores de Stripe). El backend nunca toca datos
+de tarjeta directamente — solo crea una sesión y redirige al usuario.
+
+Flujo resumido:
+  1. Usuario elige un monto en DonateScreen.tsx (React)
+  2. Frontend llama a POST /api/v1/payments/checkout (con JWT)
+  3. El backend crea una sesión en Stripe y devuelve una URL
+  4. El frontend redirige al usuario a esa URL (página de Stripe)
+  5. El usuario paga en la página de Stripe
+  6. Stripe llama al webhook POST /api/v1/payments/webhook
+  7. El backend verifica la firma y envía un email de agradecimiento
+  8. Stripe redirige al usuario de vuelta a la app con ?donation=success
+  9. La app detecta el parámetro y muestra DonationSuccessScreen.tsx
+
+
+────────────────────────────────────────────────────────────────────────────────
+  2. VARIABLES DE ENTORNO
+────────────────────────────────────────────────────────────────────────────────
+
+
+  STRIPE_SECRET_KEY       → Clave secreta del servidor. Se usa para crear sesiones
+                            y verificar eventos. NUNCA debe exponerse al frontend.
+                            Formato: sk_test_... (test) / sk_live_... (producción)
+
+  STRIPE_PUBLISHABLE_KEY  → Clave pública. Puede enviarse al frontend si se
+                            necesita Stripe.js. En este proyecto no se usa
+                            directamente en el cliente (el checkout es hosted).
+                            Formato: pk_test_... / pk_live_...
+
+  STRIPE_WEBHOOK_SECRET   → Secret específico del endpoint de webhook. Se genera
+                            en el dashboard de Stripe al registrar el endpoint.
+                            Se usa para verificar la firma criptográfica de cada
+                            evento recibido.
+                            Formato: whsec_...
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+  3. DEPENDENCIAS
+────────────────────────────────────────────────────────────────────────────────
+
+  Backend (lightbotAPI/package.json):
+    "stripe": "^22.0.1"   → SDK oficial de Node.js
+
+  Frontend (package.json):
+    "@stripe/stripe-js": "^9.1.0"  → Instalado pero no usado activamente,
+                                      ya que el checkout es 100% hosted.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  4. RUTAS REGISTRADAS
+────────────────────────────────────────────────────────────────────────────────
+
+Archivo: lightbotAPI/start/routes.ts
+
+  POST /api/v1/payments/checkout
+    - Requiere autenticación (middleware.auth())
+    - Crea una sesión de Stripe Checkout
+    - Controlador: PaymentsController.checkout()
+
+  POST /api/v1/payments/webhook
+    - PÚBLICA — sin autenticación JWT
+    - Llamada directamente por los servidores de Stripe
+    - Seguridad garantizada por firma criptográfica (no por JWT)
+    - Controlador: PaymentsController.webhook()
+
+¿Por qué el webhook es público?
+  Stripe llama a este endpoint desde sus propios servidores — no tiene token
+  de usuario. La seguridad se reemplaza por verificación de firma: solo Stripe
+  posee el secreto para generar una firma válida con STRIPE_WEBHOOK_SECRET.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5. FLUJO DETALLADO: CHECKOUT
+────────────────────────────────────────────────────────────────────────────────
+
+Archivo frontend: src/components/DonateScreen.tsx
+Archivo servicio: src/services/service.ts → createCheckoutSession()
+Archivo backend:  lightbotAPI/app/controllers/payments_controller.ts → checkout()
+Validador:        lightbotAPI/app/validators/payments.ts
+
+  PASO 1 — Usuario selecciona monto (DonateScreen.tsx)
+  ┌─────────────────────────────────────────────────────┐
+  │  Botones rápidos: €2, €5, €10, €20                  │
+  │  Input personalizado: €0.50 mínimo, €10.000 máximo  │
+  │  El monto se convierte a centavos antes de enviarlo │
+  │  Ejemplo: €10 → amountInCents: 1000                 │
+  └─────────────────────────────────────────────────────┘
+
+  PASO 2 — Llamada al backend (service.ts)
+  ┌─────────────────────────────────────────────────────┐
+  │  POST /api/v1/payments/checkout                     │
+  │  Headers: Authorization: Bearer <jwt_token>         │
+  │  Body: { amountInCents: 1000, currency: "eur" }     │
+  └─────────────────────────────────────────────────────┘
+
+  PASO 3 — Validación del request (payments.ts)
+  ┌─────────────────────────────────────────────────────┐
+  │  amountInCents: número entero, mínimo 50            │
+  │  currency: solo "eur" o "usd" (frontend envía "eur")│
+  └─────────────────────────────────────────────────────┘
+
+  PASO 4 — Creación de sesión en Stripe (payments_controller.ts)
+  ┌─────────────────────────────────────────────────────┐
+  │  Se instancia Stripe con STRIPE_SECRET_KEY          │
+  │  Se llama stripe.checkout.sessions.create({...})    │
+  │                                                     │
+  │  Parámetros clave:                                  │
+  │    payment_method_types: ['card']                   │
+  │    line_items: producto "Donación a MAESTRO BOT"    │
+  │    mode: 'payment'  (pago único, no suscripción)    │
+  │    success_url: FRONTEND_URL + "?donation=success"  │
+  │    cancel_url:  FRONTEND_URL                        │
+  │    customer_email: email del tutor autenticado      │
+  │                                                     │
+  │  Stripe devuelve un objeto session con una URL      │
+  │  Ej: https://checkout.stripe.com/pay/cs_test_...   │
+  └─────────────────────────────────────────────────────┘
+
+  PASO 5 — Redirect al checkout de Stripe (DonateScreen.tsx)
+  ┌─────────────────────────────────────────────────────┐
+  │  El backend devuelve: { checkoutUrl: "https://..." }│
+  │  El frontend ejecuta: window.location.href = url    │
+  │  El usuario es llevado a la página de pago de Stripe│
+  └─────────────────────────────────────────────────────┘
+
+  PASO 6 — El usuario completa el pago en Stripe
+  ┌─────────────────────────────────────────────────────┐
+  │  Stripe maneja toda la lógica de pago (PCI-DSS)     │
+  │  El usuario ingresa datos de tarjeta en Stripe      │
+  │  La app nunca ve los datos de la tarjeta            │
+  └─────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────
+  6. FLUJO DETALLADO: WEBHOOK
+────────────────────────────────────────────────────────────────────────────────
+
+Archivo: lightbotAPI/app/controllers/payments_controller.ts → webhook()
+Servicio email: lightbotAPI/app/services/email_verification_service.ts
+
+¿Qué es el webhook?
+  Tras completarse el pago, Stripe necesita notificar al backend de forma
+  asíncrona y confiable. Para esto, Stripe hace una petición HTTP POST al
+  endpoint /payments/webhook con un payload JSON del evento.
+
+  PASO 1 — Stripe envía el evento al backend
+  ┌─────────────────────────────────────────────────────┐
+  │  POST /api/v1/payments/webhook                      │
+  │  Header: stripe-signature: t=...,v1=...             │
+  │  Body (raw): JSON del evento de Stripe              │
+  │                                                     │
+  │  El evento más importante:                          │
+  │    { type: "checkout.session.completed", data: {}}  │
+  └─────────────────────────────────────────────────────┘
+
+  PASO 2 — Verificación de firma criptográfica
+  ┌─────────────────────────────────────────────────────┐
+  │  El backend obtiene STRIPE_WEBHOOK_SECRET del .env  │
+  │  Obtiene el header "stripe-signature" del request   │
+  │  Llama a:                                           │
+  │    stripe.webhooks.constructEvent(                  │
+  │      request.raw(),   ← body crudo (sin parsear)    │
+  │      signature,       ← header stripe-signature     │
+  │      webhookSecret    ← STRIPE_WEBHOOK_SECRET        │
+  │    )                                                │
+  │                                                     │
+  │  Si la firma es inválida → responde 400 Bad Request │
+  │  Si la firma es válida   → procede con el evento    │
+  │                                                     │
+  │  IMPORTANTE: se usa request.raw() (no request.body) │
+  │  porque la firma se calcula sobre el payload crudo. │
+  │  Si el body fue parseado/modificado, la firma falla.│
+  └─────────────────────────────────────────────────────┘
+
+  PASO 3 — Procesamiento del evento
+  ┌─────────────────────────────────────────────────────┐
+  │  Solo se procesa: checkout.session.completed        │
+  │                                                     │
+  │  Del objeto session se extrae:                      │
+  │    customer_email  → email del pagador              │
+  │    amount_total    → monto en centavos (ej: 1000)   │
+  │                                                     │
+  │  Se convierte: amountEur = amount_total / 100       │
+  │  Ej: 1000 centavos → "10.00"                        │
+  └─────────────────────────────────────────────────────┘
+
+  PASO 4 — Envío del email de agradecimiento
+  ┌─────────────────────────────────────────────────────┐
+  │  Se llama a sendDonationThankYouEmail(              │
+  │    email, name, amountEur                           │
+  │  )                                                  │
+  │                                                     │
+  │  El email incluye:                                  │
+  │    - Monto donado en euros                          │
+  │    - Mensaje de impacto de la donación              │
+  │    - Nota sobre el recibo oficial de Stripe         │
+  │    - Diseño HTML con estilos inline                 │
+  │                                                     │
+  │  Si el email falla, el error se captura en silencio.│
+  │  Nunca se devuelve un error 500 a Stripe por email, │
+  │  ya que Stripe reintentaría el webhook innecesariam.│
+  └─────────────────────────────────────────────────────┘
+
+  PASO 5 — Respuesta al webhook
+  ┌─────────────────────────────────────────────────────┐
+  │  return response.ok({ received: true })  → HTTP 200 │
+  │                                                     │
+  │  Stripe espera un 2xx. Si recibe otro código,       │
+  │  marcará el evento como fallido y reintentará.      │
+  └─────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────────────────────
+  7. RETORNO DEL USUARIO A LA APP
+────────────────────────────────────────────────────────────────────────────────
+
+Archivo: src/App.tsx
+
+Después de pagar, Stripe redirige al usuario a:
+  success_url: http://localhost:3000?donation=success
+
+App.tsx detecta el parámetro al cargar:
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('donation') === 'success') {
+    setScreen('donation-success')
+  }
+
+Se muestra DonationSuccessScreen.tsx con:
+  - Confirmación del pago
+  - Monto donado (guardado en sessionStorage antes del redirect)
+  - Nota: "Recibirás un recibo por email de parte de Stripe"
+  - Botón para volver al inicio
+
+
+────────────────────────────────────────────────────────────────────────────────
+  8. DIAGRAMA DE SECUENCIA COMPLETO
+────────────────────────────────────────────────────────────────────────────────
+
+  Usuario          DonateScreen     Backend API        Stripe           Email
+    │                   │               │                │                │
+    │── elige monto ───>│               │                │                │
+    │                   │── POST /checkout (JWT) ──────>│                │
+    │                   │               │── sessions.create() ──────────>│
+    │                   │               │<─────────── { url } ───────────│
+    │                   │<── { checkoutUrl } ───────────│                │
+    │<── redirect ──────│               │                │                │
+    │                   │               │                │                │
+    │─────────────────────────────────────── pago en Stripe ────────────>│
+    │                   │               │                │                │
+    │                   │               │<── POST /webhook ──────────────│
+    │                   │               │   (checkout.session.completed) │
+    │                   │               │── verifica firma               │
+    │                   │               │── extrae email + monto         │
+    │                   │               │── sendDonationThankYouEmail() ─────────>│
+    │                   │               │── return 200 { received: true }│
+    │                   │               │                │                │
+    │<── redirect ─────────────────────────── success_url ──────────────│
+    │   (?donation=success)             │                │                │
+    │── ve DonationSuccessScreen ──────>│               │                │
+
+
+────────────────────────────────────────────────────────────────────────────────
+  9. ARQUITECTURA DE SEGURIDAD
+────────────────────────────────────────────────────────────────────────────────
+
+  Endpoint /checkout:
+    - Protegido por JWT (middleware.auth())
+    - Solo usuarios autenticados pueden crear sesiones
+    - El email del cliente se toma del usuario autenticado (no del request)
+    - Esto evita que alguien done con el email de otra persona
+
+  Endpoint /webhook:
+    - Sin JWT, pero protegido por firma HMAC-SHA256
+    - Stripe firma cada evento con STRIPE_WEBHOOK_SECRET
+    - constructEvent() verifica que la firma sea válida
+    - Si la firma no coincide → 400 Bad Request inmediato
+    - Se usa request.raw() para que el body no sea modificado antes de verificar
+    - El sistema es stateless: no guarda pagos en base de datos propia
+
+
+────────────────────────────────────────────────────────────────────────────────
+  10. CONSIDERACIONES PARA PRODUCCIÓN
+────────────────────────────────────────────────────────────────────────────────
+
+  1. CAMBIAR CLAVES TEST → LIVE
+     En el dashboard de Stripe, obtener:
+       sk_live_... para STRIPE_SECRET_KEY
+       pk_live_... para STRIPE_PUBLISHABLE_KEY
+     Crear un nuevo endpoint de webhook en producción y obtener:
+       whsec_... para STRIPE_WEBHOOK_SECRET
+
+  2. REGISTRAR EL WEBHOOK EN STRIPE
+     Dashboard → Developers → Webhooks → Add endpoint
+     URL: https://tu-dominio.com/api/v1/payments/webhook
+     Eventos a escuchar: checkout.session.completed
+
+  3. STRIPE CLI (para testing local)
+     stripe listen --forward-to localhost:3333/api/v1/payments/webhook
+     Esto genera un webhook secret temporal para desarrollo local.
+
+  4. AÑADIR VARIABLES AL start/env.ts (recomendado)
+     Actualmente process.env.STRIPE_SECRET_KEY no está validado por AdonisJS.
+     Se recomienda añadirlo a start/env.ts para que la app falle al arrancar
+     si falta la variable, en lugar de fallar en tiempo de ejecución.
+
+  5. CONSIDERAR ALMACENAMIENTO DE DONACIONES
+     El sistema actual no guarda las donaciones en base de datos.
+     Para tener historial, añadir una tabla Donation con:
+       - tutor_id, amount_cents, currency, stripe_session_id, created_at
+
+  6. IDEMPOTENCIA EN WEBHOOKS
+     Stripe puede enviar el mismo evento más de una vez (reintentos).
+     Si se añade persistencia de donaciones, verificar stripe_session_id
+     antes de insertar para evitar duplicados.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  11. ARCHIVOS CLAVE — REFERENCIA RÁPIDA
+────────────────────────────────────────────────────────────────────────────────
+
+  Backend:
+    lightbotAPI/.env                                  → Claves de Stripe
+    lightbotAPI/start/routes.ts                       → Definición de rutas
+    lightbotAPI/app/controllers/payments_controller.ts → Lógica checkout + webhook
+    lightbotAPI/app/validators/payments.ts            → Validación del request
+    lightbotAPI/app/services/email_verification_service.ts → Email de agradecimiento
+
+  Frontend:
+    src/services/service.ts                           → createCheckoutSession()
+    src/components/DonateScreen.tsx                   → UI de donación
+    src/components/DonationSuccessScreen.tsx          → Pantalla de éxito
+    src/App.tsx                                       → Detección de ?donation=success
+
+================================================================================

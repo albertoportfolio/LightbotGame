@@ -7,7 +7,7 @@ import { Command } from '../../types/game.types';
 const level8: LevelDef = {
   id: 8,
   name: 'Caja de Luces',
-  maxCommands: 13,
+  maxCommands: 15,
   maxAttempts: 5,
   instructions: 'Recorre la U y enciende las 3 luces',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE],

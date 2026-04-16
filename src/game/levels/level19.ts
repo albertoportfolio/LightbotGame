@@ -7,8 +7,8 @@ import { Command } from '../../types/game.types';
 const level19: LevelDef = {
   id: 19,
   name: 'Rio de Luces',
-  maxCommands: 14,
-  maxAttempts: 2,
+  maxCommands: 16,
+  maxAttempts: 5,
   instructions: 'Sigue el rio encendiendo luces en cada curva hasta la planta',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },

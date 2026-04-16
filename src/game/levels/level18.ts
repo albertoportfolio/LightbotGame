@@ -8,7 +8,7 @@ const level18: LevelDef = {
   id: 18,
   name: 'Dientes de Sierra',
   maxCommands: 12,
-  maxAttempts: 2,
+  maxAttempts: 1,
   instructions: 'Recorre los dientes encendiendo luces hasta la planta',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 2, col: 0, direction: 'RIGHT' },

@@ -6,7 +6,7 @@ const level30: LevelDef = {
   name: 'El Gran Puzzle',
   maxCommands: 20,
   maxAttempts: 3,
-  instructions: 'Haz que las esquinas sean rojas y los bordes azules',
+  instructions: 'Haz que solamente las esquinas sean rojas y todas las demás variables sean azules.',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.COPY_VAR],
   robotStart: { row: 2, col: 3, direction: 'UP' },
   grid: [

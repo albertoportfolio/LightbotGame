@@ -8,7 +8,7 @@ const level15: LevelDef = {
   id: 15,
   name: 'Escalera Luminosa',
   maxCommands: 7,
-  maxAttempts: 3,
+  maxAttempts: 1,
   instructions: 'Sube la escalera encendiendo luces. Usa el bucle',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LIGHT_TOGGLE, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 3, col: 0, direction: 'RIGHT' },

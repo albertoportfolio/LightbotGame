@@ -9,7 +9,7 @@ const level16: LevelDef = {
   id: 16,
   name: 'Descenso',
   maxCommands: 5,
-  maxAttempts: 3,
+  maxAttempts: 1,
   instructions: 'Baja la escalera hasta la planta usando un bucle',
   allowedCommands: [Command.MOVE_FORWARD, Command.TURN_LEFT, Command.TURN_RIGHT, Command.LOOP_UNTIL_PLANT],
   robotStart: { row: 0, col: 0, direction: 'RIGHT' },

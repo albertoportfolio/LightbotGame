@@ -1,0 +1,334 @@
+================================================================================
+  DOCUMENTACIÓN: DEPENDENCIAS DEL PROYECTO — LIGHTBOT
+================================================================================
+
+Fecha: 2026-04-27
+Proyecto: lightbot (frontend del juego)
+Archivo de origen: package.json
+
+────────────────────────────────────────────────────────────────────────────────
+  1. VISIÓN GENERAL
+────────────────────────────────────────────────────────────────────────────────
+
+El proyecto es un juego tipo Lightbot construido con React 18 + TypeScript + Vite,
+con Phaser 3 como motor de renderizado del tablero y Zustand como store global.
+La interfaz fuera del canvas (menús, paneles, drag-and-drop de comandos) usa
+Tailwind CSS y @dnd-kit. La comunicación entre el "mundo React" y el "mundo
+Phaser" se hace mediante un EventEmitter compartido en game.registry.
+
+El package.json contiene 7 dependencias de runtime y 8 de desarrollo. No se
+incluye ninguna librería de testing ni linter (no están configurados).
+
+
+────────────────────────────────────────────────────────────────────────────────
+  2. SCRIPTS DE NPM
+────────────────────────────────────────────────────────────────────────────────
+
+  npm run dev      → Arranca Vite en modo desarrollo (http://localhost:3000)
+                     con HMR (Hot Module Replacement).
+
+  npm run build    → Ejecuta `tsc` (chequeo de tipos sin emitir) y luego
+                     `vite build` para generar los assets de producción en /dist.
+
+  npm run preview  → Sirve la build de producción localmente para validarla
+                     antes de desplegar.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  3. DEPENDENCIAS DE RUNTIME (dependencies)
+────────────────────────────────────────────────────────────────────────────────
+
+  ──────────────────────────────────────────────
+  3.1  @dnd-kit/core (^6.1.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Motor de drag-and-drop accesible (con soporte de teclado y lectores de
+    pantalla) para React. Aporta los primitives DndContext, useDraggable,
+    useDroppable y los sensores (Pointer, Keyboard, etc.).
+
+  Dónde se usa:
+    src/components/Game/InstructionPanel.tsx
+      → Panel donde el jugador construye la cola de comandos arrastrándolos
+        desde la paleta a la lista de instrucciones.
+
+  Notas:
+    - Sin esta librería el modo "drag-and-drop" del panel no funcionaría.
+      El modo de texto (input en español) no la usa.
+
+
+  ──────────────────────────────────────────────
+  3.2  @dnd-kit/sortable (^8.0.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Extensión de @dnd-kit/core para listas reordenables. Provee SortableContext,
+    useSortable y la utilidad arrayMove.
+
+  Dónde se usa:
+    src/components/Game/InstructionPanel.tsx
+      → Permite reordenar la cola de comandos arrastrando un comando ya
+        colocado a otra posición de la lista.
+
+  Notas:
+    - Requiere @dnd-kit/core como peer dependency.
+
+
+  ──────────────────────────────────────────────
+  3.3  @dnd-kit/utilities (^3.2.2)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Helpers menores de @dnd-kit. En este proyecto solo se importa el helper
+    `CSS` para serializar las transformaciones (translate3d) que aplica el
+    motor de drag-and-drop al elemento que se está arrastrando.
+
+  Dónde se usa:
+    src/components/Game/InstructionPanel.tsx (import { CSS } from '@dnd-kit/utilities')
+
+  Notas:
+    - Es una dependencia obligatoria del ecosistema @dnd-kit; conviene que
+      las tres versiones (core/sortable/utilities) estén alineadas según la
+      tabla de compatibilidad oficial.
+
+
+  ──────────────────────────────────────────────
+  3.4  phaser (^3.90.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Motor de juego 2D que se encarga de renderizar el tablero, animar al
+    robot, gestionar las escenas y reproducir los efectos visuales.
+
+  Dónde se usa (9 archivos del directorio src/game/):
+    src/game/PhaserGame.ts             → Configura e instancia el Phaser.Game
+    src/game/scenes/BootScene.ts       → Carga inicial de assets/colores
+    src/game/scenes/GameScene.ts       → Loop principal: grid, comandos, victoria
+    src/game/entities/Robot.ts         → Sprite del robot, movimiento, dirección
+    src/game/logic/CommandExecutor.ts  → Ejecutor secuencial de comandos
+    src/components/Game/GameWrapper.tsx → Punto de montaje del canvas en React
+    src/components/Game/LevelHUD.tsx    → HUD superpuesto al canvas
+    src/components/Game/InstructionPanel.tsx → Acceso a Phaser.Events
+    src/hooks/useGameBridge.ts         → Bridge React ↔ Phaser
+
+  Notas:
+    - Canvas fijo de 680x560 (ver src/game/constants/gameConfig.ts).
+    - Usa el Phaser.Events.EventEmitter de game.registry como bus de
+      comunicación con React (eventos como 'run-commands', 'level-complete').
+
+
+  ──────────────────────────────────────────────
+  3.5  react (^18.2.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Librería de UI declarativa. Toda la interfaz fuera del canvas (pantalla
+    de inicio, selección de niveles, ajustes, donaciones, HUD, panel de
+    instrucciones) está construida con componentes React.
+
+  Dónde se usa:
+    Prácticamente todos los archivos de src/components, src/hooks,
+    src/context y src/App.tsx.
+
+  Notas:
+    - Se usa la API moderna basada en hooks (useState, useEffect, useRef,
+      useContext, useMemo). No hay class components.
+    - Versión 18 → habilita createRoot, transiciones concurrentes y StrictMode.
+
+
+  ──────────────────────────────────────────────
+  3.6  react-dom (^18.2.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Renderer de React para el DOM del navegador. Provee createRoot, que
+    monta el árbol de componentes en el elemento HTML raíz.
+
+  Dónde se usa:
+    src/main.tsx (entry point):
+      ReactDOM.createRoot(document.getElementById('root')!).render(<App />)
+
+  Notas:
+    - Su versión debe coincidir SIEMPRE con la de `react` (ambas en 18.2.0).
+
+
+  ──────────────────────────────────────────────
+  3.7  zustand (^4.4.7)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Store global mínima y sin boilerplate. Alternativa ligera a Redux o
+    Context API para estado compartido entre componentes.
+
+  Dónde se usa:
+    src/store/gameStore.ts
+      → Mantiene la cola de comandos (commandQueue), el contador de intentos,
+        el flag de ejecución (isRunning) y métodos para mutarlos
+        (addCommand, removeCommand, clearQueue, etc.).
+
+  Notas:
+    - Se elige Zustand sobre Redux porque el proyecto tiene un único store
+      pequeño y no necesita middleware ni devtools complejos.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  4. DEPENDENCIAS DE DESARROLLO (devDependencies)
+────────────────────────────────────────────────────────────────────────────────
+
+  ──────────────────────────────────────────────
+  4.1  typescript (^5.3.3)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Compilador y verificador de tipos. En el script `build` se ejecuta `tsc`
+    antes de `vite build` para asegurar que no haya errores de tipos antes
+    de producir el bundle.
+
+  Configuración:
+    tsconfig.json (raíz) y tsconfig.node.json (config de Vite).
+
+  Notas:
+    - El build falla si `tsc` reporta errores → garantiza que el código que
+      llega a producción está bien tipado.
+    - Vite, durante `dev`, no chequea tipos: solo transpila. Por eso es
+      importante correr `npm run build` antes de hacer un commit grande.
+
+
+  ──────────────────────────────────────────────
+  4.2  vite (^5.1.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Bundler de desarrollo (basado en esbuild) y producción (basado en Rollup).
+    Aporta servidor de dev con HMR ultrarrápido y build optimizada para
+    producción.
+
+  Configuración:
+    vite.config.ts en la raíz.
+
+  Notas:
+    - Reemplaza tradicionalmente a Webpack/CRA. La velocidad del HMR es
+      especialmente notable con un canvas de Phaser que requiere recarga
+      frecuente.
+
+
+  ──────────────────────────────────────────────
+  4.3  @vitejs/plugin-react (^4.2.1)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Plugin oficial de Vite para React. Habilita Fast Refresh (preserva el
+    estado de los componentes al editar) y la transformación JSX moderna.
+
+  Dónde se usa:
+    vite.config.ts → plugins: [react()]
+
+
+  ──────────────────────────────────────────────
+  4.4  @types/react (^18.2.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Definiciones de tipos de React para TypeScript (JSX.IntrinsicElements,
+    FC, ReactNode, hooks, etc.).
+
+  Notas:
+    - Su versión major debe coincidir con la de `react` (ambas en 18.x).
+
+
+  ──────────────────────────────────────────────
+  4.5  @types/react-dom (^18.2.0)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Definiciones de tipos de react-dom (createRoot, render, hydrate, etc.).
+
+  Notas:
+    - Versión alineada con react-dom.
+
+
+  ──────────────────────────────────────────────
+  4.6  tailwindcss (^3.4.1)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Framework CSS utility-first. Genera clases atómicas (flex, items-center,
+    bg-blue-500, etc.) que se componen directamente en el JSX.
+
+  Configuración:
+    tailwind.config.js → define content paths y la paleta de colores.
+    Las directivas @tailwind base/components/utilities se incluyen en el
+    CSS global.
+
+  Dónde se usa:
+    En el className de prácticamente todos los componentes de src/components.
+
+
+  ──────────────────────────────────────────────
+  4.7  postcss (^8.4.35)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Procesador de CSS sobre el que corre Tailwind y Autoprefixer. Vite lo
+    invoca automáticamente al detectar postcss.config.js.
+
+  Configuración:
+    postcss.config.js → plugins: [tailwindcss, autoprefixer]
+
+  Notas:
+    - No se usa directamente en código; es la "tubería" donde se conectan
+      Tailwind y Autoprefixer.
+
+
+  ──────────────────────────────────────────────
+  4.8  autoprefixer (^10.4.17)
+  ──────────────────────────────────────────────
+
+  Propósito:
+    Plugin de PostCSS que añade prefijos de proveedor (-webkit-, -moz-, etc.)
+    al CSS final según la lista de browserslist. Asegura compatibilidad con
+    navegadores antiguos sin escribir prefijos a mano.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  5. DEPENDENCIA RECIENTEMENTE ELIMINADA
+────────────────────────────────────────────────────────────────────────────────
+
+  @stripe/stripe-js  (eliminada el 2026-04-27)
+
+  Estaba listada en package.json pero nunca se importaba en src/. El flujo
+  de donaciones (DonateScreen.tsx) llama al backend con createCheckoutSession
+  y luego redirige a la URL devuelta:
+      window.location.href = response.checkoutUrl
+
+  Como el checkout está alojado por Stripe (Hosted Checkout), el SDK
+  cliente no es necesario. Si en el futuro se quisiera usar Stripe Elements
+  o Embedded Checkout para integrar el formulario de pago en la propia
+  página, habrá que reinstalarla:
+      npm install @stripe/stripe-js
+
+
+────────────────────────────────────────────────────────────────────────────────
+  6. NOTAS TRANSVERSALES
+────────────────────────────────────────────────────────────────────────────────
+
+  - Versionado: todas las dependencias usan ^ (caret), por lo que `npm install`
+    actualiza minor y patch versions. Para reproducibilidad estricta se debe
+    confiar en package-lock.json (no borrarlo).
+
+  - Vulnerabilidades: `npm audit` reporta 4 vulnerabilidades (3 moderate, 1
+    high) tras la última auditoría. Conviene revisarlas con `npm audit` y
+    aplicar `npm audit fix` cuando no implique breaking changes.
+
+  - Tamaño del bundle: Phaser es la dependencia más pesada (~1 MB minificada).
+    Vite la incluye en el chunk principal porque se usa en pantalla de juego;
+    si se quisiera optimizar la primera carga, se podría hacer code-splitting
+    cargando PhaserGame.ts solo cuando el usuario entra a un nivel.
+
+  - Sin testing/lint: no hay Jest, Vitest, ESLint ni Prettier instalados. El
+    chequeo de tipos en `npm run build` es la única "red de seguridad"
+    automática del proyecto.
+
+================================================================================
+  FIN DEL DOCUMENTO
+================================================================================

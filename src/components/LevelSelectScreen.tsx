@@ -6,7 +6,6 @@ interface LevelInfo {
   description: string
 }
 
-// Props de la pantalla de selección de nivel
 interface LevelSelectScreenProps {
   onSelectLevel: (index: number) => void
   onBack: () => void
@@ -19,9 +18,6 @@ interface LevelSelectScreenProps {
   levelInfo: LevelInfo[]
 }
 
-// ─── Mundos ───────────────────────────────────────────────────────────────────
-
-// Definición de los 4 mundos: colores de cielo/suelo, decoraciones y rangos de niveles
 const ZONES = [
   {
     id: 0,
@@ -57,7 +53,7 @@ const ZONES = [
     id: 2,
     name: 'Mundo 3',
     subtitle: '🚀 Galaxia Robot',
-    levels: [20, 21, 22, 23,24, 25, 26, 27, 28, 29],
+    levels: [20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
     skyTop: '#0a0a2e',
     skyBot: '#1a1060',
     groundCol: '#3a1878',
@@ -85,48 +81,46 @@ const ZONES = [
   },
 ]
 
-// ─── Mapeo de tile temático del suelo por mundo ──────────────────────────────
-
-// Devuelve la ruta del strip horizontal `floor-1-X` cuya temática corresponde al mundo.
-// Convención de nombres en `public/assets/floor/` (ver
-// .claude/skills/lightbot-graphics/SKILL.md): el sufijo indica la temática
-// (sin sufijo = arena, -1 = espacio, -2 = lava, -3 = hierba). `floor-1` es la
-// variante de barra horizontal larga, ideal para una plataforma única por mundo.
 function getFloorTileForZone(zoneId: number): string {
   switch (zoneId) {
-    case 0: return '/assets/floor/floor-1-3.png'   // hierba (Tierra de Luces)
-    case 1: return '/assets/floor/floor-1.png'     // arena (Isla del Código) — sin sufijo
-    case 2: return '/assets/floor/floor-1-1.png'   // espacio (Galaxia Robot)
-    case 3: return '/assets/floor/floor-1-2.png'   // lava (Volcán Digital)
+    case 0: return '/assets/floor/floor-1-3.png'
+    case 1: return '/assets/floor/floor-1.png'
+    case 2: return '/assets/floor/floor-1-1.png'
+    case 3: return '/assets/floor/floor-1-2.png'
     default: return '/assets/floor/floor-1.png'
   }
 }
 
-// ─── Layout de la plataforma única + nodos ───────────────────────────────────
+// ─── Layout: una sola plataforma con zigzag interno ──────────────────────────
 
 const ZONE_WIDTH = 1800
-const PLATFORM_LEFT = 70                          // px de margen a la izquierda
-const PLATFORM_WIDTH = ZONE_WIDTH - 140           // ancho del strip floor-1 (uno por mundo)
-const PLATFORM_HEIGHT = 170                       // alto visual del strip
-const PLATFORM_TOP_PCT = 52                       // posición vertical (%) del borde superior del strip
-const PLATFORM_DECK_OFFSET = 22                   // px desde el top del strip hasta la "tapa" donde se posan los nodos
-const NODE_W = 76                                 // ancho del icono blocks/type=default.png
-const NODE_H = 90                                 // alto del icono (incluyendo la base 3D)
+const PLATFORM_LEFT = 70
+const PLATFORM_WIDTH = ZONE_WIDTH - 140
+const PLATFORM_HEIGHT = 350           // plataforma alta para contener el zigzag
 
-// 10 nodos repartidos uniformemente sobre la plataforma horizontal
+// Posición Y de la única plataforma (% del contenedor)
+const PLATFORM_TOP_PCT = 24
+
+// Offsets internos dentro de la plataforma para las dos filas del zigzag
+const ZIGZAG_TOP_OFFSET = 44          // fila superior dentro de la plataforma
+const ZIGZAG_BOT_OFFSET = 140         // fila inferior dentro de la plataforma
+
+const NODE_W = 86
+const NODE_H = 90
 const NODES_PER_ZONE = 10
-const NODE_AREA_LEFT = PLATFORM_LEFT + 70
-const NODE_AREA_RIGHT = PLATFORM_LEFT + PLATFORM_WIDTH - 70
+
+const NODE_AREA_LEFT = PLATFORM_LEFT + 80
+const NODE_AREA_RIGHT = PLATFORM_LEFT + PLATFORM_WIDTH - 80
 const NODE_PITCH = (NODE_AREA_RIGHT - NODE_AREA_LEFT) / (NODES_PER_ZONE - 1)
 
+// Zigzag: índices pares → fila top interna, impares → fila bot interna
 const NODE_POSITIONS = Array.from({ length: NODES_PER_ZONE }, (_, i) => ({
   x: NODE_AREA_LEFT + i * NODE_PITCH,
-  y: 0,
+  row: (i % 2 === 0 ? 'top' : 'bot') as 'top' | 'bot',
 }))
 
 // ─── Nube infantil ────────────────────────────────────────────────────────────
 
-// Nube decorativa animada con drift horizontal infinito
 function FunCloud({ x, y, scale = 1, speed = 28, color }: {
   x: number; y: number; scale?: number; speed?: number; color: string
 }) {
@@ -142,23 +136,19 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
       }}
     >
       <div style={{ position: 'relative', width: 90, height: 36 }}>
-        {/* cuerpo */}
         <div style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: 24,
           background: color, borderRadius: 24, opacity: 0.9,
           boxShadow: `0 4px 12px rgba(0,0,0,0.15)`,
         }} />
-        {/* pom pom izq */}
         <div style={{
           position: 'absolute', width: 36, height: 36, borderRadius: '50%',
           background: color, bottom: 10, left: 8, opacity: 0.9,
         }} />
-        {/* pom pom der */}
         <div style={{
           position: 'absolute', width: 28, height: 28, borderRadius: '50%',
           background: color, bottom: 14, left: 36, opacity: 0.9,
         }} />
-        {/* pom pom centro */}
         <div style={{
           position: 'absolute', width: 32, height: 32, borderRadius: '50%',
           background: color, bottom: 16, left: 22, opacity: 0.95,
@@ -170,7 +160,6 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
 
 // ─── Decoración flotante ──────────────────────────────────────────────────────
 
-// Emoji decorativo flotante con animación de rebote
 function FloatingDeco({ emoji, x, y, delay, size }: {
   emoji: string; x: number; y: number; delay: number; size: number
 }) {
@@ -189,12 +178,100 @@ function FloatingDeco({ emoji, x, y, delay, size }: {
   )
 }
 
-// ─── Conector animado entre nodos ─────────────────────────────────────────────
+// ─── Conector en L entre nodos de distinta fila (zigzag interno) ──────────────
 
-// Pequeños rectángulos "hechos a mano" (con leve rotación alternante) que se
-// pulsan en secuencia entre dos nodos consecutivos para simular una traza de código.
-function PathConnector({ fromX, toX, topPercent, deckYpx, accent }: {
-  fromX: number; toX: number; topPercent: number; deckYpx: number; accent: string
+function ZigzagConnector({
+  fromX,
+  toX,
+  fromRow,
+  toRow,
+  accent,
+  containerHeightPx,
+}: {
+  fromX: number
+  toX: number
+  fromRow: 'top' | 'bot'
+  toRow: 'top' | 'bot'
+  accent: string
+  containerHeightPx: number
+}) {
+  // Y en px del centro del nodo para cada fila interna
+  const nodeY = (row: 'top' | 'bot') =>
+    PLATFORM_TOP_PCT / 100 * containerHeightPx
+    + (row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET)
+    + NODE_H / 2
+
+  const y1 = nodeY(fromRow)
+  const y2 = nodeY(toRow)
+  const midX = (fromX + toX) / 2
+
+  const segW = 14
+  const segH = 7
+  const style = (x: number, y: number, rotate: number, delay: number) => ({
+    position: 'absolute' as const,
+    left: x - segW / 2,
+    top: y - segH / 2,
+    width: segW,
+    height: segH,
+    background: accent,
+    borderRadius: 2,
+    border: '2px solid rgba(255,255,255,0.85)',
+    transform: `rotate(${rotate}deg)`,
+    boxShadow: `0 0 8px ${accent}aa, 0 2px 4px rgba(0,0,0,0.4)`,
+    zIndex: 4,
+    animation: `connectorPulse 1.6s ease-in-out ${delay}s infinite`,
+    pointerEvents: 'none' as const,
+  })
+
+  // Segmentos horizontales en fila origen
+  const hSegs1: { x: number; y: number; r: number; d: number }[] = []
+  const steps1 = 3
+  for (let i = 0; i < steps1; i++) {
+    hSegs1.push({
+      x: fromX + (midX - fromX) * ((i + 1) / (steps1 + 1)),
+      y: y1,
+      r: i % 2 === 0 ? 6 : -5,
+      d: i * 0.1,
+    })
+  }
+
+  // Segmentos verticales en la columna central (de y1 a y2)
+  const vSegs: { x: number; y: number; r: number; d: number }[] = []
+  const vSteps = Math.max(2, Math.round(Math.abs(y2 - y1) / 22))
+  for (let i = 0; i < vSteps; i++) {
+    vSegs.push({
+      x: midX,
+      y: y1 + (y2 - y1) * ((i + 1) / (vSteps + 1)),
+      r: 90 + (i % 2 === 0 ? 6 : -5),
+      d: 0.3 + i * 0.1,
+    })
+  }
+
+  // Segmentos horizontales en fila destino
+  const hSegs2: { x: number; y: number; r: number; d: number }[] = []
+  const steps2 = 3
+  for (let i = 0; i < steps2; i++) {
+    hSegs2.push({
+      x: midX + (toX - midX) * ((i + 1) / (steps2 + 1)),
+      y: y2,
+      r: i % 2 === 0 ? -6 : 5,
+      d: 0.6 + i * 0.1,
+    })
+  }
+
+  return (
+    <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4 }}>
+      {[...hSegs1, ...vSegs, ...hSegs2].map((s, i) => (
+        <div key={i} style={style(s.x, s.y, s.r, s.d)} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Conector horizontal simple (misma fila interna) ─────────────────────────
+
+function PathConnector({ fromX, toX, y, accent }: {
+  fromX: number; toX: number; y: number; accent: string
 }) {
   const segments = 5
   const dx = (toX - fromX) / (segments + 1)
@@ -207,7 +284,7 @@ function PathConnector({ fromX, toX, topPercent, deckYpx, accent }: {
           className="absolute pointer-events-none"
           style={{
             left: fromX + dx * (i + 1) - 9,
-            top: `calc(${topPercent}% + ${deckYpx}px)`,
+            top: y - 4,
             width: 18,
             height: 7,
             background: accent,
@@ -226,8 +303,6 @@ function PathConnector({ fromX, toX, topPercent, deckYpx, accent }: {
 
 // ─── Nodo de nivel ────────────────────────────────────────────────────────────
 
-// Nodo de nivel basado en `blocks/type=default.png` con número/icono superpuesto.
-// Aplica filtros distintos para los estados completed / locked / active.
 function LevelNode({
   levelIndex, info, completed, locked, active, zone, onClick,
 }: {
@@ -242,7 +317,6 @@ function LevelNode({
   const [hov, setHov] = useState(false)
   const [g1] = zone.nodeGrad
 
-  // Filtros visuales de estado aplicados sobre el bloque cyan/teal por defecto
   const blockFilter = locked
     ? 'grayscale(0.85) brightness(0.55) contrast(0.9)'
     : completed
@@ -251,8 +325,6 @@ function LevelNode({
 
   return (
     <div style={{ position: 'relative', width: NODE_W, height: NODE_H + 18 }}>
-
-      {/* Tooltip */}
       {hov && !locked && (
         <div
           className="absolute pointer-events-none"
@@ -282,7 +354,6 @@ function LevelNode({
         </div>
       )}
 
-      {/* Estrellas arriba (nivel completado) */}
       {completed && (
         <div
           className="absolute flex gap-0.5 justify-center pointer-events-none"
@@ -294,19 +365,15 @@ function LevelNode({
         </div>
       )}
 
-      {/* Onda de pulso (nivel activo) */}
       {active && !completed && (
-        <>
-          <div className="absolute rounded-full pointer-events-none" style={{
-            width: NODE_W + 10, height: NODE_W + 10, top: '40%', left: '50%',
-            transform: 'translate(-50%,-50%)',
-            background: `radial-gradient(circle, ${g1}50, transparent 70%)`,
-            animation: 'activePulse 1.8s ease-out infinite',
-          }} />
-        </>
+        <div className="absolute rounded-full pointer-events-none" style={{
+          width: NODE_W + 10, height: NODE_W + 10, top: '40%', left: '50%',
+          transform: 'translate(-50%,-50%)',
+          background: `radial-gradient(circle, ${g1}50, transparent 70%)`,
+          animation: 'activePulse 1.8s ease-out infinite',
+        }} />
       )}
 
-      {/* Botón con la imagen del bloque */}
       <button
         disabled={locked}
         onClick={onClick}
@@ -332,14 +399,8 @@ function LevelNode({
           alt=""
           aria-hidden="true"
           className="select-none pointer-events-none"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
-            filter: blockFilter,
-          }}
+          style={{ width: '100%', height: '100%', objectFit: 'contain', filter: blockFilter }}
         />
-        {/* Icono + número centrados sobre la "tapa" del bloque */}
         <div
           className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
           style={{ paddingBottom: '22%' }}
@@ -351,18 +412,15 @@ function LevelNode({
             {locked ? '🔒' : info.icon}
           </span>
           <span style={{
-            fontSize: 11, fontWeight: 900,
-            color: 'white',
+            fontSize: 11, fontWeight: 900, color: 'white',
             textShadow: '0 1px 3px rgba(0,0,0,0.7)',
-            marginTop: 1,
-            letterSpacing: 0.4,
+            marginTop: 1, letterSpacing: 0.4,
           }}>
             {String(levelIndex + 1).padStart(2, '0')}
           </span>
         </div>
       </button>
 
-      {/* Nombre del nivel debajo */}
       {!locked && (
         <div style={{
           position: 'absolute', top: NODE_H + 2, left: '50%',
@@ -372,10 +430,8 @@ function LevelNode({
           <p style={{
             fontSize: 9, fontWeight: 800, color: 'white',
             textShadow: '0 1px 4px rgba(0,0,0,0.7)',
-            lineHeight: 1.2,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            lineHeight: 1.2, whiteSpace: 'nowrap',
+            overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {info.name}
           </p>
@@ -396,7 +452,6 @@ const SPACE_STARS = [...Array(30)].map(() => ({
   del: Math.random() * 3,
 }))
 
-// Sección visual de un mundo: fondo temático, camino SVG curvo, nodos de nivel y decoraciones
 function ZoneSection({
   zone, completedLevels, nextLevel, onSelectLevel, levelInfo,
 }: {
@@ -406,11 +461,20 @@ function ZoneSection({
   onSelectLevel: (i: number) => void
   levelInfo: LevelInfo[]
 }) {
-  const nodes = NODE_POSITIONS
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerH, setContainerH] = useState(600)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const obs = new ResizeObserver(([entry]) => setContainerH(entry.contentRect.height))
+    obs.observe(el)
+    setContainerH(el.offsetHeight)
+    return () => obs.disconnect()
+  }, [])
 
   const floorTile = getFloorTileForZone(zone.id)
 
-  // Decoraciones dispersas en la zona
   const decoItems = zone.decorations.map((emoji, i) => ({
     emoji,
     x: 80 + i * 300 + (i % 2) * 60,
@@ -421,14 +485,11 @@ function ZoneSection({
 
   return (
     <div
+      ref={containerRef}
       className="relative flex-shrink-0 overflow-hidden"
-      style={{
-        width: ZONE_WIDTH,
-        height: '100%',
-        borderRight: `3px solid rgba(0,0,0,0.15)`,
-      }}
+      style={{ width: ZONE_WIDTH, height: '100%', borderRight: '3px solid rgba(0,0,0,0.15)' }}
     >
-      {/* Fondo difuminado: capa propia para que el blur no afecte a plataforma/nodos */}
+      {/* Fondo */}
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none"
@@ -442,7 +503,6 @@ function ZoneSection({
           zIndex: 0,
         }}
       />
-      {/* Velo sutil para mejorar contraste con la plataforma y los nodos */}
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none"
@@ -452,25 +512,21 @@ function ZoneSection({
         }}
       />
 
-      {/* Estrellas en zona espacial */}
+      {/* Estrellas zona espacial */}
       {zone.id === 2 && [...Array(30)].map((_, i) => (
         <div key={i} className="absolute rounded-full bg-white pointer-events-none" style={{
-          width: SPACE_STARS[i].w,
-          height: SPACE_STARS[i].w,
-          top: `${SPACE_STARS[i].top}%`,
-          left: `${SPACE_STARS[i].left}%`,
+          width: SPACE_STARS[i].w, height: SPACE_STARS[i].w,
+          top: `${SPACE_STARS[i].top}%`, left: `${SPACE_STARS[i].left}%`,
           opacity: SPACE_STARS[i].op,
           animation: `starTwinkle ${SPACE_STARS[i].dur}s ease-in-out ${SPACE_STARS[i].del}s infinite`,
         }} />
       ))}
 
-      {/* Brasas flotantes en zona volcánica */}
+      {/* Brasas volcánicas */}
       {zone.id === 3 && [...Array(20)].map((_, i) => (
         <div key={i} className="absolute rounded-full pointer-events-none" style={{
-          width: SPACE_STARS[i].w + 1,
-          height: SPACE_STARS[i].w + 1,
-          top: `${SPACE_STARS[i].top}%`,
-          left: `${SPACE_STARS[i].left}%`,
+          width: SPACE_STARS[i].w + 1, height: SPACE_STARS[i].w + 1,
+          top: `${SPACE_STARS[i].top}%`, left: `${SPACE_STARS[i].left}%`,
           opacity: SPACE_STARS[i].op,
           background: i % 3 === 0 ? '#ff4400' : i % 3 === 1 ? '#ff8800' : '#ffaa00',
           animation: `starTwinkle ${SPACE_STARS[i].dur}s ease-in-out ${SPACE_STARS[i].del}s infinite`,
@@ -484,7 +540,6 @@ function ZoneSection({
       <FunCloud x={390} y={15} scale={0.7} speed={26} color={zone.cloudCol} />
       <FunCloud x={580} y={30} scale={1.0} speed={34} color={zone.cloudCol} />
       <FunCloud x={700} y={10} scale={0.8} speed={20} color={zone.cloudCol} />
-      <FunCloud x={20} y={18} scale={0.9} speed={22} color={zone.cloudCol} />
       <FunCloud x={300} y={35} scale={1.1} speed={30} color={zone.cloudCol} />
       <FunCloud x={600} y={15} scale={0.7} speed={26} color={zone.cloudCol} />
       <FunCloud x={900} y={30} scale={1.0} speed={34} color={zone.cloudCol} />
@@ -493,11 +548,9 @@ function ZoneSection({
       <FunCloud x={1800} y={18} scale={0.7} speed={24} color={zone.cloudCol} />
 
       {/* Decoraciones flotantes */}
-      {decoItems.map((d, i) => (
-        <FloatingDeco key={i} {...d} />
-      ))}
+      {decoItems.map((d, i) => <FloatingDeco key={i} {...d} />)}
 
-      {/* Banner del mundo (imagen con título grabado) */}
+      {/* Banner del mundo */}
       <img
         src={`/assets/world-badges/world-${zone.id + 1}.png`}
         alt={zone.name}
@@ -505,11 +558,10 @@ function ZoneSection({
         style={{ zIndex: 5, width: 520, height: 'auto' }}
       />
 
-      {/* Plataforma única horizontal (floor-1-X) — un solo strip por mundo */}
+      {/* ── Única plataforma ── */}
       <img
         src={floorTile}
-        alt=""
-        aria-hidden="true"
+        alt="" aria-hidden="true"
         className="absolute pointer-events-none select-none"
         style={{
           left: PLATFORM_LEFT,
@@ -517,30 +569,50 @@ function ZoneSection({
           width: PLATFORM_WIDTH,
           height: PLATFORM_HEIGHT,
           zIndex: 2,
-          filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.5))',
+          filter: 'drop-shadow(0 12px 16px rgba(0,0,0,0.5))',
         }}
       />
 
-      {/* Conectores animados (rectángulos hechos a mano) entre nodos consecutivos */}
-      {nodes.slice(0, -1).map((pos, i) => {
-        const next = nodes[i + 1]
+      {/* ── Conectores entre nodos ── */}
+      {NODE_POSITIONS.slice(0, -1).map((pos, i) => {
+        const next = NODE_POSITIONS[i + 1]
+
+        if (pos.row === next.row) {
+          // Misma fila interna → conector horizontal
+          const y =
+            PLATFORM_TOP_PCT / 100 * containerH
+            + (pos.row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET)
+            + NODE_H / 2
+          return (
+            <PathConnector
+              key={`conn-${i}`}
+              fromX={pos.x + NODE_W / 2 - 4}
+              toX={next.x - NODE_W / 2 + 4}
+              y={y}
+              accent={zone.accent}
+            />
+          )
+        }
+        // Filas distintas → conector en L interno
         return (
-          <PathConnector
+          <ZigzagConnector
             key={`conn-${i}`}
-            fromX={pos.x + NODE_W / 2 - 4}
-            toX={next.x - NODE_W / 2 + 4}
-            topPercent={PLATFORM_TOP_PCT}
-            deckYpx={PLATFORM_DECK_OFFSET + 26}
+            fromX={pos.x}
+            toX={next.x}
+            fromRow={pos.row}
+            toRow={next.row}
             accent={zone.accent}
+            containerHeightPx={containerH}
           />
         )
       })}
 
-      {/* Nodos de nivel */}
+      {/* ── Nodos de nivel ── */}
       {zone.levels.map((levelIndex, i) => {
         const info = levelInfo[levelIndex]
         if (!info) return null
-        const pos = nodes[i]
+        const pos = NODE_POSITIONS[i]
+        const internalOffset = pos.row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET
         const completed = completedLevels.includes(levelIndex)
         const locked = levelIndex > 0 && !completedLevels.includes(levelIndex - 1)
         const active = levelIndex === nextLevel
@@ -551,8 +623,8 @@ function ZoneSection({
             style={{
               position: 'absolute',
               left: pos.x,
-              top: `calc(${PLATFORM_TOP_PCT}% + ${PLATFORM_DECK_OFFSET}px)`,
-              transform: 'translate(-50%, -100%)',
+              top: `calc(${PLATFORM_TOP_PCT}% + ${internalOffset}px)`,
+              transform: 'translateX(-50%)',
               zIndex: 10,
             }}
           >
@@ -568,14 +640,12 @@ function ZoneSection({
           </div>
         )
       })}
-
     </div>
   )
 }
 
 // ─── Pantalla principal ───────────────────────────────────────────────────────
 
-// Pantalla principal de selección de niveles: mapa scrolleable horizontal con 4 mundos, header flotante y flechas de navegación
 export function LevelSelectScreen({
   onSelectLevel,
   onBack,
@@ -595,7 +665,6 @@ export function LevelSelectScreen({
     ? Math.max(0, ...completedLevels.map(i => i + 1).filter(i => i < levelInfo.length))
     : levelInfo.length - 1
 
-  // Scroll al siguiente nivel al montar
   useEffect(() => {
     if (!scrollRef.current) return
     const zoneIdx = ZONES.findIndex(z => z.levels.includes(nextLevel))
@@ -648,7 +717,7 @@ export function LevelSelectScreen({
           0%, 100% { opacity: 0.4; }
           50%       { opacity: 1; }
         }
-        @keyframes twinkle {
+        @keyframes starTwinkle {
           0%, 100% { opacity: 0.2; }
           50%       { opacity: 1; }
         }
@@ -667,11 +736,11 @@ export function LevelSelectScreen({
         ::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* ── Mapa scrolleable ── */}
+      {/* Mapa scrolleable */}
       <div
         ref={scrollRef}
         className="absolute inset-0 overflow-x-auto overflow-y-hidden"
-        style={{ scrollbarWidth: 'none', paddingTop: 64, willChange: 'scroll-position', }}
+        style={{ scrollbarWidth: 'none', paddingTop: 64, willChange: 'scroll-position' }}
       >
         <div className="flex h-full relative" style={{ width: totalWidth, minHeight: '100vh' }}>
           {ZONES.map(zone => (
@@ -684,18 +753,17 @@ export function LevelSelectScreen({
               levelInfo={levelInfo}
             />
           ))}
-          {/* Puentes horizontales que conectan los mundos — alineados con la "tapa" del strip */}
+          {/* Puentes entre mundos — alineados con la plataforma */}
           {ZONES.slice(0, -1).map((_, i) => (
             <img
               key={`bridge-${i}`}
               src="/assets/bridge/side.png"
-              alt=""
-              aria-hidden="true"
+              alt="" aria-hidden="true"
               className="absolute pointer-events-none select-none"
               style={{
-                left: ZONE_WIDTH * (i + 1) - 110,
-                top: `calc(${PLATFORM_TOP_PCT}% + ${PLATFORM_DECK_OFFSET + 18}px)`,
-                width: 220,
+                left: ZONE_WIDTH * (i + 1) - 88,
+                top: `calc(${PLATFORM_TOP_PCT}% + ${ZIGZAG_BOT_OFFSET + NODE_H - 100}px)`,
+                width: 170,
                 height: 'auto',
                 zIndex: 6,
                 filter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.55))',
@@ -705,7 +773,7 @@ export function LevelSelectScreen({
         </div>
       </div>
 
-      {/* ── Header flotante ── */}
+      {/* Header flotante */}
       <header
         className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-2"
         style={{
@@ -713,7 +781,6 @@ export function LevelSelectScreen({
           backdropFilter: 'blur(6px)',
         }}
       >
-        {/* Botón volver */}
         <button
           onClick={onBack}
           aria-label="Volver al menú"
@@ -728,11 +795,7 @@ export function LevelSelectScreen({
           Menú
         </button>
 
-        {/* Título central */}
-        <div
-          className="flex flex-col items-center"
-          style={{ animation: 'headerBob 3s ease-in-out infinite' }}
-        >
+        <div className="flex flex-col items-center" style={{ animation: 'headerBob 3s ease-in-out infinite' }}>
           <span
             className="font-black text-lg tracking-wide"
             style={{
@@ -745,7 +808,6 @@ export function LevelSelectScreen({
             🗺️ ¡Elige tu Aventura!
           </span>
           <div className="flex items-center gap-2 mt-0.5">
-            {/* Barra de progreso */}
             <div style={{
               width: 120, height: 8, borderRadius: 8,
               background: 'rgba(255,255,255,0.2)',
@@ -767,110 +829,68 @@ export function LevelSelectScreen({
           </div>
         </div>
 
-        {/* Botones audio/settings/profile */}
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={onToggleMute}
-            aria-label={muted ? 'Activar sonido' : 'Silenciar'}
+          <button onClick={onToggleMute} aria-label={muted ? 'Activar sonido' : 'Silenciar'}
             className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
-            }}
-          >
-            <img
-              src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'}
-              alt="" className="w-8 h-8 select-none" />
+            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
+            <img src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'} alt="" className="w-8 h-8 select-none" />
           </button>
-          <button
-            onClick={onOpenSettings}
-            aria-label="Ajustes"
+          <button onClick={onOpenSettings} aria-label="Ajustes"
             className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
-            }}
-          >
+            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
             <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-8 h-8 select-none" />
           </button>
-          <button
-            onClick={onOpenProfile}
-            aria-label="Perfil"
+          <button onClick={onOpenProfile} aria-label="Perfil"
             className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
-            }}
-          >
+            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
             <img src="/assets/buttons/icon/Propiedad%201=user_btn.png" alt="" className="w-8 h-8 select-none" />
           </button>
-          <button
-            onClick={onDonate}
-            aria-label="Donar"
+          <button onClick={onDonate} aria-label="Donar"
             className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
-            style={{
-              background: 'rgba(255,255,255,0.15)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
-            }}
-          >
+            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
             💙
           </button>
         </div>
       </header>
 
-      {/* ── Flecha izquierda ── */}
+      {/* Flecha izquierda */}
       {scrollX > 30 && (
         <button
           onClick={() => scrollRef.current?.scrollBy({ left: -500, behavior: 'smooth' })}
           className="fixed left-2 z-30 flex items-center justify-center"
           style={{
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: '50%', transform: 'translateY(-50%)',
             width: 44, height: 44,
             background: 'linear-gradient(135deg, #ffe066, #ff9900)',
-            border: '3px solid white',
-            borderRadius: '50%',
+            border: '3px solid white', borderRadius: '50%',
             boxShadow: '0 4px 0 #aa6600, 0 6px 16px rgba(0,0,0,0.4)',
             fontSize: 20, fontWeight: 900, color: 'white',
             textShadow: '0 1px 3px rgba(0,0,0,0.4)',
             animation: 'arrowBounceL 1s ease-in-out infinite',
           }}
-        >
-          ◀
-        </button>
+        >◀</button>
       )}
 
-      {/* ── Flecha derecha ── */}
+      {/* Flecha derecha */}
       {canScrollRight && (
         <button
           onClick={() => scrollRef.current?.scrollBy({ left: 500, behavior: 'smooth' })}
           className="fixed right-2 z-30 flex items-center justify-center"
           style={{
-            top: '50%',
-            transform: 'translateY(-50%)',
+            top: '50%', transform: 'translateY(-50%)',
             width: 44, height: 44,
             background: 'linear-gradient(135deg, #ffe066, #ff9900)',
-            border: '3px solid white',
-            borderRadius: '50%',
+            border: '3px solid white', borderRadius: '50%',
             boxShadow: '0 4px 0 #aa6600, 0 6px 16px rgba(0,0,0,0.4)',
             fontSize: 20, fontWeight: 900, color: 'white',
             textShadow: '0 1px 3px rgba(0,0,0,0.4)',
             animation: 'arrowBounce 1s ease-in-out infinite',
           }}
-        >
-          ▶
-        </button>
+        >▶</button>
       )}
 
-      {/* ── Indicadores de mundo ── */}
-      <div
-        className="fixed bottom-4 left-1/2 z-30 flex items-center gap-2"
-        style={{ transform: 'translateX(-50%)' }}
-      >
+      {/* Indicadores de mundo */}
+      <div className="fixed bottom-4 left-1/2 z-30 flex items-center gap-2" style={{ transform: 'translateX(-50%)' }}>
         {ZONES.map((zone, i) => {
           const active = scrollX >= i * ZONE_WIDTH - 100 && scrollX < (i + 1) * ZONE_WIDTH - 100
           return (
@@ -878,8 +898,7 @@ export function LevelSelectScreen({
               key={zone.id}
               onClick={() => scrollRef.current?.scrollTo({ left: i * ZONE_WIDTH, behavior: 'smooth' })}
               style={{
-                width: active ? 32 : 10,
-                height: 10,
+                width: active ? 32 : 10, height: 10,
                 borderRadius: 6,
                 background: active ? zone.accent : 'rgba(255,255,255,0.3)',
                 border: '2px solid rgba(255,255,255,0.4)',

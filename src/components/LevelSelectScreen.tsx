@@ -85,21 +85,44 @@ const ZONES = [
   },
 ]
 
-// Posiciones (x,y) de los 10 nodos de nivel dentro de cada zona — distribuidos en zigzag
-const NODE_POSITIONS = [
-  { x: 120, y: 60 },
-  { x: 300, y: 35 },
-  { x: 480, y: 65 },
-  { x: 660, y: 30 },
-  { x: 840, y: 60 },
-  { x: 1020, y: 35 },
-  { x: 1200, y: 65 },
-  { x: 1380, y: 30 },
-  { x: 1560, y: 60 },
-  { x: 1700, y: 38 },
-]
+// ─── Mapeo de tile temático del suelo por mundo ──────────────────────────────
+
+// Devuelve la ruta del strip horizontal `floor-1-X` cuya temática corresponde al mundo.
+// Convención de nombres en `public/assets/floor/` (ver
+// .claude/skills/lightbot-graphics/SKILL.md): el sufijo indica la temática
+// (sin sufijo = arena, -1 = espacio, -2 = lava, -3 = hierba). `floor-1` es la
+// variante de barra horizontal larga, ideal para una plataforma única por mundo.
+function getFloorTileForZone(zoneId: number): string {
+  switch (zoneId) {
+    case 0: return '/assets/floor/floor-1-3.png'   // hierba (Tierra de Luces)
+    case 1: return '/assets/floor/floor-1.png'     // arena (Isla del Código) — sin sufijo
+    case 2: return '/assets/floor/floor-1-1.png'   // espacio (Galaxia Robot)
+    case 3: return '/assets/floor/floor-1-2.png'   // lava (Volcán Digital)
+    default: return '/assets/floor/floor-1.png'
+  }
+}
+
+// ─── Layout de la plataforma única + nodos ───────────────────────────────────
 
 const ZONE_WIDTH = 1800
+const PLATFORM_LEFT = 70                          // px de margen a la izquierda
+const PLATFORM_WIDTH = ZONE_WIDTH - 140           // ancho del strip floor-1 (uno por mundo)
+const PLATFORM_HEIGHT = 170                       // alto visual del strip
+const PLATFORM_TOP_PCT = 52                       // posición vertical (%) del borde superior del strip
+const PLATFORM_DECK_OFFSET = 22                   // px desde el top del strip hasta la "tapa" donde se posan los nodos
+const NODE_W = 76                                 // ancho del icono blocks/type=default.png
+const NODE_H = 90                                 // alto del icono (incluyendo la base 3D)
+
+// 10 nodos repartidos uniformemente sobre la plataforma horizontal
+const NODES_PER_ZONE = 10
+const NODE_AREA_LEFT = PLATFORM_LEFT + 70
+const NODE_AREA_RIGHT = PLATFORM_LEFT + PLATFORM_WIDTH - 70
+const NODE_PITCH = (NODE_AREA_RIGHT - NODE_AREA_LEFT) / (NODES_PER_ZONE - 1)
+
+const NODE_POSITIONS = Array.from({ length: NODES_PER_ZONE }, (_, i) => ({
+  x: NODE_AREA_LEFT + i * NODE_PITCH,
+  y: 0,
+}))
 
 // ─── Nube infantil ────────────────────────────────────────────────────────────
 
@@ -145,46 +168,6 @@ function FunCloud({ x, y, scale = 1, speed = 28, color }: {
   )
 }
 
-// ─── Árbol gordo ──────────────────────────────────────────────────────────────
-
-// Árbol/decoración de suelo: cambia según el mundo (árbol, ola, estrella o fuego)
-function ChubbyTree({ x, zone }: { x: number; zone: typeof ZONES[0] }) {
-  const isSpace = zone.id === 2
-  const isOcean = zone.id === 1
-  const isVolcano = zone.id === 3
-
-  return (
-    <div aria-hidden="true" className="absolute pointer-events-none" style={{ bottom: 44, left: x }}>
-      {isVolcano ? (
-        <div style={{ fontSize: 28, lineHeight: 1 }}>🔥</div>
-      ) : isSpace ? (
-        <div style={{ fontSize: 32, lineHeight: 1 }}>🌟</div>
-      ) : isOcean ? (
-        <div style={{ fontSize: 28, lineHeight: 1 }}>🌊</div>
-      ) : (
-        <>
-          <div style={{
-            width: 10, height: 22, margin: '0 auto',
-            background: 'linear-gradient(180deg, #8B5e3c, #6b3f1e)',
-            borderRadius: 4,
-          }} />
-          <div style={{
-            width: 44, height: 44, borderRadius: '50% 50% 44% 44%',
-            background: 'linear-gradient(160deg,#4ade80,#16a34a)',
-            marginTop: -12, marginLeft: -17,
-            boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
-          }} />
-          <div style={{
-            width: 34, height: 34, borderRadius: '50% 50% 44% 44%',
-            background: 'linear-gradient(160deg,#86efac,#4ade80)',
-            marginTop: -20, marginLeft: -12,
-          }} />
-        </>
-      )}
-    </div>
-  )
-}
-
 // ─── Decoración flotante ──────────────────────────────────────────────────────
 
 // Emoji decorativo flotante con animación de rebote
@@ -206,9 +189,45 @@ function FloatingDeco({ emoji, x, y, delay, size }: {
   )
 }
 
+// ─── Conector animado entre nodos ─────────────────────────────────────────────
+
+// Pequeños rectángulos "hechos a mano" (con leve rotación alternante) que se
+// pulsan en secuencia entre dos nodos consecutivos para simular una traza de código.
+function PathConnector({ fromX, toX, topPercent, deckYpx, accent }: {
+  fromX: number; toX: number; topPercent: number; deckYpx: number; accent: string
+}) {
+  const segments = 5
+  const dx = (toX - fromX) / (segments + 1)
+  return (
+    <>
+      {Array.from({ length: segments }).map((_, i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          className="absolute pointer-events-none"
+          style={{
+            left: fromX + dx * (i + 1) - 9,
+            top: `calc(${topPercent}% + ${deckYpx}px)`,
+            width: 18,
+            height: 7,
+            background: accent,
+            borderRadius: 2,
+            border: '2px solid rgba(255,255,255,0.85)',
+            transform: `rotate(${i % 2 === 0 ? 7 : -6}deg)`,
+            boxShadow: `0 0 8px ${accent}aa, 0 2px 4px rgba(0,0,0,0.4)`,
+            zIndex: 4,
+            animation: `connectorPulse 1.6s ease-in-out ${i * 0.14}s infinite`,
+          }}
+        />
+      ))}
+    </>
+  )
+}
+
 // ─── Nodo de nivel ────────────────────────────────────────────────────────────
 
-// Nodo circular de un nivel: muestra icono, número, tooltip y estado (completado/activo/bloqueado)
+// Nodo de nivel basado en `blocks/type=default.png` con número/icono superpuesto.
+// Aplica filtros distintos para los estados completed / locked / active.
 function LevelNode({
   levelIndex, info, completed, locked, active, zone, onClick,
 }: {
@@ -221,17 +240,24 @@ function LevelNode({
   onClick: () => void
 }) {
   const [hov, setHov] = useState(false)
-  const [g1, g2] = zone.nodeGrad
+  const [g1] = zone.nodeGrad
+
+  // Filtros visuales de estado aplicados sobre el bloque cyan/teal por defecto
+  const blockFilter = locked
+    ? 'grayscale(0.85) brightness(0.55) contrast(0.9)'
+    : completed
+      ? 'hue-rotate(35deg) saturate(1.25) brightness(1.08)'
+      : ''
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', width: NODE_W, height: NODE_H + 18 }}>
 
       {/* Tooltip */}
       {hov && !locked && (
         <div
           className="absolute pointer-events-none"
           style={{
-            bottom: 'calc(100% + 14px)',
+            bottom: 'calc(100% + 12px)',
             left: '50%',
             transform: 'translateX(-50%)',
             background: 'white',
@@ -247,8 +273,6 @@ function LevelNode({
           }}
         >
           <p className="font-black text-gray-800 text-sm">{info.name}</p>
-
-          {/* flecha */}
           <div style={{
             position: 'absolute', bottom: -9, left: '50%',
             transform: 'translateX(-50%) rotate(45deg)',
@@ -258,11 +282,11 @@ function LevelNode({
         </div>
       )}
 
-      {/* Estrellas arriba */}
+      {/* Estrellas arriba (nivel completado) */}
       {completed && (
         <div
           className="absolute flex gap-0.5 justify-center pointer-events-none"
-          style={{ top: -18, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}
+          style={{ top: -16, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}
         >
           {[0, 0.08, 0.16].map((d, i) => (
             <span key={i} aria-hidden="true" style={{ fontSize: 12, animation: `starWiggle 1.4s ease-in-out ${d}s infinite` }}>⭐</span>
@@ -270,26 +294,19 @@ function LevelNode({
         </div>
       )}
 
-      {/* Onda de pulso para el nivel activo */}
+      {/* Onda de pulso (nivel activo) */}
       {active && !completed && (
         <>
           <div className="absolute rounded-full pointer-events-none" style={{
-            width: 80, height: 80, top: '50%', left: '50%',
+            width: NODE_W + 10, height: NODE_W + 10, top: '40%', left: '50%',
             transform: 'translate(-50%,-50%)',
-            background: `radial-gradient(circle, ${g1}40, transparent 70%)`,
+            background: `radial-gradient(circle, ${g1}50, transparent 70%)`,
             animation: 'activePulse 1.8s ease-out infinite',
-          }} />
-          <div className="absolute rounded-full pointer-events-none" style={{
-            width: 80, height: 80, top: '50%', left: '50%',
-            transform: 'translate(-50%,-50%)',
-            border: `3px solid ${g1}`,
-            borderRadius: '50%',
-            animation: 'activePulse 1.8s ease-out 0.4s infinite',
           }} />
         </>
       )}
 
-      {/* Botón del nodo */}
+      {/* Botón con la imagen del bloque */}
       <button
         disabled={locked}
         onClick={onClick}
@@ -297,61 +314,68 @@ function LevelNode({
         onMouseLeave={() => setHov(false)}
         aria-label={locked ? `Nivel ${levelIndex + 1}, bloqueado` : `Nivel ${levelIndex + 1}: ${info.name}`}
         style={{
-          width: 68, height: 68,
-          borderRadius: '50%',
           position: 'relative',
-          border: locked ? '4px solid rgba(255,255,255,0.2)' : '4px solid white',
-          background: locked
-            ? 'rgba(80,80,100,0.5)'
-            : completed
-              ? `radial-gradient(circle at 35% 30%, white, ${g1})`
-              : active
-                ? `radial-gradient(circle at 35% 30%, ${g1}dd, ${g2})`
-                : `radial-gradient(circle at 35% 30%, ${g1}bb, ${g2}88)`,
-          boxShadow: locked ? 'none'
-            : completed
-              ? `0 5px 0 ${g2}bb, 0 8px 20px ${g1}60`
-              : active
-                ? `0 5px 0 ${g2}99, 0 8px 16px ${g1}50`
-                : `0 5px 0 ${g2}88, 0 6px 12px rgba(0,0,0,0.2)`,
-          transform: hov && !locked ? 'scale(1.18) translateY(-4px)' : 'scale(1)',
-          transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.15s',
+          width: NODE_W,
+          height: NODE_H,
+          background: 'transparent',
+          border: 'none',
+          padding: 0,
           cursor: locked ? 'not-allowed' : 'pointer',
-          opacity: locked ? 0.45 : 1,
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          transform: hov && !locked ? 'scale(1.14) translateY(-4px)' : 'scale(1)',
+          transition: 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1)',
+          opacity: locked ? 0.6 : 1,
+          filter: !locked ? `drop-shadow(0 8px 12px ${g1}55)` : 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))',
         }}
       >
-        {/* Brillo interno */}
-        {!locked && (
-          <div style={{
-            position: 'absolute', top: 6, left: 10, width: 20, height: 8,
-            background: 'rgba(255,255,255,0.5)', borderRadius: 10,
-            transform: 'rotate(-20deg)',
-          }} />
-        )}
-        <span aria-hidden="true" style={{ fontSize: 24, filter: locked ? 'grayscale(1)' : 'none', lineHeight: 1 }}>
-          {locked ? '🔒' : info.icon}
-        </span>
-        <span style={{
-          fontSize: 11, fontWeight: 900,
-          color: locked ? '#aaa' : 'white',
-          textShadow: locked ? 'none' : '0 1px 3px rgba(0,0,0,0.4)',
-          marginTop: 2,
-        }}>
-          {String(levelIndex + 1).padStart(2, '0')}
-        </span>
+        <img
+          src="/assets/blocks/type=default.png"
+          alt=""
+          aria-hidden="true"
+          className="select-none pointer-events-none"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            filter: blockFilter,
+          }}
+        />
+        {/* Icono + número centrados sobre la "tapa" del bloque */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+          style={{ paddingBottom: '22%' }}
+        >
+          <span aria-hidden="true" style={{
+            fontSize: 22, lineHeight: 1,
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.6))',
+          }}>
+            {locked ? '🔒' : info.icon}
+          </span>
+          <span style={{
+            fontSize: 11, fontWeight: 900,
+            color: 'white',
+            textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+            marginTop: 1,
+            letterSpacing: 0.4,
+          }}>
+            {String(levelIndex + 1).padStart(2, '0')}
+          </span>
+        </div>
       </button>
 
       {/* Nombre del nivel debajo */}
       {!locked && (
         <div style={{
-          marginTop: 6, textAlign: 'center',
-          maxWidth: 80, marginLeft: -6,
+          position: 'absolute', top: NODE_H + 2, left: '50%',
+          transform: 'translateX(-50%)',
+          textAlign: 'center', maxWidth: 90,
         }}>
           <p style={{
             fontSize: 9, fontWeight: 800, color: 'white',
-            textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+            textShadow: '0 1px 4px rgba(0,0,0,0.7)',
             lineHeight: 1.2,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}>
             {info.name}
           </p>
@@ -384,16 +408,7 @@ function ZoneSection({
 }) {
   const nodes = NODE_POSITIONS
 
-
-  // Camino SVG curvo
-  const pathD = nodes.reduce((acc, node, i) => {
-    if (i === 0) return `M ${node.x} ${node.y}`
-    const prev = nodes[i - 1]
-    const cx = (prev.x + node.x) / 2
-    return `${acc} C ${cx} ${prev.y}, ${cx} ${node.y}, ${node.x} ${node.y}`
-  }, '')
-
-  const treeXs = [60, 250, 460, 660, 860, 1060, 1260, 1460, 1660, 1860]
+  const floorTile = getFloorTileForZone(zone.id)
 
   // Decoraciones dispersas en la zona
   const decoItems = zone.decorations.map((emoji, i) => ({
@@ -410,13 +425,33 @@ function ZoneSection({
       style={{
         width: ZONE_WIDTH,
         height: '100%',
-        backgroundImage: `url('/assets/backgrounds/background-${zone.id + 1}.png')`,
-        backgroundSize: '100% 100%',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
         borderRight: `3px solid rgba(0,0,0,0.15)`,
       }}
     >
+      {/* Fondo difuminado: capa propia para que el blur no afecte a plataforma/nodos */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `url('/assets/backgrounds/background-${zone.id + 1}.png')`,
+          backgroundSize: '100% 100%',
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: 'center',
+          filter: 'blur(8px) saturate(1.05)',
+          transform: 'scale(1.06)',
+          zIndex: 0,
+        }}
+      />
+      {/* Velo sutil para mejorar contraste con la plataforma y los nodos */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 65%, rgba(0,0,0,0.25) 100%)',
+          zIndex: 1,
+        }}
+      />
+
       {/* Estrellas en zona espacial */}
       {zone.id === 2 && [...Array(30)].map((_, i) => (
         <div key={i} className="absolute rounded-full bg-white pointer-events-none" style={{
@@ -470,28 +505,36 @@ function ZoneSection({
         style={{ zIndex: 5, width: 520, height: 'auto' }}
       />
 
-      {/* SVG camino */}
-      <svg
-        className="absolute pointer-events-none"
-        style={{ left: 0, top: '14%', width: '100%', height: '68%', overflow: 'visible', zIndex: 3 }}
-        viewBox={`0 0 ${ZONE_WIDTH} 120`}
-        preserveAspectRatio="none"
-      >
-        {/* Sombra gorda */}
-        <path d={pathD} fill="none" stroke="rgba(0,0,0,0.25)"
-          strokeWidth={16} strokeLinecap="round" transform="translate(0,4)" />
-        {/* Base del camino */}
-        <path d={pathD} fill="none" stroke={zone.pathCol}
-          strokeWidth={14} strokeLinecap="round" />
-        {/* Línea central */}
-        <path d={pathD} fill="none" stroke="rgba(255,255,255,0.5)"
-          strokeWidth={5} strokeLinecap="round"
-          strokeDasharray="16 10"
-          style={{ animation: 'pathScroll 1s linear infinite' }} />
-        {/* Borde superior brillo */}
-        <path d={pathD} fill="none" stroke="rgba(255,255,255,0.3)"
-          strokeWidth={3} strokeLinecap="round" />
-      </svg>
+      {/* Plataforma única horizontal (floor-1-X) — un solo strip por mundo */}
+      <img
+        src={floorTile}
+        alt=""
+        aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{
+          left: PLATFORM_LEFT,
+          top: `${PLATFORM_TOP_PCT}%`,
+          width: PLATFORM_WIDTH,
+          height: PLATFORM_HEIGHT,
+          zIndex: 2,
+          filter: 'drop-shadow(0 14px 18px rgba(0,0,0,0.5))',
+        }}
+      />
+
+      {/* Conectores animados (rectángulos hechos a mano) entre nodos consecutivos */}
+      {nodes.slice(0, -1).map((pos, i) => {
+        const next = nodes[i + 1]
+        return (
+          <PathConnector
+            key={`conn-${i}`}
+            fromX={pos.x + NODE_W / 2 - 4}
+            toX={next.x - NODE_W / 2 + 4}
+            topPercent={PLATFORM_TOP_PCT}
+            deckYpx={PLATFORM_DECK_OFFSET + 26}
+            accent={zone.accent}
+          />
+        )
+      })}
 
       {/* Nodos de nivel */}
       {zone.levels.map((levelIndex, i) => {
@@ -508,8 +551,8 @@ function ZoneSection({
             style={{
               position: 'absolute',
               left: pos.x,
-              top: `calc(14% + ${(pos.y / 120) * 68}%)`,
-              transform: 'translate(-50%, -50%)',
+              top: `calc(${PLATFORM_TOP_PCT}% + ${PLATFORM_DECK_OFFSET}px)`,
+              transform: 'translate(-50%, -100%)',
               zIndex: 10,
             }}
           >
@@ -526,51 +569,6 @@ function ZoneSection({
         )
       })}
 
-      {/* Suelo con rayas */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ height: zone.id === 1 ? 160 : 52, zIndex: 2 }}>
-        {/* Suelo con rayas */}
-        <div className="absolute bottom-0 left-0 right-0 pointer-events-none"
-          style={{ height: zone.id === 1 ? 100 : 52, zIndex: 2 }}>
-          {zone.id === 1 ? (
-            <>
-              <svg viewBox="0 0 400 50" preserveAspectRatio="none"
-                style={{ width: '100%', height: 50, display: 'block' }}>
-                {/* Ola 1 */}
-                <path
-                  d="M0,5 C30,-10 60,20 90,5 C120,-10 150,20 180,5 C210,-10 240,20 270,5 C300,-10 330,20 360,5 C380,-5 390,-8 400,5 L400,50 L0,50 Z"
-                  fill="#7dd8f0"
-                />
-                {/* Ola 2 */}
-                <path
-                  d="M0,15 C30,0 60,30 90,15 C120,0 150,30 180,15 C210,0 240,30 270,15 C300,0 330,30 360,15 C380,5 390,2 400,15 L400,50 L0,50 Z"
-                  fill="#3aaed8"
-                />
-                {/* Ola 3 */}
-                <path
-                  d="M0,25 C30,12 60,38 90,25 C120,12 150,38 180,25 C210,12 240,38 270,25 C300,12 330,38 360,25 C380,18 390,15 400,25 L400,50 L0,50 Z"
-                  fill="#1a6ea8"
-                />
-              </svg>
-              <div style={{ height: 50, background: '#1a6ea8' }} />
-            </>
-          ) : (
-            <>
-              <div style={{
-                height: 10,
-                background: `repeating-linear-gradient(90deg, ${zone.groundCol} 0px, ${zone.groundCol} 30px, ${zone.groundStripe} 30px, ${zone.groundStripe} 60px)`,
-              }} />
-              <div style={{ height: 42, background: zone.groundStripe }} />
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                background: 'rgba(255,255,255,0.3)',
-              }} />
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Árboles/decoraciones en el suelo */}
-      {treeXs.map((x, i) => <ChubbyTree key={i} x={x} zone={zone} />)}
     </div>
   )
 }
@@ -646,9 +644,9 @@ export function LevelSelectScreen({
           from { transform: translateX(-50%) scale(0.7); opacity: 0; }
           to   { transform: translateX(-50%) scale(1);   opacity: 1; }
         }
-        @keyframes pathScroll {
-          from { stroke-dashoffset: 0; }
-          to   { stroke-dashoffset: -26; }
+        @keyframes connectorPulse {
+          0%, 100% { opacity: 0.4; }
+          50%       { opacity: 1; }
         }
         @keyframes twinkle {
           0%, 100% { opacity: 0.2; }
@@ -686,7 +684,7 @@ export function LevelSelectScreen({
               levelInfo={levelInfo}
             />
           ))}
-          {/* Puentes que conectan los mundos */}
+          {/* Puentes horizontales que conectan los mundos — alineados con la "tapa" del strip */}
           {ZONES.slice(0, -1).map((_, i) => (
             <img
               key={`bridge-${i}`}
@@ -695,11 +693,12 @@ export function LevelSelectScreen({
               aria-hidden="true"
               className="absolute pointer-events-none select-none"
               style={{
-                left: ZONE_WIDTH * (i + 1) - 70,
-                top: '52%',
-                width: 140,
+                left: ZONE_WIDTH * (i + 1) - 110,
+                top: `calc(${PLATFORM_TOP_PCT}% + ${PLATFORM_DECK_OFFSET + 18}px)`,
+                width: 220,
                 height: 'auto',
-                zIndex: 4,
+                zIndex: 6,
+                filter: 'drop-shadow(0 8px 14px rgba(0,0,0,0.55))',
               }}
             />
           ))}

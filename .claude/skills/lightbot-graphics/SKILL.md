@@ -121,9 +121,68 @@ Map to existing UI:
 | `close_btn.png` | Modal close |
 | `user_btn.png` | Profile / user button |
 
-### 7) Level-select map (blocks + bridge)
+### 7) Level-select map — single platform + node blocks + animated connectors
 
-The `LevelSelectScreen.tsx` should render each level as a `blocks/type=...png` icon and connect worlds visually with `bridge/top.png` (or `side.png` for vertical layout). For variable-typed levels, use `blocks/variable/block-N.png` where `N` is the index into the alphabet/symbol set — see `references/asset-map.md` for the full per-letter mapping.
+Reference visual: `public/resultado_final/resultado_final_selectlevelscreen.png` shows the four worlds side-by-side and is the **source of truth** for what the level-select screen should look like.
+
+`LevelSelectScreen.tsx` renders each world as a horizontal scrollable section with this layered z-order (bottom → top):
+
+1. **Blurred background layer** — a dedicated `absolute inset-0` div behind everything, owning just `backgrounds/background-{1..4}.png` with `filter: blur(8px) saturate(1.05)` and `transform: scale(1.06)` (the scale prevents the blur from creating transparent edges). Putting blur on the parent zone div would also blur the platform/nodes/badge — that's why the background gets its own layer (`zIndex: 0`).
+2. **Contrast veil** — a thin `linear-gradient` overlay with darker top/bottom and transparent middle, to make the platform pop against varied backgrounds (`zIndex: 1`).
+3. **Atmospheric decorations** — clouds, floating emojis, twinkling stars/embers (`zIndex: 1`, share the layer).
+4. **Single platform strip** — **one** wide `floor-1-X` PNG per world, sized to `PLATFORM_WIDTH × PLATFORM_HEIGHT` and pinned at `PLATFORM_TOP_PCT`. The 10 levels of the world all sit on this single platform — there is **no** per-tile platform row anymore (`zIndex: 2`).
+5. **Animated path connectors** — between every pair of adjacent level nodes, the `<PathConnector>` component renders 5 small rounded rectangles with alternating ±7° rotation and a staggered `connectorPulse` opacity animation. These replace the previous `bridge/top.png` images and read like a "code path" linking the levels (`zIndex: 4`).
+6. **World banner** — `world-badges/world-{1..4}.png` rendered as the title across the top of the section (`zIndex: 5`).
+7. **Cross-zone horizontal bridges** — `bridge/side.png` placed at every zone boundary, aligned with the platform deck (`top: PLATFORM_TOP_PCT% + PLATFORM_DECK_OFFSET + 18px`). Width ~220px so the bridge clearly spans from the right edge of one platform to the left edge of the next (`zIndex: 6`).
+8. **Level nodes (`<LevelNode>`)** — each level is rendered as `blocks/type=default.png` (the cyan/teal 3D block) with the level number and emoji overlaid on the deck. The button is `transparent` with `border: none`; visual state comes from CSS `filter` on the block image:
+   - **Locked** → `grayscale(0.85) brightness(0.55) contrast(0.9)` and `🔒` overlay
+   - **Completed** → `hue-rotate(35deg) saturate(1.25) brightness(1.08)` and 3 wiggling stars overhead
+   - **Active** → unfiltered + a soft radial-gradient pulse ring behind it
+   - **Default (unlocked)** → unfiltered
+
+   Nodes are positioned on the platform deck via `transform: translate(-50%, -100%)` so the *bottom* of the block sits exactly on the deck Y (`zIndex: 10`).
+
+Key constants live near the top of the file:
+
+```tsx
+const ZONE_WIDTH = 1800
+const PLATFORM_LEFT = 70
+const PLATFORM_WIDTH = ZONE_WIDTH - 140
+const PLATFORM_HEIGHT = 170
+const PLATFORM_TOP_PCT = 52       // top of strip as % of zone height
+const PLATFORM_DECK_OFFSET = 22   // px from strip top down to the "lid" where nodes stand
+const NODE_W = 76
+const NODE_H = 90                 // includes the 3D base of the block image
+const NODES_PER_ZONE = 10
+```
+
+#### Theme-to-floor mapping helper (`floor-1` strip)
+
+`getFloorTileForZone(zoneId)` translates a zone id (0–3) into one of the four `floor-1` (long horizontal bar) asset paths:
+
+| zoneId | Theme | Asset |
+|---|---|---|
+| 0 | Tierra de Luces (grass) | `/assets/floor/floor-1-3.png` |
+| 1 | Isla del Código (sand)  | `/assets/floor/floor-1.png` (no theme suffix) |
+| 2 | Galaxia Robot (space)   | `/assets/floor/floor-1-1.png` |
+| 3 | Volcán Digital (lava)   | `/assets/floor/floor-1-2.png` |
+
+> The non-obvious bit is that the **unsuffixed** file is the sand variant — the original asset set treated sand as the "base" theme. When in doubt, open the PNG and verify before wiring it up.
+
+#### Connector animation (`connectorPulse`)
+
+```css
+@keyframes connectorPulse {
+  0%, 100% { opacity: 0.4; }
+  50%      { opacity: 1; }
+}
+```
+
+Each rectangle in `<PathConnector>` uses `animation: connectorPulse 1.6s ease-in-out ${i * 0.14}s infinite` so the segments light up in sequence like a "code path" being traced. Color comes from `zone.accent`, with a 2px white border + soft `box-shadow` for the hand-drawn / glowing look. Rotation is set statically per index (`±7deg`) — *not* inside the keyframe — so the pulse only animates opacity, keeping the transform stable.
+
+#### Block icon mapping (level nodes)
+
+The level node now uses `blocks/type=default.png` for **every** level; visual variants are achieved via CSS `filter` on the same image rather than swapping the source. The other `blocks/type=...png` files (plant/star/moon) are **available** for future use (e.g. a boss level or a star-collection bonus level) but the current implementation does not swap them.
 
 ## Important Gotchas
 

@@ -96,14 +96,14 @@ function getFloorTileForZone(zoneId: number): string {
 const ZONE_WIDTH = 1800
 const PLATFORM_LEFT = 70
 const PLATFORM_WIDTH = ZONE_WIDTH - 140
-const PLATFORM_HEIGHT = 350           // plataforma alta para contener el zigzag
+const PLATFORM_HEIGHT = 300           // plataforma alta para contener el zigzag
 
 // Posición Y de la única plataforma (% del contenedor)
-const PLATFORM_TOP_PCT = 24
+const PLATFORM_TOP_PCT = 20
 
 // Offsets internos dentro de la plataforma para las dos filas del zigzag
-const ZIGZAG_TOP_OFFSET = 44          // fila superior dentro de la plataforma
-const ZIGZAG_BOT_OFFSET = 140         // fila inferior dentro de la plataforma
+const ZIGZAG_TOP_OFFSET = 24          // fila superior dentro de la plataforma
+const ZIGZAG_BOT_OFFSET = 120         // fila inferior dentro de la plataforma
 
 const NODE_W = 86
 const NODE_H = 90
@@ -554,7 +554,7 @@ function ZoneSection({
       <img
         src={`/assets/world-badges/world-${zone.id + 1}.png`}
         alt={zone.name}
-        className="absolute top-10 left-1/2 -translate-x-1/2 pointer-events-none select-none"
+        className="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none select-none"
         style={{ zIndex: 5, width: 520, height: 'auto' }}
       />
 

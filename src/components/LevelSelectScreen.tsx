@@ -554,7 +554,7 @@ function ZoneSection({
       <img
         src={`/assets/world-badges/world-${zone.id + 1}.png`}
         alt={zone.name}
-        className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none select-none"
+        className="absolute top-10 left-1/2 -translate-x-1/2 pointer-events-none select-none"
         style={{ zIndex: 5, width: 520, height: 'auto' }}
       />
 

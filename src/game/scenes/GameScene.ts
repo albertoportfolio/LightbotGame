@@ -22,16 +22,6 @@ function drawStar(
   g.fillPoints(verts, true)
 }
 
-// Dibuja una nube decorativa con 5 círculos superpuestos
-function drawCloud(g: Phaser.GameObjects.Graphics, cx: number, cy: number, scale: number) {
-  g.fillStyle(0xffffff, 0.18)
-  g.fillCircle(cx, cy, 18 * scale)
-  g.fillCircle(cx - 18 * scale, cy + 6 * scale, 14 * scale)
-  g.fillCircle(cx + 18 * scale, cy + 6 * scale, 14 * scale)
-  g.fillCircle(cx - 8 * scale, cy - 10 * scale, 14 * scale)
-  g.fillCircle(cx + 8 * scale, cy - 8 * scale, 12 * scale)
-}
-
 // ── Dibuja una plantita pixel art centrada en (cx, cy) ──────────────────────
 function drawPlantDecal(g: Phaser.GameObjects.Graphics, cx: number, cy: number) {
   const s = 1
@@ -74,8 +64,7 @@ export class GameScene extends Phaser.Scene {
   private levelState!: LevelState
   private robot!: Robot
   private executor!: CommandExecutor
-  private bgGraphics!: Phaser.GameObjects.Graphics
-  private decorGraphics!: Phaser.GameObjects.Graphics
+  private bgImage?: Phaser.GameObjects.Image
   private gridGraphics!: Phaser.GameObjects.Graphics
   private wonThisLevel = false
   private sfx = new SoundManager()
@@ -93,11 +82,8 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   // Inicializa la escena: obtiene el bridge, crea gráficos, carga nivel 0 y registra listeners de eventos
   create() {
     this.bridge = this.registry.get('bridge') as Phaser.Events.EventEmitter
-    this.bgGraphics = this.add.graphics()
-    this.decorGraphics = this.add.graphics()
     this.gridGraphics = this.add.graphics()
     this.executor = new CommandExecutor(this, this.bridge)
-    this.drawBackground()
     this.loadLevel(0) // Carga el nivel 5 (índice 4) para pruebas rápidas
     this.bridge.on('run-commands', this.handleRunCommands, this)
     this.bridge.on('reset-level', this.handleReset, this)
@@ -122,101 +108,24 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.off('start-music', this.handleStartMusic)
   }
 
-  // Dibuja el fondo decorativo: cielo con gradiente, estrellas, luna, colinas y césped
-  private drawBackground() {
-    const W = GAME_CONFIG.WIDTH
-    const H = GAME_CONFIG.HEIGHT
-    const g = this.bgGraphics
-    const bands = [
-      { color: 0x0f0c29, y: 0 },
-      { color: 0x0a0a2e, y: H * 0.3 },
-      { color: 0x060618, y: H * 0.6 },
-      { color: 0x030310, y: H * 0.8 },
-    ]
-    bands.forEach((b, i) => {
-      const nextY = i < bands.length - 1 ? bands[i + 1].y : H
-      g.fillStyle(b.color, 1)
-      g.fillRect(0, b.y, W, nextY - b.y + 1)
-    })
-    const rand = (() => { let s = 137; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646 } })()
-    for (let i = 0; i < 60; i++) {
-      g.fillStyle(0xffffff, rand() * 0.5 + 0.5)
-      g.fillCircle(rand() * W, rand() * H * 0.7, rand() * 2 + 0.5)
-    }
-    for (let i = 0; i < 10; i++) {
-      g.fillStyle(0xfef08a, rand() * 0.4 + 0.6)
-      g.fillCircle(rand() * W, rand() * H * 0.5, 2)
-    }
-    const moonX = W - 70, moonY = 52
-    g.fillStyle(0xfde68a, 0.15); g.fillCircle(moonX, moonY, 40)
-    g.fillStyle(0xfef9c3, 0.9); g.fillCircle(moonX, moonY, 26)
-    g.fillStyle(0xfef3c7, 1); g.fillCircle(moonX, moonY, 22)
-    g.fillStyle(0xfde68a, 0.35)
-    g.fillCircle(moonX - 7, moonY - 4, 5)
-    g.fillCircle(moonX + 8, moonY + 6, 3)
-    g.fillCircle(moonX + 2, moonY - 10, 3)
-    g.fillStyle(0x1e1b4b, 1)
-    g.fillEllipse(W * 0.1, H * 0.8, 320, 140)
-    g.fillEllipse(W * 0.65, H * 0.78, 360, 130)
-    g.fillEllipse(W * 0.35, H * 0.82, 260, 110)
-    g.fillStyle(0x052e16, 1); g.fillRect(0, H * 0.86, W, H * 0.14)
-    g.fillStyle(0x14532d, 1); g.fillRect(0, H * 0.86, W, 12)
-    for (let x = 2; x < W; x += 10) {
-      const h = 5 + Math.sin(x * 0.5) * 3
-      g.fillStyle(0x16a34a, 1)
-      g.fillTriangle(x, H * 0.86, x + 5, H * 0.86, x + 2, H * 0.86 - h)
-      g.fillStyle(0x4ade80, 0.5)
-      g.fillTriangle(x + 2, H * 0.86, x + 6, H * 0.86, x + 4, H * 0.86 - h + 2)
-    }
-    drawCloud(g, 80, 32, 1.0)
-    drawCloud(g, W - 100, 25, 1.2)
-    drawCloud(g, W * 0.5, 48, 0.8)
+  // Devuelve el ID del mundo (1..4) según el índice del nivel: 0-9→1, 10-19→2, 20-29→3, 30-39→4
+  private getWorldFromIndex(index: number): number {
+    return Math.min(4, Math.floor(index / 10) + 1)
   }
 
-  // Dibuja decoraciones de primer plano: árboles y flores alrededor del grid
-  private drawDecorations() {
-    const g = this.decorGraphics
-    g.clear()
+  // Pinta el background del mundo correspondiente, sustituyendo cualquier imagen previa
+  private drawWorldBackground(world: number) {
     const W = GAME_CONFIG.WIDTH
     const H = GAME_CONFIG.HEIGHT
-    this.drawTree(g, 20, H * 0.83)
-    this.drawTree(g, W - 20, H * 0.82)
-    this.drawTree(g, 50, H * 0.87)
-    this.drawTree(g, W - 50, H * 0.86)
-    const flowers = [
-      { x: 12, y: H - 20, c: 0xf472b6 },
-      { x: 36, y: H - 16, c: 0xfbbf24 },
-      { x: W - 14, y: H - 22, c: 0x34d399 },
-      { x: W - 40, y: H - 16, c: 0xf87171 },
-      { x: W * 0.5 + 130, y: H - 18, c: 0xa78bfa },
-    ]
-    flowers.forEach(f => {
-      g.fillStyle(0x15803d, 1)
-      g.fillRect(f.x - 1, f.y - 9, 2, 10)
-      for (let a = 0; a < 5; a++) {
-        const angle = (a / 5) * Math.PI * 2
-        g.fillStyle(f.c, 0.9)
-        g.fillCircle(f.x + Math.cos(angle) * 4, f.y - 12 + Math.sin(angle) * 4, 3)
-      }
-      g.fillStyle(0xfef9c3, 1)
-      g.fillCircle(f.x, f.y - 12, 2.5)
-    })
-  }
-
-  // Dibuja un árbol pixel art con tronco y 3 capas de copa
-  private drawTree(g: Phaser.GameObjects.Graphics, x: number, y: number) {
-    g.fillStyle(0x92400e, 1); g.fillRect(x - 3, y - 14, 6, 16)
-    g.fillStyle(0x78350f, 1); g.fillRect(x + 1, y - 14, 2, 16)
-    g.fillStyle(0x15803d, 1); g.fillTriangle(x, y - 44, x - 14, y - 14, x + 14, y - 14)
-    g.fillStyle(0x16a34a, 1); g.fillTriangle(x, y - 56, x - 11, y - 30, x + 11, y - 30)
-    g.fillStyle(0x4ade80, 1); g.fillTriangle(x, y - 64, x - 8, y - 46, x + 8, y - 46)
-    g.fillStyle(0xbbf7d0, 0.5); g.fillCircle(x + 3, y - 54, 3)
+    this.bgImage?.destroy()
+    this.bgImage = this.add.image(W / 2, H / 2, 'bg-' + world)
+      .setDisplaySize(W, H)
+      .setDepth(-100)
   }
 
   // Renderiza toda la cuadrícula: dibuja cada celda según su tipo (floor, wall, light, plant, variable)
   renderGrid() {
   this.gridGraphics.clear()
-  this.drawDecorations()
   const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
   const grid = this.levelState.grid
   const g = this.gridGraphics
@@ -337,6 +246,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.levelState = this.levelManager.buildState(def)
   this.robot?.destroy()
   this.robot = new Robot(this, def.robotStart)
+  this.drawWorldBackground(this.getWorldFromIndex(index))
   this.renderGrid()
   this.drawVarLabels()   
   this.sfx.levelStart()

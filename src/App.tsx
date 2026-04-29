@@ -74,32 +74,20 @@ const TOTAL_LEVELS = 40
 type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy' | 'terms' | 'donate' | 'donation-success'
 
 
-// Estrella decorativa animada para la pantalla de inicio
-function Star({ style }: { style: React.CSSProperties }) {
-  return <div className="absolute text-2xl pointer-events-none select-none animate-bounce" style={style}>⭐</div>
-}
-
-// Pantalla de inicio: logo, botón "JUGAR" y animación de estrellas
+// Pantalla de inicio: logo, botón "JUGAR" y fondo con cielo + nubes
 function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onPrivacy: () => void; onTerms: () => void }) {
   const [pressed, setPressed] = useState(false)
   const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
     <div className="relative flex items-center justify-center overflow-hidden"
-      style={{ height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}>
-      {[...Array(20)].map((_, i) => (
-        <div key={i} className="absolute rounded-full bg-white"
-          style={{
-            width: Math.random() * 3 + 1, height: Math.random() * 3 + 1,
-            top: `${Math.random() * 100}%`, left: `${Math.random() * 100}%`,
-            opacity: Math.random() * 0.7 + 0.3,
-            animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-            animationDelay: `${Math.random() * 3}s`,
-          }} />
-      ))}
-      <Star style={{ top: '8%', left: '6%', animationDuration: '2.1s' }} />
-      <Star style={{ top: '12%', right: '8%', animationDuration: '1.8s', animationDelay: '0.5s' }} />
-      <Star style={{ bottom: '12%', left: '10%', animationDuration: '2.4s', animationDelay: '1s' }} />
-      <Star style={{ bottom: '8%', right: '6%', animationDuration: '1.9s', animationDelay: '0.2s' }} />
+      style={{ height: '100dvh', backgroundColor: '#9fe7e0' }}>
+      <img src="/assets/backgrounds/menu/sky%201.png" alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+      <img src="/assets/backgrounds/menu/clouds_2%201.png" alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
+        style={{ opacity: 0.85 }} />
+      <img src="/assets/backgrounds/menu/clouds_1%201.png" alt=""
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
 
       {/* Layout horizontal: robot a la izquierda, contenido a la derecha */}
       <div className="relative z-10 flex flex-row items-center gap-8 px-10 py-8 rounded-3xl"

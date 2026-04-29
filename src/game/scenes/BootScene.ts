@@ -157,7 +157,12 @@ export class BootScene extends Phaser.Scene {
     super({ key: 'BootScene' })
   }
 
-  preload() {}
+  preload() {
+    this.load.image('bg-1', 'assets/backgrounds/background-1.png')
+    this.load.image('bg-2', 'assets/backgrounds/background-2.png')
+    this.load.image('bg-3', 'assets/backgrounds/background-3.png')
+    this.load.image('bg-4', 'assets/backgrounds/background-4.png')
+  }
 
   create() {
     const totalWidth = FRAME_SIZE * 4

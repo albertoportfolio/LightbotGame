@@ -1,0 +1,76 @@
+{"frames": [
+
+{
+	"filename": "back-fly.png",
+	"frame": {"x":0,"y":0,"w":268,"h":262},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":268,"h":262},
+	"sourceSize": {"w":268,"h":262}
+},
+{
+	"filename": "back.png",
+	"frame": {"x":268,"y":0,"w":214,"h":280},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":214,"h":280},
+	"sourceSize": {"w":214,"h":280}
+},
+{
+	"filename": "front-fly.png",
+	"frame": {"x":0,"y":280,"w":258,"h":294},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":258,"h":294},
+	"sourceSize": {"w":258,"h":294}
+},
+{
+	"filename": "front.png",
+	"frame": {"x":258,"y":280,"w":216,"h":282},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":216,"h":282},
+	"sourceSize": {"w":216,"h":282}
+},
+{
+	"filename": "left-fly.png",
+	"frame": {"x":0,"y":574,"w":258,"h":278},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":258,"h":278},
+	"sourceSize": {"w":258,"h":278}
+},
+{
+	"filename": "left.png",
+	"frame": {"x":258,"y":574,"w":202,"h":286},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":202,"h":286},
+	"sourceSize": {"w":202,"h":286}
+},
+{
+	"filename": "right-fly.png",
+	"frame": {"x":0,"y":860,"w":264,"h":276},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":264,"h":276},
+	"sourceSize": {"w":264,"h":276}
+},
+{
+	"filename": "right.png",
+	"frame": {"x":264,"y":860,"w":204,"h":286},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":204,"h":286},
+	"sourceSize": {"w":204,"h":286}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "player.png",
+	"format": "RGBA8888",
+	"size": {"w":482,"h":1146},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:983296a690b37309ffb696422b7859ac:bbcd09335926d286ea9eba0690ce345b:86d5339b780aedd87b35e2b7c0a7e11b$"
+}
+}

@@ -316,10 +316,6 @@ incluye ninguna librería de testing ni linter (no están configurados).
     actualiza minor y patch versions. Para reproducibilidad estricta se debe
     confiar en package-lock.json (no borrarlo).
 
-  - Vulnerabilidades: `npm audit` reporta 4 vulnerabilidades (3 moderate, 1
-    high) tras la última auditoría. Conviene revisarlas con `npm audit` y
-    aplicar `npm audit fix` cuando no implique breaking changes.
-
   - Tamaño del bundle: Phaser es la dependencia más pesada (~1 MB minificada).
     Vite la incluye en el chunk principal porque se usa en pantalla de juego;
     si se quisiera optimizar la primera carga, se podría hacer code-splitting

@@ -410,9 +410,11 @@ function ZoneSection({
       style={{
         width: ZONE_WIDTH,
         height: '100%',
-        background: `linear-gradient(180deg, ${zone.skyTop} 0%, ${zone.skyBot} 60%, ${zone.groundCol} 60%, ${zone.groundCol} 100%)`,
+        backgroundImage: `url('/assets/backgrounds/background-${zone.id + 1}.png')`,
+        backgroundSize: '100% 100%',
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'center',
         borderRight: `3px solid rgba(0,0,0,0.15)`,
-
       }}
     >
       {/* Estrellas en zona espacial */}
@@ -460,27 +462,13 @@ function ZoneSection({
         <FloatingDeco key={i} {...d} />
       ))}
 
-      {/* Banner del mundo */}
-      <div
-        className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none"
-        style={{ zIndex: 5, textAlign: 'center' }}
-      >
-        <div style={{
-          background: 'rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(6px)',
-          border: `2px solid ${zone.accent}60`,
-          borderRadius: 20,
-          padding: '4px 14px',
-          display: 'inline-block',
-        }}>
-          <p style={{ fontWeight: 900, fontSize: 11, color: zone.accent, letterSpacing: 2, textTransform: 'uppercase' }}>
-            {zone.name}
-          </p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>
-            {zone.subtitle}
-          </p>
-        </div>
-      </div>
+      {/* Banner del mundo (imagen con título grabado) */}
+      <img
+        src={`/assets/world-badges/world-${zone.id + 1}.png`}
+        alt={zone.name}
+        className="absolute top-3 left-1/2 -translate-x-1/2 pointer-events-none select-none"
+        style={{ zIndex: 5, width: 520, height: 'auto' }}
+      />
 
       {/* SVG camino */}
       <svg
@@ -687,7 +675,7 @@ export function LevelSelectScreen({
         className="absolute inset-0 overflow-x-auto overflow-y-hidden"
         style={{ scrollbarWidth: 'none', paddingTop: 64, willChange: 'scroll-position', }}
       >
-        <div className="flex h-full" style={{ width: totalWidth, minHeight: '100vh' }}>
+        <div className="flex h-full relative" style={{ width: totalWidth, minHeight: '100vh' }}>
           {ZONES.map(zone => (
             <ZoneSection
               key={zone.id}
@@ -696,6 +684,23 @@ export function LevelSelectScreen({
               nextLevel={nextLevel}
               onSelectLevel={onSelectLevel}
               levelInfo={levelInfo}
+            />
+          ))}
+          {/* Puentes que conectan los mundos */}
+          {ZONES.slice(0, -1).map((_, i) => (
+            <img
+              key={`bridge-${i}`}
+              src="/assets/bridge/side.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute pointer-events-none select-none"
+              style={{
+                left: ZONE_WIDTH * (i + 1) - 70,
+                top: '52%',
+                width: 140,
+                height: 'auto',
+                zIndex: 4,
+              }}
             />
           ))}
         </div>

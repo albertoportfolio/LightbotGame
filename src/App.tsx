@@ -336,13 +336,17 @@ function GameScreen({
         style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
         <div className="flex items-center gap-2">
           <button onClick={handleBackToMenu}
-            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm font-semibold">
-            ← Menú
+            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-semibold"
+            aria-label="Volver al menú">
+            <img src="/assets/buttons/icon/Propiedad%201=home_btn.png" alt="" className="w-7 h-7 select-none" />
+            Menú
           </button>
           <span className="text-white/20">|</span>
           <button onClick={handleBackToLevels}
-            className="flex items-center gap-1 text-white/50 hover:text-white transition-colors text-sm font-semibold">
-            📋 Niveles
+            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-semibold"
+            aria-label="Volver a niveles">
+            <img src="/assets/buttons/icon/Propiedad%201=menu_btn.png" alt="" className="w-7 h-7 select-none" />
+            Niveles
           </button>
         </div>
         <div className="flex items-center gap-1">
@@ -351,14 +355,18 @@ function GameScreen({
         </div>
         <div className="flex items-center gap-1">
           <button onClick={onToggleMute}
-            className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-            title={muted ? 'Activar sonido' : 'Silenciar'}>
-            {muted ? '🔇' : '🔊'}
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+            title={muted ? 'Activar sonido' : 'Silenciar'}
+            aria-label={muted ? 'Activar sonido' : 'Silenciar'}>
+            <img
+              src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'}
+              alt="" className="w-8 h-8 select-none" />
           </button>
           <button onClick={onOpenSettings}
-            className="text-white/50 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-            title="Opciones">
-            ⚙️
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+            title="Opciones"
+            aria-label="Opciones">
+            <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-8 h-8 select-none" />
           </button>
         </div>
       </header>

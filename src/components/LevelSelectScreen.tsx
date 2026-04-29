@@ -717,14 +717,16 @@ export function LevelSelectScreen({
         {/* Botón volver */}
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 font-black text-sm text-white px-4 py-2 rounded-2xl transition-all hover:scale-105 active:scale-95"
+          aria-label="Volver al menú"
+          className="flex items-center gap-1.5 font-black text-sm text-white px-3 py-1.5 rounded-2xl transition-all hover:scale-105 active:scale-95"
           style={{
             background: 'linear-gradient(135deg, #ff6b6b, #ff4444)',
             border: '3px solid rgba(255,255,255,0.3)',
             boxShadow: '0 4px 0 #aa2222, 0 6px 12px rgba(255,0,0,0.3)',
           }}
         >
-          ◀ Menú
+          <img src="/assets/buttons/icon/Propiedad%201=home_btn.png" alt="" className="w-7 h-7 select-none" />
+          Menú
         </button>
 
         {/* Título central */}
@@ -771,38 +773,40 @@ export function LevelSelectScreen({
           <button
             onClick={onToggleMute}
             aria-label={muted ? 'Activar sonido' : 'Silenciar'}
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: '2px solid rgba(255,255,255,0.3)',
               boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
             }}
           >
-            {muted ? '🔇' : '🔊'}
+            <img
+              src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'}
+              alt="" className="w-8 h-8 select-none" />
           </button>
           <button
             onClick={onOpenSettings}
             aria-label="Ajustes"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: '2px solid rgba(255,255,255,0.3)',
               boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
             }}
           >
-            ⚙️
+            <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-8 h-8 select-none" />
           </button>
           <button
             onClick={onOpenProfile}
             aria-label="Perfil"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
             style={{
               background: 'rgba(255,255,255,0.15)',
               border: '2px solid rgba(255,255,255,0.3)',
               boxShadow: '0 3px 0 rgba(0,0,0,0.3)',
             }}
           >
-            👤
+            <img src="/assets/buttons/icon/Propiedad%201=user_btn.png" alt="" className="w-8 h-8 select-none" />
           </button>
           <button
             onClick={onDonate}

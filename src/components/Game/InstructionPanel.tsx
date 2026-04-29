@@ -293,7 +293,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
           onClick={onReset}
           className="flex-1 py-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
-          <span>⏹</span> Resetear
+          <img src="/assets/buttons/icon/Propiedad%201=redo_btn.png" alt="" className="w-6 h-6 select-none" /> Resetear
         </button>
       </div>
     </div>
@@ -506,7 +506,7 @@ if (textMode) {
             onClick={handleReset}
             className="flex-1 py-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
-            <span>⏹</span> Resetear nivel
+            <img src="/assets/buttons/icon/Propiedad%201=redo_btn.png" alt="" className="w-6 h-6 select-none" /> Resetear nivel
           </button>
         </div>
 

@@ -323,16 +323,45 @@ function LevelNode({
         </div>
       )}
 
-      {completed && (
-        <div
-          className="absolute flex gap-0.5 justify-center pointer-events-none"
-          style={{ top: -16, left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}
+      <div
+        className="absolute pointer-events-none select-none"
+        style={{
+          top: -50,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 96,
+          height: 56,
+          zIndex: 11,
+        }}
+      >
+        <img
+          src={completed ? '/assets/header/estrellas1.png' : '/assets/header/sinestrellas.png'}
+          alt="" aria-hidden="true"
+          className="absolute inset-0 w-full h-full"
+          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
+        />
+        <span
+          style={{
+            position: 'absolute',
+            left: 0, right: 0,
+            bottom: '15%',
+            textAlign: 'center',
+            fontSize: 8,
+            fontWeight: 900,
+            color: completed ? 'white' : '#5C5C7A',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            paddingLeft: 6,
+            paddingRight: 6,
+            letterSpacing: 0.2,
+            textShadow: completed ? '0 1px 0 rgba(0,0,0,0.35)' : 'none',
+            fontFamily: 'Nunito, sans-serif',
+          }}
         >
-          {[0, 0.08, 0.16].map((d, i) => (
-            <span key={i} aria-hidden="true" style={{ fontSize: 12, animation: `starWiggle 1.4s ease-in-out ${d}s infinite` }}>⭐</span>
-          ))}
-        </div>
-      )}
+          {info.name}
+        </span>
+      </div>
 
       {active && !completed && (
         <div className="absolute rounded-full pointer-events-none" style={{
@@ -390,22 +419,7 @@ function LevelNode({
         </div>
       </button>
 
-      {!locked && (
-        <div style={{
-          position: 'absolute', top: NODE_H + 2, left: '50%',
-          transform: 'translateX(-50%)',
-          textAlign: 'center', maxWidth: 90,
-        }}>
-          <p style={{
-            fontSize: 9, fontWeight: 800, color: 'white',
-            textShadow: '0 1px 4px rgba(0,0,0,0.7)',
-            lineHeight: 1.2, whiteSpace: 'nowrap',
-            overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {info.name}
-          </p>
-        </div>
-      )}
+    
     </div>
   )
 }
@@ -661,6 +675,51 @@ export function LevelSelectScreen({
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ background: '#000' }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&display=swap');
+
+        .adventure-title {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 20px;
+          letter-spacing: 0.04em;
+          color: white;
+          line-height: 1;
+          -webkit-text-stroke: 2px #2A3380;
+          paint-order: stroke fill;
+          text-shadow:
+            0 1px 0 #2A3380,
+            0 2px 0 #2A3380,
+            0 3px 0 #2A3380,
+            0 4px 0 #1F2A66,
+            0 6px 6px rgba(0,0,0,0.35);
+        }
+
+        .adventure-counter {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 17px;
+          letter-spacing: 0.02em;
+          color: white;
+          line-height: 1;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          -webkit-text-stroke: 2px #2A3380;
+          paint-order: stroke fill;
+          text-shadow:
+            0 1px 0 #2A3380,
+            0 2px 0 #2A3380,
+            0 3px 0 #1F2A66,
+            0 5px 5px rgba(0,0,0,0.35);
+        }
+
+        .adventure-counter .star {
+          -webkit-text-stroke: 0;
+          text-shadow: none;
+          filter: drop-shadow(0 0 3px rgba(255,210,80,0.6));
+          font-size: 18px;
+        }
+
         @keyframes cloudDrift {
           from { transform: translateX(-120px); }
           to   { transform: translateX(920px); }
@@ -769,38 +828,12 @@ export function LevelSelectScreen({
           />
         </button>
 
-        <div className="flex flex-col items-center" style={{ animation: 'headerBob 3s ease-in-out infinite' }}>
-          <span
-            className="font-black text-lg tracking-wide"
-            style={{
-              background: 'linear-gradient(135deg, #ffe066, #ff9900, #ff6644)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))',
-            }}
-          >
-            🗺️ ¡Elige tu Aventura!
+        <div className="flex items-center gap-4">
+          <span className="adventure-title select-none">ELIGE TU AVENTURA</span>
+          <span className="adventure-counter select-none">
+            {completedLevels.length}/{levelInfo.length}
+            <span aria-hidden="true" className="star">⭐</span>
           </span>
-          <div className="flex items-center gap-2 mt-0.5">
-            <div style={{
-              width: 120, height: 8, borderRadius: 8,
-              background: 'rgba(255,255,255,0.2)',
-              border: '2px solid rgba(255,255,255,0.3)',
-              overflow: 'hidden',
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${(completedLevels.length / levelInfo.length) * 100}%`,
-                background: 'linear-gradient(90deg, #ffe066, #ff9900)',
-                borderRadius: 8,
-                transition: 'width 0.5s ease',
-                boxShadow: '0 0 8px #ff990080',
-              }} />
-            </div>
-            <span style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,255,255,0.7)' }}>
-              {completedLevels.length}/{levelInfo.length} ⭐
-            </span>
-          </div>
         </div>
 
         <div className="flex items-center gap-1.5">

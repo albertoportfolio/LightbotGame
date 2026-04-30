@@ -6,19 +6,17 @@ interface Props {
   onAuthSuccess: () => void
   onBack: () => void
   onSignupSuccess: (email: string) => void
-  onOpenPrivacy?: () => void
-  onOpenTerms?: () => void
 }
 
-type View = 'play' | 'login' | 'register'
+type View = 'login' | 'register'
 
 const CARD_W = 387
 const CARD_H = 506
 const NAV_BG = '#505FFF'
 
-export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOpenTerms }: Props) {
+export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
   const { setAuth } = useAuth()
-  const [view, setView] = useState<View>('play')
+  const [view, setView] = useState<View>('login')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -36,7 +34,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOp
   const canRegister = (): boolean =>
     acceptAge && acceptChildData && regPassword === regConfirm && !!regEmail
 
-  const switchAuthTab = (next: 'login' | 'register') => {
+  const switchAuthTab = (next: View) => {
     setView(next)
     setError('')
   }
@@ -74,10 +72,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOp
     }
   }
 
-  const navTitle =
-    view === 'play' ? 'MAESTRO BOT'
-    : view === 'login' ? 'INICIAR SESIÓN'
-    : 'INICIAR SESIÓN'
+  const navTitle = view === 'login' ? 'INICIAR SESIÓN' : 'REGISTRARSE'
 
   // Register view needs taller card
   const cardHeight = view === 'register' ? 'auto' : CARD_H
@@ -201,25 +196,6 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOp
         .btn-green:active { transform: scale(0.96) translateY(2px); }
         .btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .btn-cyan {
-          background: linear-gradient(180deg, #8FE3FA 0%, #5DCEF8 60%, #4FB8E5 100%);
-          border: 2px solid #4FBFE8;
-          box-shadow: 0 4px 0 #2F8FB8, 0 6px 14px rgba(80,200,250,0.35), inset 0 2px 0 rgba(255,255,255,0.6);
-          color: white;
-          font-family: 'Nunito', sans-serif;
-          font-weight: 900;
-          font-size: 18px;
-          letter-spacing: 0.14em;
-          text-shadow: 0 1px 2px rgba(0,0,0,0.25);
-          border-radius: 999px;
-          width: 100%;
-          padding: 13px 0;
-          cursor: pointer;
-          transition: transform 0.1s;
-        }
-
-        .btn-cyan:active { transform: scale(0.96) translateY(2px); }
-
         .fields-box {
           background: #F5F5F5;
           border-radius: 14px;
@@ -271,14 +247,6 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOp
             >
               {error}
             </div>
-          )}
-
-          {view === 'play' && (
-            <PlayView
-              onJugar={() => setView('login')}
-              onPrivacy={onOpenPrivacy}
-              onTerms={onOpenTerms}
-            />
           )}
 
           {view === 'login' && (
@@ -385,68 +353,6 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOp
             </>
           )}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function PlayView({ onJugar, onPrivacy, onTerms }: {
-  onJugar: () => void
-  onPrivacy?: () => void
-  onTerms?: () => void
-}) {
-  return (
-    <div className="flex flex-col items-center flex-1">
-      <img
-        src="/assets/header/title.png"
-        alt="Maestro Bot"
-        className="select-none mt-6"
-        style={{
-          width: 270,
-          height: 'auto',
-          filter: 'drop-shadow(0 6px 14px rgba(80,95,255,0.35))',
-        }}
-      />
-      <p
-        className="text-center mt-5 text-sm px-4"
-        style={{ color: '#666', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
-      >
-        ¡Programa al robot y enciende las luces!
-      </p>
-
-      <div className="flex-1" />
-
-      <button
-        onClick={onJugar}
-        className="btn-cyan"
-      >
-        JUGAR
-      </button>
-
-      <div
-        className="flex items-center justify-center gap-5 mt-4"
-        style={{ fontSize: 11, color: '#888' }}
-      >
-        <button
-          type="button"
-          onClick={onPrivacy}
-          style={{
-            background: 'none', border: 'none', padding: 0, color: 'inherit',
-            cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600,
-          }}
-        >
-          Política de privacidad
-        </button>
-        <button
-          type="button"
-          onClick={onTerms}
-          style={{
-            background: 'none', border: 'none', padding: 0, color: 'inherit',
-            cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600,
-          }}
-        >
-          Términos y condiciones
-        </button>
       </div>
     </div>
   )

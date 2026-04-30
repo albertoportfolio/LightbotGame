@@ -74,89 +74,128 @@ const TOTAL_LEVELS = 40
 type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy' | 'terms' | 'donate' | 'donation-success'
 
 
-// Pantalla de inicio: logo, botón "JUGAR" y fondo con cielo + nubes
+// Pantalla de inicio: navbar MAESTRO BOT + logo + botón JUGAR + footer legal
 function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onPrivacy: () => void; onTerms: () => void }) {
-  const [pressed, setPressed] = useState(false)
-  const handleClick = () => { setPressed(true); setTimeout(onStart, 300) }
   return (
-    <div className="relative flex items-center justify-center overflow-hidden"
-      style={{ height: '100dvh', backgroundColor: '#9fe7e0' }}>
-      <img src="/assets/backgrounds/menu/sky%201.png" alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
-      <img src="/assets/backgrounds/menu/clouds_2%201.png" alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none"
-        style={{ opacity: 0.85 }} />
-      <img src="/assets/backgrounds/menu/clouds_1%201.png" alt=""
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+    <div
+      className="fixed inset-0 flex items-center justify-center overflow-hidden p-4"
+      style={{
+        backgroundImage: "url('/assets/backgrounds/menu/sky 1.png')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#9FE3D8',
+      }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
 
-      {/* Layout horizontal: robot a la izquierda, contenido a la derecha */}
-      <div className="relative z-10 flex flex-row items-center gap-8 px-10 py-8 rounded-3xl"
+        @keyframes cloudSlow {
+          from { transform: translateX(-30px); }
+          to   { transform: translateX(30px); }
+        }
+
+        .start-card * { font-family: 'Nunito', sans-serif; }
+
+        .start-nav-title {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 20px;
+          letter-spacing: 0.12em;
+          color: white;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.20), 0 0 12px rgba(255,255,255,0.15);
+        }
+
+        .start-btn-cyan {
+          background: linear-gradient(180deg, #8FE3FA 0%, #5DCEF8 60%, #4FB8E5 100%);
+          border: 2px solid #4FBFE8;
+          box-shadow: 0 4px 0 #2F8FB8, 0 6px 14px rgba(80,200,250,0.35), inset 0 2px 0 rgba(255,255,255,0.6);
+          color: white;
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 18px;
+          letter-spacing: 0.14em;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+          border-radius: 999px;
+          width: 100%;
+          padding: 13px 0;
+          cursor: pointer;
+          transition: transform 0.1s;
+        }
+        .start-btn-cyan:active { transform: scale(0.96) translateY(2px); }
+      `}</style>
+
+      <img
+        src="/assets/backgrounds/menu/clouds_1 1.png"
+        alt="" aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ top: '8%', left: 0, width: '100%', opacity: 0.85, animation: 'cloudSlow 18s ease-in-out infinite alternate' }}
+      />
+      <img
+        src="/assets/backgrounds/menu/clouds_2 1.png"
+        alt="" aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ bottom: '6%', left: 0, width: '100%', opacity: 0.7, animation: 'cloudSlow 24s ease-in-out infinite alternate-reverse' }}
+      />
+
+      <div
+        className="start-card relative flex flex-col rounded-3xl overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(12px)',
-          border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 60px rgba(100, 150, 255, 0.2)',
-          maxWidth: 780, width: '92%', maxHeight: '92dvh',
-        }}>
-        {/* Robot */}
-        <img src="/assets/img/icon.png" alt="Robot" className="flex-shrink-0" style={{ width: 96, height: 96, filter: 'drop-shadow(0 0 16px #63b3ed)', imageRendering: 'pixelated' }} />
+          width: 387,
+          height: 506,
+          maxWidth: 'calc(100vw - 32px)',
+          maxHeight: 'calc(100dvh - 32px)',
+          background: 'white',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.28), 0 8px 16px rgba(0,0,0,0.15)',
+        }}
+      >
+        <header
+          className="relative flex items-center justify-center flex-shrink-0"
+          style={{ background: '#505FFF', height: 62 }}
+        >
+          <h1 className="start-nav-title select-none">MAESTRO BOT</h1>
+        </header>
 
-        {/* Contenido */}
-        <div className="flex flex-col gap-4 flex-1 min-w-0">
-          <div>
-            <h1 className="font-black tracking-tight leading-none"
-              style={{
-                textAlign: 'center',
-                fontSize: 'clamp(1.2rem, 3.5vw, 1.8rem)',
-                background: 'linear-gradient(135deg, #63b3ed, #f6e05e, #fc8181)',
-                WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-              }}>
-              MAESTRO BOT
-            </h1>
-            <p style={{textAlign: 'center'}} className="text-white/70 text-sm mt-0.5">¡Programa al robot y enciende las luces!</p>
-          </div>
-
-          <div style={{justifyContent:'space-evenly', flex: 1}} className="flex flex-wrap gap-1.5">
-            {['🧩 Puzles', '💡 Luces', '🎮 Comandos', '🏆 Niveles'].map(tag => (
-              <span key={tag} className="px-2 py-0.5 rounded-full text-xs font-semibold text-white/80"
-                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
-                {tag}
-              </span>
-            ))}
-          </div>
-
-          <button onClick={handleClick}
-            aria-label="Jugar"
+        <div className="flex-1 flex flex-col items-center px-6 py-5">
+          <img
+            src="/assets/header/title.png"
+            alt="Maestro Bot"
+            className="select-none mt-6"
             style={{
-              background: pressed ? 'linear-gradient(135deg, #2b6cb0, #276749)' : 'linear-gradient(135deg, #63b3ed, #48bb78)',
-              boxShadow: pressed ? '0 2px 0 #1a365d, 0 0 16px rgba(99,179,237,0.4)' : '0 5px 0 #1a365d, 0 0 24px rgba(99,179,237,0.5)',
-              transform: pressed ? 'translateY(3px)' : 'translateY(0)', transition: 'all 0.1s ease',
+              width: 270,
+              height: 'auto',
+              filter: 'drop-shadow(0 6px 14px rgba(80,95,255,0.35))',
             }}
-            className="px-8 py-4 rounded-2xl font-black text-white text-xl tracking-wide w-full">
-            {pressed ? <><span aria-hidden="true">🚀</span> ¡Cargando!</> : <><span aria-hidden="true">▶</span>  JUGAR</>}
+          />
+          <p
+            className="text-center mt-5 text-sm px-4"
+            style={{ color: '#666', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
+          >
+            ¡Programa al robot y enciende las luces!
+          </p>
+
+          <div className="flex-1" />
+
+          <button onClick={onStart} className="start-btn-cyan" aria-label="Jugar">
+            JUGAR
           </button>
 
-          <div className="flex gap-16 justify-center">
-            {[
-              { icon: '☝️', text: 'Añade' },
-              { icon: '🔀', text: 'Ordena' },
-              { icon: '▶️', text: 'Ejecuta' },
-              { icon: '💡', text: '¡Enciende!' },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex flex-col items-center gap-0.5 text-white/50 text-xs font-medium">
-                <span className="text-lg" aria-hidden="true">{icon}</span>
-                <span>{text}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex gap-3 justify-end mt-1">
-            <button onClick={onPrivacy}
-              className="text-white/40 hover:text-white/70 transition-colors text-xs underline underline-offset-2">
-              Politica de Privacidad
+          <div
+            className="flex items-center justify-center gap-5 mt-4"
+            style={{ fontSize: 11, color: '#888' }}
+          >
+            <button
+              type="button"
+              onClick={onPrivacy}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
+            >
+              Política de privacidad
             </button>
-            <button onClick={onTerms}
-              className="text-white/40 hover:text-white/70 transition-colors text-xs underline underline-offset-2">
-              Terminos y Condiciones
+            <button
+              type="button"
+              onClick={onTerms}
+              style={{ background: 'none', border: 'none', padding: 0, color: 'inherit', cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
+            >
+              Términos y condiciones
             </button>
           </div>
         </div>

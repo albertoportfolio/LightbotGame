@@ -204,66 +204,43 @@ function ZigzagConnector({
   const y1 = nodeY(fromRow)
   const y2 = nodeY(toRow)
   const midX = (fromX + toX) / 2
+  const yMin = Math.min(y1, y2)
+  const yMax = Math.max(y1, y2)
+  const thickness = 16
 
-  const segW = 14
-  const segH = 7
-  const style = (x: number, y: number, rotate: number, delay: number) => ({
+  const baseStyle = {
     position: 'absolute' as const,
-    left: x - segW / 2,
-    top: y - segH / 2,
-    width: segW,
-    height: segH,
     background: accent,
-    borderRadius: 2,
-    border: '2px solid rgba(255,255,255,0.85)',
-    transform: `rotate(${rotate}deg)`,
-    boxShadow: `0 0 8px ${accent}aa, 0 2px 4px rgba(0,0,0,0.4)`,
+    borderRadius: 4,
+    boxShadow: `0 2px 0 rgba(0,0,0,0.35), 0 0 8px ${accent}aa`,
     zIndex: 4,
-    animation: `connectorPulse 1.6s ease-in-out ${delay}s infinite`,
+    animation: 'connectorPulse 1.6s ease-in-out infinite',
     pointerEvents: 'none' as const,
-  })
-
-  // Segmentos horizontales en fila origen
-  const hSegs1: { x: number; y: number; r: number; d: number }[] = []
-  const steps1 = 3
-  for (let i = 0; i < steps1; i++) {
-    hSegs1.push({
-      x: fromX + (midX - fromX) * ((i + 1) / (steps1 + 1)),
-      y: y1,
-      r: i % 2 === 0 ? 6 : -5,
-      d: i * 0.1,
-    })
-  }
-
-  // Segmentos verticales en la columna central (de y1 a y2)
-  const vSegs: { x: number; y: number; r: number; d: number }[] = []
-  const vSteps = Math.max(2, Math.round(Math.abs(y2 - y1) / 22))
-  for (let i = 0; i < vSteps; i++) {
-    vSegs.push({
-      x: midX,
-      y: y1 + (y2 - y1) * ((i + 1) / (vSteps + 1)),
-      r: 90 + (i % 2 === 0 ? 6 : -5),
-      d: 0.3 + i * 0.1,
-    })
-  }
-
-  // Segmentos horizontales en fila destino
-  const hSegs2: { x: number; y: number; r: number; d: number }[] = []
-  const steps2 = 3
-  for (let i = 0; i < steps2; i++) {
-    hSegs2.push({
-      x: midX + (toX - midX) * ((i + 1) / (steps2 + 1)),
-      y: y2,
-      r: i % 2 === 0 ? -6 : 5,
-      d: 0.6 + i * 0.1,
-    })
   }
 
   return (
     <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4 }}>
-      {[...hSegs1, ...vSegs, ...hSegs2].map((s, i) => (
-        <div key={i} style={style(s.x, s.y, s.r, s.d)} />
-      ))}
+      <div style={{
+        ...baseStyle,
+        left: fromX,
+        top: y1 - thickness / 2,
+        width: midX - fromX + thickness / 2,
+        height: thickness,
+      }} />
+      <div style={{
+        ...baseStyle,
+        left: midX - thickness / 2,
+        top: yMin - thickness / 2,
+        width: thickness,
+        height: yMax - yMin + thickness,
+      }} />
+      <div style={{
+        ...baseStyle,
+        left: midX - thickness / 2,
+        top: y2 - thickness / 2,
+        width: toX - midX + thickness / 2,
+        height: thickness,
+      }} />
     </div>
   )
 }
@@ -273,31 +250,23 @@ function ZigzagConnector({
 function PathConnector({ fromX, toX, y, accent }: {
   fromX: number; toX: number; y: number; accent: string
 }) {
-  const segments = 5
-  const dx = (toX - fromX) / (segments + 1)
+  const thickness = 16
   return (
-    <>
-      {Array.from({ length: segments }).map((_, i) => (
-        <div
-          key={i}
-          aria-hidden="true"
-          className="absolute pointer-events-none"
-          style={{
-            left: fromX + dx * (i + 1) - 9,
-            top: y - 4,
-            width: 18,
-            height: 7,
-            background: accent,
-            borderRadius: 2,
-            border: '2px solid rgba(255,255,255,0.85)',
-            transform: `rotate(${i % 2 === 0 ? 7 : -6}deg)`,
-            boxShadow: `0 0 8px ${accent}aa, 0 2px 4px rgba(0,0,0,0.4)`,
-            zIndex: 4,
-            animation: `connectorPulse 1.6s ease-in-out ${i * 0.14}s infinite`,
-          }}
-        />
-      ))}
-    </>
+    <div
+      aria-hidden="true"
+      className="absolute pointer-events-none"
+      style={{
+        left: fromX,
+        top: y - thickness / 2,
+        width: toX - fromX,
+        height: thickness,
+        background: accent,
+        borderRadius: 4,
+        boxShadow: `0 2px 0 rgba(0,0,0,0.35), 0 0 8px ${accent}aa`,
+        zIndex: 4,
+        animation: 'connectorPulse 1.6s ease-in-out infinite',
+      }}
+    />
   )
 }
 
@@ -498,7 +467,7 @@ function ZoneSection({
           backgroundSize: '100% 100%',
           backgroundRepeat: 'no-repeat',
           backgroundPosition: 'center',
-          filter: 'blur(8px) saturate(1.05)',
+          filter: 'blur(3px) saturate(1.05)',
           transform: 'scale(1.06)',
           zIndex: 0,
         }}
@@ -777,22 +746,27 @@ export function LevelSelectScreen({
       <header
         className="fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-2"
         style={{
-          background: 'linear-gradient(180deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.0) 100%)',
-          backdropFilter: 'blur(6px)',
+          background: '#505FFF',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
         }}
       >
         <button
           onClick={onBack}
           aria-label="Volver al menú"
-          className="flex items-center gap-1.5 font-black text-sm text-white px-3 py-1.5 rounded-2xl transition-all hover:scale-105 active:scale-95"
+          className="transition-all hover:scale-110 active:scale-95"
           style={{
-            background: 'linear-gradient(135deg, #ff6b6b, #ff4444)',
-            border: '3px solid rgba(255,255,255,0.3)',
-            boxShadow: '0 4px 0 #aa2222, 0 6px 12px rgba(255,0,0,0.3)',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
           }}
         >
-          <img src="/assets/buttons/icon/Propiedad%201=home_btn.png" alt="" className="w-7 h-7 select-none" />
-          Menú
+          <img
+            src="/assets/buttons/icon/Propiedad%201=home_btn.png"
+            alt=""
+            className="w-12 h-12 select-none"
+            style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.5))' }}
+          />
         </button>
 
         <div className="flex flex-col items-center" style={{ animation: 'headerBob 3s ease-in-out infinite' }}>
@@ -831,23 +805,23 @@ export function LevelSelectScreen({
 
         <div className="flex items-center gap-1.5">
           <button onClick={onToggleMute} aria-label={muted ? 'Activar sonido' : 'Silenciar'}
-            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
-            <img src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'} alt="" className="w-8 h-8 select-none" />
+            className="w-10 h-10 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+            <img src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'} alt="" className="w-10 h-10 select-none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
           </button>
           <button onClick={onOpenSettings} aria-label="Ajustes"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
-            <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-8 h-8 select-none" />
+            className="w-10 h-10 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+            <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-10 h-10 select-none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
           </button>
           <button onClick={onOpenProfile} aria-label="Perfil"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all hover:scale-110 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
-            <img src="/assets/buttons/icon/Propiedad%201=user_btn.png" alt="" className="w-8 h-8 select-none" />
+            className="w-10 h-10 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
+            <img src="/assets/buttons/icon/Propiedad%201=user_btn.png" alt="" className="w-10 h-10 select-none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
           </button>
           <button onClick={onDonate} aria-label="Donar"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-xl transition-all hover:scale-110 active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.3)', boxShadow: '0 3px 0 rgba(0,0,0,0.3)' }}>
+            className="w-10 h-10 flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
+            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
             💙
           </button>
         </div>

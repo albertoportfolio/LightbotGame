@@ -6,40 +6,39 @@ interface Props {
   onAuthSuccess: () => void
   onBack: () => void
   onSignupSuccess: (email: string) => void
+  onOpenPrivacy?: () => void
+  onOpenTerms?: () => void
 }
 
-type Tab = 'login' | 'register'
+type View = 'play' | 'login' | 'register'
 
-// Pantalla de autenticación: tabs de login/registro, valida credenciales contra la API y guarda el token
-export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
+const CARD_W = 387
+const CARD_H = 506
+const NAV_BG = '#505FFF'
+
+export function AuthScreen({ onAuthSuccess, onSignupSuccess, onOpenPrivacy, onOpenTerms }: Props) {
   const { setAuth } = useAuth()
-  const [tab, setTab] = useState<Tab>('login')
+  const [view, setView] = useState<View>('play')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Login fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // Register fields
   const [regName, setRegName] = useState('')
   const [regEmail, setRegEmail] = useState('')
   const [regPassword, setRegPassword] = useState('')
   const [regConfirm, setRegConfirm] = useState('')
 
-  // COPPA consent fields
   const [acceptAge, setAcceptAge] = useState(false)
   const [acceptChildData, setAcceptChildData] = useState(false)
 
-  const canRegister = (): boolean => {
-    return acceptAge && acceptChildData && regPassword === regConfirm && !!regEmail
-  }
+  const canRegister = (): boolean =>
+    acceptAge && acceptChildData && regPassword === regConfirm && !!regEmail
 
-  const switchTab = (t: Tab) => {
-    setTab(t)
+  const switchAuthTab = (next: 'login' | 'register') => {
+    setView(next)
     setError('')
-    setAcceptAge(false)
-    setAcceptChildData(false)
   }
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -50,7 +49,7 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
       const res = await login(email, password)
       setAuth(res.data.token, res.data.tutor)
       onAuthSuccess()
-    } catch (err: any) {
+    } catch {
       setError('Error al iniciar sesión')
     } finally {
       setLoading(false)
@@ -75,195 +74,414 @@ export function AuthScreen({ onAuthSuccess, onBack, onSignupSuccess }: Props) {
     }
   }
 
+  const navTitle =
+    view === 'play' ? 'MAESTRO BOT'
+    : view === 'login' ? 'INICIAR SESIÓN'
+    : 'INICIAR SESIÓN'
+
+  // Register view needs taller card
+  const cardHeight = view === 'register' ? 'auto' : CARD_H
+  const cardMinHeight = view === 'register' ? 580 : CARD_H
+
   return (
     <div
-      className="relative flex flex-col items-center overflow-y-auto py-10"
-      style={{ height: '100dvh', background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)' }}
+      className="fixed inset-0 flex items-center justify-center overflow-hidden p-4"
+      style={{
+        backgroundImage: "url('/assets/backgrounds/menu/sky 1.png')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#9FE3D8',
+      }}
     >
-      {/* Estrellas de fondo */}
-      {[...Array(24)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full bg-white pointer-events-none"
-          style={{
-            width: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1.5,
-            height: i % 3 === 0 ? 3 : i % 2 === 0 ? 2 : 1.5,
-            top: `${(i * 37 + 11) % 100}%`,
-            left: `${(i * 53 + 7) % 100}%`,
-            opacity: 0.3 + (i % 5) * 0.12,
-            animation: `twinkle ${2 + (i % 3)}s ease-in-out infinite`,
-            animationDelay: `${(i % 4) * 0.5}s`,
-          }}
-        />
-      ))}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 
-      {/* Tarjeta principal */}
+        @keyframes cloudSlow {
+          from { transform: translateX(-30px); }
+          to   { transform: translateX(30px); }
+        }
+
+        .auth-card * {
+          font-family: 'Nunito', sans-serif;
+        }
+
+        .nav-title {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 20px;
+          letter-spacing: 0.12em;
+          color: white;
+          text-shadow:
+            0 2px 0 rgba(0,0,0,0.20),
+            0 0 12px rgba(255,255,255,0.15);
+        }
+
+        .field-label {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 800;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          color: #999;
+          text-transform: uppercase;
+        }
+
+        .field-input {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 600;
+          font-size: 14px;
+          color: #444;
+          background: #F5F5F5;
+          border: 1.5px solid #E0E0E0;
+          border-radius: 10px;
+          padding: 10px 14px;
+          width: 100%;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+
+        .field-input::placeholder {
+          color: #C0C0C0;
+          font-weight: 500;
+        }
+
+        .field-input:focus {
+          border-color: #5DCEF8;
+        }
+
+        .consent-section-label {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 10px;
+          letter-spacing: 0.12em;
+          color: #E83A3A;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+        }
+
+        .consent-text {
+          font-family: 'Nunito', sans-serif;
+          font-weight: 600;
+          font-size: 10px;
+          color: #777;
+          line-height: 1.4;
+        }
+
+        .tab-active {
+          background: linear-gradient(180deg, #FFE066 0%, #FFC93D 100%);
+          color: #7C5400;
+          box-shadow: 0 2px 0 #DAA520;
+          border-radius: 999px;
+          font-weight: 900;
+        }
+
+        .tab-inactive {
+          background: transparent;
+          color: #666;
+          font-weight: 800;
+          border-radius: 999px;
+        }
+
+        .btn-green {
+          background: linear-gradient(180deg, #B3E665 0%, #7BC340 60%, #5FA628 100%);
+          border: 2px solid #4F8C20;
+          box-shadow: 0 4px 0 #3D6E18, 0 6px 14px rgba(120,200,80,0.30), inset 0 2px 0 rgba(255,255,255,0.5);
+          color: white;
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 18px;
+          letter-spacing: 0.14em;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+          border-radius: 999px;
+          width: 100%;
+          padding: 13px 0;
+          cursor: pointer;
+          transition: transform 0.1s;
+        }
+
+        .btn-green:active { transform: scale(0.96) translateY(2px); }
+        .btn-green:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-cyan {
+          background: linear-gradient(180deg, #8FE3FA 0%, #5DCEF8 60%, #4FB8E5 100%);
+          border: 2px solid #4FBFE8;
+          box-shadow: 0 4px 0 #2F8FB8, 0 6px 14px rgba(80,200,250,0.35), inset 0 2px 0 rgba(255,255,255,0.6);
+          color: white;
+          font-family: 'Nunito', sans-serif;
+          font-weight: 900;
+          font-size: 18px;
+          letter-spacing: 0.14em;
+          text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+          border-radius: 999px;
+          width: 100%;
+          padding: 13px 0;
+          cursor: pointer;
+          transition: transform 0.1s;
+        }
+
+        .btn-cyan:active { transform: scale(0.96) translateY(2px); }
+
+        .fields-box {
+          background: #F5F5F5;
+          border-radius: 14px;
+          padding: 14px 14px 10px 14px;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+      `}</style>
+
+      <img
+        src="/assets/backgrounds/menu/clouds_1 1.png"
+        alt="" aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ top: '8%', left: 0, width: '100%', opacity: 0.85, animation: 'cloudSlow 18s ease-in-out infinite alternate' }}
+      />
+      <img
+        src="/assets/backgrounds/menu/clouds_2 1.png"
+        alt="" aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{ bottom: '6%', left: 0, width: '100%', opacity: 0.7, animation: 'cloudSlow 24s ease-in-out infinite alternate-reverse' }}
+      />
+
       <div
-        className="relative z-10 flex flex-col gap-5 px-8 py-10 rounded-3xl w-full"
+        className="auth-card relative flex flex-col rounded-3xl overflow-hidden"
         style={{
-          background: 'rgba(255,255,255,0.06)',
-          backdropFilter: 'blur(12px)',
-          border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 60px rgba(100,150,255,0.2)',
-          maxWidth: 420,
+          width: CARD_W,
+          height: cardHeight,
+          minHeight: cardMinHeight,
+          maxWidth: 'calc(100vw - 32px)',
+          maxHeight: 'calc(100dvh - 32px)',
+          background: 'white',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.28), 0 8px 16px rgba(0,0,0,0.15)',
         }}
       >
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onBack}
-            className="text-white/50 hover:text-white text-xl transition-colors leading-none"
-          >
-            ←
-          </button>
-          <h2
-            className="font-black text-2xl tracking-wide"
-            style={{
-              background: 'linear-gradient(135deg, #63b3ed, #f6e05e)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            {tab === 'login' ? 'Iniciar Sesión' : 'Registrarse'}
-          </h2>
-        </div>
+        <header
+          className="relative flex items-center justify-center flex-shrink-0"
+          style={{ background: NAV_BG, height: 62 }}
+        >
+          <h1 className="nav-title select-none">{navTitle}</h1>
+        </header>
 
-        {/* Tabs */}
-        <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
-          <button
-            onClick={() => switchTab('login')}
-            className="flex-1 py-2.5 text-sm font-bold transition-all"
-            style={{
-              background: tab === 'login' ? 'rgba(99,179,237,0.25)' : 'transparent',
-              color: tab === 'login' ? '#63b3ed' : 'rgba(255,255,255,0.4)',
-            }}
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            onClick={() => switchTab('register')}
-            className="flex-1 py-2.5 text-sm font-bold transition-all"
-            style={{
-              background: tab === 'register' ? 'rgba(99,179,237,0.25)' : 'transparent',
-              color: tab === 'register' ? '#63b3ed' : 'rgba(255,255,255,0.4)',
-            }}
-          >
-            Registrarse
-          </button>
-        </div>
-
-        {/* Error */}
-        {error && (
-          <div
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold"
-            style={{
-              background: 'rgba(252,129,129,0.15)',
-              border: '1px solid rgba(252,129,129,0.3)',
-              color: '#fc8181',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Login form */}
-        {tab === 'login' && (
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <InputField
-              label="Correo electrónico"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="tu@correo.com"
-              required
-            />
-            <InputField
-              label="Contraseña"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="Tu contraseña"
-              required
-            />
-            <SubmitButton loading={loading} label="Entrar" />
-          </form>
-        )}
-
-        {/* Register form */}
-        {tab === 'register' && (
-          <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <InputField
-              label="Nombre completo"
-              type="text"
-              value={regName}
-              onChange={setRegName}
-              placeholder="Tu nombre (opcional)"
-            />
-            <InputField
-              label="Correo electrónico"
-              type="email"
-              value={regEmail}
-              onChange={setRegEmail}
-              placeholder="tu@correo.com"
-              required
-            />
-            <InputField
-              label="Contraseña"
-              type="password"
-              value={regPassword}
-              onChange={setRegPassword}
-              placeholder="Mínimo 8 caracteres"
-              required
-              minLength={8}
-            />
-            <InputField
-              label="Confirmar contraseña"
-              type="password"
-              value={regConfirm}
-              onChange={setRegConfirm}
-              placeholder="Repite la contraseña"
-              required
-              minLength={8}
-            />
-            {/* COPPA: age and parental consent */}
-            <div className="flex flex-col gap-3">
-              <ConsentCheckbox
-                checked={acceptAge}
-                onChange={setAcceptAge}
-                label="Confirmo que soy mayor de 18 años"
-              />
-              <ConsentCheckbox
-                checked={acceptChildData}
-                onChange={setAcceptChildData}
-                label="Como tutor/docente, confirmo que tengo autorización parental o tutela legal para gestionar los datos de los estudiantes que añada a mi cuenta"
-              />
+        <div className="flex-1 flex flex-col px-6 py-5 overflow-y-auto">
+          {error && (
+            <div
+              className="w-full px-3 py-2 rounded-lg text-xs font-semibold mb-3 flex-shrink-0"
+              style={{ background: '#FEE', border: '1px solid #FCC', color: '#C33', fontFamily: 'Nunito, sans-serif' }}
+            >
+              {error}
             </div>
-            <SubmitButton loading={loading} label="Crear cuenta" disabled={!canRegister()} />
-          </form>
-        )}
+          )}
 
-        {/* Footer hint */}
-        <p className="text-white/30 text-xs text-center">
-          {tab === 'login'
-            ? '¿No tienes cuenta? Pulsa "Registrarse" arriba'
-            : '¿Ya tienes cuenta? Pulsa "Iniciar Sesión" arriba'}
-        </p>
+          {view === 'play' && (
+            <PlayView
+              onJugar={() => setView('login')}
+              onPrivacy={onOpenPrivacy}
+              onTerms={onOpenTerms}
+            />
+          )}
+
+          {view === 'login' && (
+            <>
+              <TabSwitcher active="login" onSwitch={switchAuthTab} />
+              <form onSubmit={handleLogin} className="flex flex-col gap-3 mt-4 flex-1">
+                <div className="fields-box">
+                  <FormField
+                    label="CORREO ELECTRÓNICO"
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    placeholder="tu@correo.com"
+                    required
+                  />
+                  <FormField
+                    label="CONTRASEÑA"
+                    type="password"
+                    value={password}
+                    onChange={setPassword}
+                    placeholder="Tú contraseña"
+                    required
+                  />
+                </div>
+                <div className="flex-1" />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-green"
+                >
+                  {loading ? 'CARGANDO...' : 'ENTRAR'}
+                </button>
+              </form>
+            </>
+          )}
+
+          {view === 'register' && (
+            <>
+              <TabSwitcher active="register" onSwitch={switchAuthTab} />
+              <form onSubmit={handleRegister} className="flex flex-col gap-3 mt-4 flex-1">
+                {/* Fields box */}
+                <div className="fields-box">
+                  <FormField
+                    label="NOMBRE COMPLETO"
+                    type="text"
+                    value={regName}
+                    onChange={setRegName}
+                    placeholder="tu@correo.com"
+                  />
+                  <FormField
+                    label="CORREO ELECTRÓNICO"
+                    type="email"
+                    value={regEmail}
+                    onChange={setRegEmail}
+                    placeholder="Tú contraseña"
+                    required
+                  />
+                  <FormField
+                    label="CONTRASEÑA"
+                    type="password"
+                    value={regPassword}
+                    onChange={setRegPassword}
+                    placeholder="Tú contraseña"
+                    required
+                    minLength={8}
+                  />
+                  <FormField
+                    label="CONFIRMAR CONTRASEÑA"
+                    type="password"
+                    value={regConfirm}
+                    onChange={setRegConfirm}
+                    placeholder="Tú contraseña"
+                    required
+                    minLength={8}
+                  />
+                </div>
+
+                {/* Consent section */}
+                <div style={{ marginTop: 2 }}>
+                  <div className="consent-section-label">CONSENTIMIENTO</div>
+                  <ConsentCheckbox
+                    checked={acceptAge}
+                    onChange={setAcceptAge}
+                    label="Confirmo que soy mayor de 18 años."
+                  />
+                  <div style={{ marginTop: 6 }}>
+                    <ConsentCheckbox
+                      checked={acceptChildData}
+                      onChange={setAcceptChildData}
+                      label="Como tutor/docente, confirmo que tengo autorización parental o tutela legal  para gestionar los datos de los estudiantes que añada a mi cuenta"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading || !canRegister()}
+                  className="btn-green"
+                  style={{ marginTop: 4 }}
+                >
+                  {loading ? 'CARGANDO...' : 'ENTRAR'}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
-// ─── Helpers UI ──────────────────────────────────────────────────────────────
+function PlayView({ onJugar, onPrivacy, onTerms }: {
+  onJugar: () => void
+  onPrivacy?: () => void
+  onTerms?: () => void
+}) {
+  return (
+    <div className="flex flex-col items-center flex-1">
+      <img
+        src="/assets/header/title.png"
+        alt="Maestro Bot"
+        className="select-none mt-6"
+        style={{
+          width: 270,
+          height: 'auto',
+          filter: 'drop-shadow(0 6px 14px rgba(80,95,255,0.35))',
+        }}
+      />
+      <p
+        className="text-center mt-5 text-sm px-4"
+        style={{ color: '#666', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
+      >
+        ¡Programa al robot y enciende las luces!
+      </p>
 
-// Campo de formulario reutilizable con label, estilo glassmorphism y efecto de foco
-function InputField({
-  label,
-  type,
-  value,
-  onChange,
-  placeholder,
-  required,
-  minLength,
+      <div className="flex-1" />
+
+      <button
+        onClick={onJugar}
+        className="btn-cyan"
+      >
+        JUGAR
+      </button>
+
+      <div
+        className="flex items-center justify-center gap-5 mt-4"
+        style={{ fontSize: 11, color: '#888' }}
+      >
+        <button
+          type="button"
+          onClick={onPrivacy}
+          style={{
+            background: 'none', border: 'none', padding: 0, color: 'inherit',
+            cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600,
+          }}
+        >
+          Política de privacidad
+        </button>
+        <button
+          type="button"
+          onClick={onTerms}
+          style={{
+            background: 'none', border: 'none', padding: 0, color: 'inherit',
+            cursor: 'pointer', fontFamily: 'Nunito, sans-serif', fontWeight: 600,
+          }}
+        >
+          Términos y condiciones
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function TabSwitcher({ active, onSwitch }: {
+  active: 'login' | 'register'
+  onSwitch: (next: 'login' | 'register') => void
+}) {
+  return (
+    <div
+      className="w-full flex p-1 rounded-full flex-shrink-0"
+      style={{ background: '#F0F0F0' }}
+    >
+      {(['login', 'register'] as const).map((id) => {
+        const isActive = active === id
+        const label = id === 'login' ? 'Iniciar sesión' : 'Registrarse'
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => onSwitch(id)}
+            className={`flex-1 py-2.5 text-sm transition-all ${isActive ? 'tab-active' : 'tab-inactive'}`}
+            style={{ fontFamily: 'Nunito, sans-serif', border: 'none', cursor: 'pointer' }}
+          >
+            {label}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function FormField({
+  label, type, value, onChange, placeholder, required, minLength,
 }: {
   label: string
   type: string
@@ -274,10 +492,8 @@ function InputField({
   minLength?: number
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-white/50 text-xs uppercase tracking-widest font-semibold">
-        {label}
-      </label>
+    <div className="flex flex-col gap-1 w-full">
+      <label className="field-label">{label}</label>
       <input
         type={type}
         value={value}
@@ -285,48 +501,26 @@ function InputField({
         placeholder={placeholder}
         required={required}
         minLength={minLength}
-        className="w-full px-4 py-3 rounded-xl text-white text-sm font-medium outline-none transition-all"
-        style={{
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(255,255,255,0.12)',
-        }}
-        onFocus={(e) => (e.target.style.borderColor = 'rgba(99,179,237,0.5)')}
-        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
+        className="field-input"
       />
     </div>
   )
 }
 
-// Checkbox de consentimiento con label
-function ConsentCheckbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+function ConsentCheckbox({ checked, onChange, label }: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+}) {
   return (
-    <label className="flex items-start gap-2.5 cursor-pointer group">
+    <label className="flex items-start gap-2 cursor-pointer">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5 w-4 h-4 rounded accent-sky-400 flex-shrink-0"
+        style={{ accentColor: '#5DCEF8', marginTop: 2, width: 14, height: 14, flexShrink: 0 }}
       />
-      <span className="text-white/50 text-xs leading-relaxed group-hover:text-white/70 transition-colors">
-        {label}
-      </span>
+      <span className="consent-text">{label}</span>
     </label>
-  )
-}
-
-// Botón de submit con estado de carga y estilo gradiente
-function SubmitButton({ loading, label, disabled }: { loading: boolean; label: string; disabled?: boolean }) {
-  return (
-    <button
-      type="submit"
-      disabled={loading || disabled}
-      className="w-full py-3 rounded-2xl font-black text-white text-lg transition-all active:scale-95 disabled:opacity-50"
-      style={{
-        background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-        boxShadow: '0 4px 0 #1a365d',
-      }}
-    >
-      {loading ? 'Cargando...' : label}
-    </button>
   )
 }

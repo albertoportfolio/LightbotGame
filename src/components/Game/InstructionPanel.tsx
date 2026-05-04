@@ -24,9 +24,61 @@ import { ALL_COMMANDS, COMMAND_META } from '../../game/logic/commands'
 import { useGameStore } from '../../store/gameStore'
 import { parseTextCommands } from '../../game/logic/textCommandParser'
 
+// ─── Estilos compartidos del panel (cards, botones de acción) ────────────────
+
+function PanelStyles() {
+  return (
+    <style>{`
+      .hud-card {
+        background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
+        border: 2px solid #38bdf8;
+        box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
+      }
+      .hud-card-title {
+        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+        color: white;
+        text-transform: uppercase;
+        font-weight: 800;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-align: center;
+        padding: 4px 10px;
+        margin: -6px auto 10px;
+        border-radius: 999px;
+        width: fit-content;
+        box-shadow: 0 2px 0 rgba(37,99,235,0.5);
+      }
+      .action-btn {
+        flex: 1;
+        padding: 14px 0;
+        border-radius: 14px;
+        font-weight: 900;
+        font-size: 17px;
+        letter-spacing: 0.14em;
+        color: white;
+        text-shadow: 0 2px 2px rgba(0,0,0,0.18);
+        border: 2px solid rgba(0,0,0,0.08);
+        transition: transform 0.08s;
+        cursor: pointer;
+      }
+      .action-btn:active:not(:disabled) { transform: translateY(2px); }
+      .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .action-btn--run {
+        background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
+        box-shadow: 0 4px 0 #15803d, 0 6px 14px rgba(34,197,94,0.35);
+      }
+      .action-btn--reset {
+        background: linear-gradient(180deg, #fde68a 0%, #facc15 100%);
+        color: #78350f;
+        text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+        box-shadow: 0 4px 0 #ca8a04, 0 6px 14px rgba(250,204,21,0.35);
+      }
+    `}</style>
+  )
+}
+
 // ─── Individual command chip ─────────────────────────────────────────────────
 
-// Props de un chip de comando draggeable en la cola
 interface ChipProps {
   command: Command
   id: string
@@ -36,7 +88,7 @@ interface ChipProps {
   onRemove?: () => void
 }
 
-// Chip visual de un comando en la cola: draggeable con dnd-kit, resaltable cuando está activo
+// Usa paletteSprite igual que la paleta, para que la imagen sea siempre la misma
 function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: ChipProps) {
   const meta = COMMAND_META[command]
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -62,11 +114,14 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
       title={meta.label}
     >
       <img
-        src={meta.chipSprite}
+        src={meta.paletteSprite}
         alt={meta.label}
         draggable={false}
-        className="block h-9 w-auto select-none pointer-events-none"
-        style={{ filter: isActive ? 'brightness(1.15)' : undefined }}
+        className="block w-14 h-14 select-none pointer-events-none"
+        style={{
+          objectFit: 'contain',
+          filter: isActive ? 'brightness(1.15)' : undefined,
+        }}
       />
       {showRemove && (
         <button
@@ -83,7 +138,6 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
 
 // ─── Source palette (available commands) ─────────────────────────────────────
 
-// Botón arrastrable de la paleta: usa useDraggable para poder soltarlo en la cola
 interface PaletteButtonProps {
   command: Command
   isFull: boolean
@@ -114,12 +168,12 @@ function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) 
         alt={meta.label}
         draggable={false}
         className="block w-14 h-14 select-none pointer-events-none"
+        style={{ objectFit: 'contain' }}
       />
     </button>
   )
 }
 
-// Paleta de comandos disponibles: botones que al hacer click o arrastrar añaden un comando a la cola
 function CommandPalette() {
   const { addCommand, queue, maxCommands, allowedCommands } = useGameStore()
   const isFull = queue.length >= maxCommands
@@ -147,7 +201,6 @@ function CommandPalette() {
 
 // ─── Droppable queue area ─────────────────────────────────────────────────────
 
-// Props del área droppable donde el jugador ordena su cola de comandos
 interface QueueAreaProps {
   slots: Array<{ id: string; command: Command }>
   activeCommandIndex: number
@@ -156,7 +209,6 @@ interface QueueAreaProps {
   onRemove: (index: number) => void
 }
 
-// Área droppable que muestra la cola de comandos + slots vacíos. Los chips se pueden reordenar por drag
 function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove }: QueueAreaProps) {
   const { setNodeRef } = useDroppable({ id: 'queue-droppable' })
 
@@ -164,9 +216,7 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
 
   return (
     <div className="rounded-2xl px-3 py-3 hud-card hud-card--queue">
-      <p className="hud-card-title">
-        Introduce Comandos
-      </p>
+      <p className="hud-card-title">Introduce Comandos</p>
       <div
         ref={setNodeRef}
         className="flex flex-wrap gap-2 min-h-[88px] p-3 rounded-xl"
@@ -193,8 +243,8 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
             key={`empty-${i}`}
             className="rounded-xl"
             style={{
-              width: 70,
-              height: 36,
+              width: 56,
+              height: 56,
               background: 'rgba(255,255,255,0.55)',
               border: '1px dashed rgba(56,189,248,0.4)',
             }}
@@ -210,10 +260,8 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
   )
 }
 
-//PANEL DE TEXTO
+// ─── Text mode panel ──────────────────────────────────────────────────────────
 
-
-// Panel alternativo para niveles en modo texto: el jugador escribe comandos en español en un textarea
 function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, onReset: () => void }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -233,75 +281,70 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
     if (e.key === 'Enter') handleRun()
   }
 
-  return (
-    <div className="flex flex-col gap-4 h-full">
+  const reference: Array<{ cmd: Command; desc: string }> = [
+    { cmd: Command.MOVE_FORWARD,     desc: 'Avanza n pasos' },
+    { cmd: Command.TURN_LEFT,        desc: 'Girar izquierda' },
+    { cmd: Command.TURN_RIGHT,       desc: 'Girar derecha' },
+    { cmd: Command.LIGHT_TOGGLE,     desc: 'Enciende luz' },
+    { cmd: Command.COPY_VAR,         desc: 'Copiar variable' },
+    { cmd: Command.LOOP_UNTIL_PLANT, desc: 'Bucle' },
+  ]
 
-      {/* Referencia de comandos */}
-      <div className="bg-white/5 rounded-xl p-3 border border-white/10">
-        <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos disponibles</p>
-        <div className="grid grid-cols-2 gap-1 text-xs font-mono">
-          {[
-            ['AVANZA [n]', 'Avanza n pasos'],
-            ['IZQUIERDA',     'Girar izquierda'],
-            ['DERECHA',     'Girar derecha'],
-            ['LUZ',     'Enciende luz'],
-            ['COPIAR',     'Copiar variable'],
-            ['BUCLE',     'Bucle'],
-          ].map(([cmd, desc]) => (
-            <div key={cmd} className="flex gap-2">
-              <span className="text-yellow-400 w-14 shrink-0">{cmd}</span>
-              <span className="text-white/50">{desc}</span>
-            </div>
-          ))}
+  return (
+    <div className="flex flex-col gap-3 h-full">
+      <div className="rounded-2xl px-3 py-3 hud-card">
+        <p className="hud-card-title">Comandos Disponibles</p>
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+          {reference.map(({ cmd, desc }) => {
+            const meta = COMMAND_META[cmd]
+            return (
+              <div key={cmd} className="flex items-center gap-2">
+                <img
+                  src={meta.chipSprite}
+                  alt={meta.label}
+                  draggable={false}
+                  className="h-7 w-auto select-none pointer-events-none shrink-0"
+                />
+                <span className="text-[11px] text-sky-900/80 font-semibold">{desc}</span>
+              </div>
+            )
+          })}
         </div>
       </div>
 
-      {/* Input */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs text-white/50 uppercase tracking-widest">Escribe tu programa</p>
+      <div className="rounded-2xl px-3 py-3 hud-card">
+        <p className="hud-card-title">Escribe tu programa</p>
         <textarea
           value={input}
           onChange={e => { setInput(e.target.value); setError(null) }}
           onKeyDown={handleKeyDown}
           disabled={isRunning || isGameOver}
-          placeholder={'AVANZA 4, IZQUIERDA, LUZ, , IZQUIERDA, BUCLE'}
+          placeholder={'AVANZA 4, IZQUIERDA, LUZ, IZQUIERDA, BUCLE'}
           rows={4}
-          className="w-full bg-white/5 border border-white/20 rounded-xl px-3 py-2 text-white font-mono text-sm resize-none focus:outline-none focus:border-yellow-400/50 disabled:opacity-40"
+          className="w-full rounded-xl px-3 py-2 font-mono text-sm resize-none focus:outline-none disabled:opacity-50"
+          style={{
+            background: 'rgba(186,230,253,0.55)',
+            border: '2px dashed rgba(56,189,248,0.55)',
+            color: '#0c4a6e',
+          }}
         />
         {error && (
-          <p className="text-xs text-red-400 font-mono">⚠ {error}</p>
+          <p className="text-xs text-red-500 font-mono mt-1">⚠ {error}</p>
         )}
       </div>
 
-      {/* Intentos */}
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-white/50">Intentos</span>
-        <span className={attempts >= maxAttempts - 1 ? 'text-red-400 font-bold' : 'text-white/70'}>
-          {attempts} / {maxAttempts}
-        </span>
-      </div>
-
       {isGameOver && (
-        <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700">
+        <div className="w-full py-3 rounded-xl text-center font-black text-white bg-rose-600">
           💀 GAME OVER — Pulsa Resetear
         </div>
       )}
 
-      {/* Botones */}
-      <div className="flex gap-2 mt-auto">
-        <button
-          disabled={isRunning || isGameOver}
-          onClick={handleRun}
-          className="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          <span>▶</span> Ejecutar
+      <div className="flex gap-3 mt-auto">
+        <button disabled={isRunning || isGameOver} onClick={handleRun} className="action-btn action-btn--run">
+          EJECUTAR
         </button>
-        <button
-          disabled={isRunning}
-          onClick={onReset}
-          className="flex-1 py-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          <img src="/assets/buttons/icon/Propiedad%201=redo_btn.png" alt="" className="w-6 h-6 select-none" /> Resetear
+        <button disabled={isRunning} onClick={onReset} className="action-btn action-btn--reset">
+          RESETEAR
         </button>
       </div>
     </div>
@@ -310,7 +353,6 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
 
 // ─── Main panel ───────────────────────────────────────────────────────────────
 
-// Props del panel principal de instrucciones
 interface InstructionPanelProps {
   bridge: Phaser.Events.EventEmitter
   onRun: () => void
@@ -319,7 +361,6 @@ interface InstructionPanelProps {
   showNextLevel: boolean
 }
 
-// Panel principal de instrucciones: modo drag-and-drop o modo texto según el nivel. Gestiona DnD, ejecución y reset
 export function InstructionPanel({
   bridge,
   onRun,
@@ -342,11 +383,9 @@ export function InstructionPanel({
 
   const isFull = queue.length >= maxCommands
 
-  // Attach stable IDs to queue items for dnd-kit
   const [slotIds, setSlotIds] = useState<string[]>([])
 
   useEffect(() => {
-    // When queue grows, append new IDs
     setSlotIds(prev => {
       if (prev.length === queue.length) return prev
       if (queue.length > prev.length) {
@@ -361,7 +400,6 @@ export function InstructionPanel({
 
   const slots = queue.map((cmd, i) => ({ id: slotIds[i] ?? `cmd-${i}`, command: cmd }))
 
-  // Track command executed events
   useEffect(() => {
     const onExecuted = (data: { command: Command; index: number }) => {
       setActiveCommandIndex(data.index)
@@ -385,7 +423,6 @@ export function InstructionPanel({
     }
   }, [bridge, setActiveCommandIndex, setIsRunning])
 
-  // Also detect end of execution (last command executed = no more)
   useEffect(() => {
     if (!isRunning) return
     if (activeCommandIndex === queue.length - 1) {
@@ -413,7 +450,6 @@ export function InstructionPanel({
       const { active, over } = e
       const activeId = active.id as string
 
-      // Drop desde la paleta → añadir comando al final de la cola
       if (activeId.startsWith('palette-')) {
         const cmd = active.data.current?.command as Command
         if (cmd && over && !isFull) {
@@ -422,7 +458,6 @@ export function InstructionPanel({
         return
       }
 
-      // Reordenar dentro de la cola
       if (!over || active.id === over.id) return
       const oldIndex = slots.findIndex(s => s.id === active.id)
       const newIndex = slots.findIndex(s => s.id === over.id)
@@ -438,8 +473,8 @@ export function InstructionPanel({
 
   // ─── Run / Reset ──────────────────────────────────────────────────────────
 
-  const { attempts, maxAttempts, incrementAttempts, textMode } = useGameStore()  // ← añade al destructuring existente
-  
+  const { attempts, maxAttempts, incrementAttempts, textMode } = useGameStore()
+
   const isGameOver = attempts >= maxAttempts
 
   const handleRun = () => {
@@ -457,72 +492,28 @@ export function InstructionPanel({
     onReset()
   }
 
+  // La imagen arrastrada: siempre paletteSprite, igual que paleta y cola
   const draggingCommand: Command | null = draggingId
     ? draggingId.startsWith('palette-')
       ? (draggingId.replace('palette-', '') as Command)
       : (slots.find(s => s.id === draggingId)?.command ?? null)
     : null
 
-
-
-// si es textMode, renderizamos el panel de texto en lugar del drag-and-drop
-if (textMode) {
-  return (
-    <TextModePanel
-      onRun={(cmds) => { bridge.emit('run-commands', cmds) }}
-      onReset={() => { clearQueue(); onReset() }}
-    />
-  )
-}
+  if (textMode) {
+    return (
+      <>
+        <PanelStyles />
+        <TextModePanel
+          onRun={(cmds) => { bridge.emit('run-commands', cmds) }}
+          onReset={() => { clearQueue(); onReset() }}
+        />
+      </>
+    )
+  }
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <style>{`
-        .hud-card {
-          background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
-          border: 2px solid #38bdf8;
-          box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
-        }
-        .hud-card-title {
-          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-          color: white;
-          text-transform: uppercase;
-          font-weight: 800;
-          font-size: 11px;
-          letter-spacing: 0.16em;
-          text-align: center;
-          padding: 4px 10px;
-          margin: -6px auto 10px;
-          border-radius: 999px;
-          width: fit-content;
-          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
-        }
-        .action-btn {
-          flex: 1;
-          padding: 14px 0;
-          border-radius: 14px;
-          font-weight: 900;
-          font-size: 17px;
-          letter-spacing: 0.14em;
-          color: white;
-          text-shadow: 0 2px 2px rgba(0,0,0,0.18);
-          border: 2px solid rgba(0,0,0,0.08);
-          transition: transform 0.08s;
-          cursor: pointer;
-        }
-        .action-btn:active:not(:disabled) { transform: translateY(2px); }
-        .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .action-btn--run {
-          background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
-          box-shadow: 0 4px 0 #15803d, 0 6px 14px rgba(34,197,94,0.35);
-        }
-        .action-btn--reset {
-          background: linear-gradient(180deg, #fde68a 0%, #facc15 100%);
-          color: #78350f;
-          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-          box-shadow: 0 4px 0 #ca8a04, 0 6px 14px rgba(250,204,21,0.35);
-        }
-      `}</style>
+      <PanelStyles />
       <div className="flex flex-col gap-3 h-full">
         <CommandPalette />
 
@@ -534,19 +525,12 @@ if (textMode) {
           onRemove={removeCommand}
         />
 
-        {/* Control buttons */}
-        <div className="flex items-center justify-between text-sm mb-2">
-          <span className="text-white/50">Intentos</span>
-          <span className={attempts >= maxAttempts - 1 ? 'text-red-400 font-bold' : 'text-white/70'}>
-            {attempts} / {maxAttempts}
-          </span>
-        </div>
-
         {isGameOver && (
           <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700 mb-2">
             💀 GAME OVER — Pulsa Resetear
           </div>
         )}
+
         <div className="flex gap-3 mt-auto">
           <button
             disabled={queue.length === 0 || isRunning || showNextLevel}
@@ -574,13 +558,14 @@ if (textMode) {
         )}
       </div>
 
-      {/* Drag overlay so cursor shows the dragged chip */}
+      {/* Overlay: misma imagen que paleta y cola → sin cambio visual al arrastrar */}
       <DragOverlay dropAnimation={null}>
         {draggingCommand ? (
           <img
-            src={COMMAND_META[draggingCommand].chipSprite}
+            src={COMMAND_META[draggingCommand].paletteSprite}
             alt=""
-            className="h-9 w-auto select-none drop-shadow-xl opacity-95 pointer-events-none"
+            className="block w-14 h-14 select-none drop-shadow-xl opacity-95 pointer-events-none"
+            style={{ objectFit: 'contain' }}
             draggable={false}
           />
         ) : null}

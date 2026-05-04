@@ -367,52 +367,45 @@ function GameScreen({
 
   return (
     <div style={{
-      height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
+      height: '100dvh', width: '100vw', overflow: 'hidden',
+      display: 'flex', flexDirection: 'column',
       background: 'linear-gradient(180deg, #c8eaff 0%, #9fd9f5 100%)',
+      paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
+      position: 'relative',
     }}>
-      <header className="flex items-center justify-between px-4 py-2"
-        style={{ borderBottom: '1px solid rgba(56,189,248,0.25)', background: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>
-        <div className="flex items-center gap-2">
-          <button onClick={handleBackToMenu}
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-semibold"
-            aria-label="Volver al menú">
-            <img src="/assets/buttons/icon/Propiedad%201=home_btn.png" alt="" className="w-7 h-7 select-none" />
-            Menú
-          </button>
-          <span className="text-white/20">|</span>
-          <button onClick={handleBackToLevels}
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-semibold"
-            aria-label="Volver a niveles">
-            <img src="/assets/buttons/icon/Propiedad%201=menu_btn.png" alt="" className="w-7 h-7 select-none" />
-            Niveles
-          </button>
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-lg">🤖</span>
-          <span className="font-black text-white tracking-wide text-sm hidden sm:inline">ENCIENDE LAS LUCES</span>
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={onToggleMute}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-            title={muted ? 'Activar sonido' : 'Silenciar'}
-            aria-label={muted ? 'Activar sonido' : 'Silenciar'}>
-            <img
-              src={muted ? '/assets/buttons/icon/Propiedad%201=volume_btn-no.png' : '/assets/buttons/icon/Propiedad%201=volume_btn.png'}
-              alt="" className="w-8 h-8 select-none" />
-          </button>
-          <button onClick={onOpenSettings}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-            title="Opciones"
-            aria-label="Opciones">
-            <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-8 h-8 select-none" />
-          </button>
-        </div>
-      </header>
+      {/* Botones flotantes superiores izquierdos: volver a niveles + ajustes */}
+      <div
+        className="absolute flex items-center gap-2"
+        style={{
+          top: 'calc(env(safe-area-inset-top) + 10px)',
+          left: 12,
+          zIndex: 30,
+        }}
+      >
+        <button
+          onClick={handleBackToLevels}
+          className="w-11 h-11 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          title="Volver a niveles"
+          aria-label="Volver a niveles"
+          style={{ background: 'transparent', border: 'none', padding: 0 }}
+        >
+          <img src="/assets/buttons/icon/Propiedad%201=back_btn.png" alt="" className="w-11 h-11 select-none" />
+        </button>
+        <button
+          onClick={onOpenSettings}
+          className="w-11 h-11 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          title="Opciones"
+          aria-label="Opciones"
+          style={{ background: 'transparent', border: 'none', padding: 0 }}
+        >
+          <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-11 h-11 select-none" />
+        </button>
+      </div>
       <main style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'flex', flexDirection: 'row',
-        padding: '6px', gap: '6px', alignItems: 'stretch',
+        padding: '8px', gap: '8px', alignItems: 'stretch',
       }}>
         {/* GameWrapper — izquierda: ocupa la altura completa del main, ancho por aspect-ratio */}
         <div style={{

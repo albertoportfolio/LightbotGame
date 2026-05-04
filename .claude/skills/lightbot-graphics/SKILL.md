@@ -101,6 +101,22 @@ Currently `BootScene.ts:162-180` generates the `robot` texture procedurally with
 
 For the **command palette** (`InstructionPanel.tsx`): floor-2 or floor-4 sized to the panel. Since this is React (not Phaser), use the file as a CSS `background-image: url('/assets/floor/floor-2-1.png')` (note the leading slash because the browser resolves relative to the page).
 
+#### In-game level platform (`GameScene.drawFloorPlatform`) — allowed shapes
+
+For the platform that sits behind the level grid (the "isla" with the robot and blocks on top), **only shapes 1, 2 and 4 are allowed**. Shape 3 (the small square) is reserved for HUD badges/icons and should **never** be used for the gameplay platform — it looks too cramped behind a grid.
+
+The picker (`GameScene.pickFloorShape`) uses the bbox aspect-ratio (`cols / rows`) of non-empty cells:
+
+| Aspect ratio (cols/rows) | Asset | Visual |
+|---|---|---|
+| `≥ 2.4` | `floor-1-X` | Tira fina horizontal — niveles muy anchos |
+| `≥ 1.4` | `floor-2-X` | Barra ancha — niveles medianos/anchos |
+| `< 1.4` | `floor-4-X` | Rect grande casi cuadrado — niveles cuadrados o verticales |
+
+Where `X` is the world-theme suffix from the World↔asset table. The shape stretches to the bbox via `setDisplaySize`, so the source aspect-ratio of the asset isn't critical — what matters is keeping the visual variety across worlds and avoiding shape 3 in-game.
+
+Decorative bottom: `drawFloorPlatform` adds extra `padBottom` (≈56 px) so the blocks never reach the lower edge of the platform (it reads as a 3D base, not a tile floor).
+
 ### 6) Buttons (HUD icons)
 
 `buttons/icon/` files have a Figma-style prefix `Propiedad 1=...`. Two options:
@@ -192,6 +208,7 @@ The level node now uses `blocks/type=default.png` for **every** level; visual va
 - **TexturePacker JSON format**: `player.json` uses the *array* format (`"frames": [ ... ]`), which Phaser's `load.atlas` reads natively. No conversion needed.
 - **Image sizes are large** (backgrounds ≈600×340, player frames ≈260×280). Scale down with `setDisplaySize()` or `setScale()` to fit the 680×560 canvas / cell sizes.
 - **All UI text remains Spanish.** Replacing procedural text with badge images does not change the language requirement for any new text added.
+- **In-game platform shapes are restricted to 1, 2 and 4** (shape 3 is HUD-only). See "In-game level platform" above for the picker rules. Shape 3 (`floor-3-X`) stays loaded for badges/icons but must never be returned by `GameScene.pickFloorShape`.
 
 ## Additional Resources
 

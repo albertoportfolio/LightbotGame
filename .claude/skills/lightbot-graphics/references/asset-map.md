@@ -79,10 +79,12 @@ HUD / panel backgrounds. The numeric prefix is the **shape**, the suffix is the 
 
 | Prefix | Aspect | Likely use |
 |---|---|---|
-| `floor-1` | Wide thin horizontal bar (~448×138) | HUD strip at top/bottom of the screen |
-| `floor-2` | Wide tall horizontal panel (~482×196) | Command palette / instruction panel |
-| `floor-3` | Square (~200×227) | Icon containers, badge backgrounds |
-| `floor-4` | Large rectangle (~250×195) | Modal / dialog panels |
+| `floor-1` | Wide thin horizontal bar (~448×138) | In-game platform for very wide levels (`ratio ≥ 2.4`); also HUD strips |
+| `floor-2` | Wide tall horizontal panel (~482×196) | In-game platform for medium/wide levels (`ratio ≥ 1.4`); command palette |
+| `floor-3` | Square (~200×227) | **HUD-only** — icon containers, badge backgrounds. **Never used as in-game platform** |
+| `floor-4` | Large rectangle (~250×195) | In-game platform for square/vertical levels (`ratio < 1.4`); modal/dialog panels |
+
+> **In-game restriction:** `GameScene.pickFloorShape` must only return 1, 2 or 4. The shape-3 variants stay loaded for HUD use (badges, icon tiles) but are forbidden behind the gameplay grid because the small square crops awkwardly when stretched.
 
 ### World theme (suffix)
 

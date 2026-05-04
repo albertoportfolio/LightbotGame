@@ -30,15 +30,20 @@ export class Robot {
   private scene: Phaser.Scene
   private state: RobotState
   private lastVarCell: { row: number; col: number } | null = null;
+  private originX: number
+  private originY: number
 
-  constructor(scene: Phaser.Scene, initialState: RobotState) {
+  constructor(scene: Phaser.Scene, initialState: RobotState, origin?: { x: number; y: number }) {
     this.scene = scene
     this.state = { ...initialState }
+    this.originX = origin?.x ?? GAME_CONFIG.GRID_OFFSET_X
+    this.originY = origin?.y ?? GAME_CONFIG.GRID_OFFSET_Y
 
     const { x, y } = this.cellToWorld(initialState.row, initialState.col)
     this.sprite = scene.add.sprite(x, y, DIRECTION_FRAME[initialState.direction].idle)
     this.sprite.setOrigin(0.5, 0.5)
     this.sprite.setScale(ROBOT_SCALE)
+    this.sprite.setDepth(10)
   }
 
   // Devuelve una copia del estado actual del robot (evita mutaciones externas)
@@ -111,11 +116,12 @@ copyVar(levelState: LevelState): boolean {
   }
 
   // Convierte coordenadas de cuadrícula (row, col) a píxeles del canvas (x, y)
+  // Usa el origen pasado al constructor (recalculado por nivel para centrar la plataforma)
   private cellToWorld(row: number, col: number): { x: number; y: number } {
-    const { GRID_OFFSET_X, GRID_OFFSET_Y, CELL_SIZE } = GAME_CONFIG
+    const { CELL_SIZE } = GAME_CONFIG
     return {
-      x: GRID_OFFSET_X + col * CELL_SIZE + CELL_SIZE / 2,
-      y: GRID_OFFSET_Y + row * CELL_SIZE + CELL_SIZE / 2,
+      x: this.originX + col * CELL_SIZE + CELL_SIZE / 2,
+      y: this.originY + row * CELL_SIZE + CELL_SIZE / 2,
     }
   }
 

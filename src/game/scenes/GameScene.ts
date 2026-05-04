@@ -69,6 +69,11 @@ export class GameScene extends Phaser.Scene {
   private cellImages: Phaser.GameObjects.Image[] = []
   private gridGraphics!: Phaser.GameObjects.Graphics
   private wonThisLevel = false
+  // Origen píxel del grid (top-left de fila 0, col 0). Se recalcula por nivel para centrar la plataforma.
+  private gridOriginX: number = GAME_CONFIG.GRID_OFFSET_X
+  private gridOriginY: number = GAME_CONFIG.GRID_OFFSET_Y
+  // Bounding box de celdas no vacías del nivel actual (cacheado para no recalcularlo en cada render)
+  private cellBBox = { minR: 0, maxR: 0, minC: 0, maxC: 0, rows: 0, cols: 0 }
   private sfx = new SoundManager()
   private handleStopMusic = () => { this.sfx.stopMusic() }
   private handleToggleMute = () => { this.sfx.toggleMute() }
@@ -125,22 +130,25 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
       .setDepth(-100)
   }
 
-  // Elige la forma del floor (1=fina, 2=barra, 3=cuadrado, 4=rect grande) según las dimensiones útiles del grid
-  // Se prioriza una forma cuyo aspect-ratio se acerque al del área ocupada por celdas no vacías
+  // Elige la forma del floor para la plataforma del nivel.
+  // Solo se permiten 1 (tira fina), 2 (barra ancha) y 4 (rect grande casi cuadrado);
+  // la 3 (cuadrado pequeño) queda reservada para badges/iconos del HUD, no para niveles.
+  // La elección depende del tamaño/aspecto del bbox de celdas usadas:
+  //   - levels muy anchos (ratio ≥ 2.4) → floor-1 (tira fina)
+  //   - levels medianos/anchos (ratio ≥ 1.4) → floor-2 (barra ancha)
+  //   - levels cuadrados o verticales → floor-4 (rect grande)
   private pickFloorShape(rows: number, cols: number): number {
     const ratio = cols / Math.max(1, rows)
-    if (ratio >= 3.0) return 1   // muy ancho y bajo → tira fina
-    if (ratio >= 1.8) return 2   // ancho moderado → barra
-    if (ratio <= 1.1) return 3   // casi cuadrado → cuadrado
-    return 4                     // proporciones balanceadas → rect grande
+    if (ratio >= 2.4) return 1
+    if (ratio >= 1.4) return 2
+    return 4
   }
 
-  // Pinta una "isla" de floor (hierba/arena/lava/galaxia) detrás de las celdas, ajustada al tamaño del grid
-  private drawFloorPlatform(world: number) {
+  // Calcula el bbox de celdas no vacías y lo cachea en this.cellBBox
+  private computeBBox() {
     const grid = this.levelState.grid
     const rows = grid.length
     const cols = grid[0]?.length ?? 0
-    // Calcular bounding box de celdas no vacías para que el floor se ajuste al área jugable
     let minR = rows, maxR = -1, minC = cols, maxC = -1
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
@@ -152,20 +160,73 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
         }
       }
     }
-    if (maxR < 0) return
-    const usedRows = maxR - minR + 1
-    const usedCols = maxC - minC + 1
-    const shape = this.pickFloorShape(usedRows, usedCols)
+    if (maxR < 0) {
+      this.cellBBox = { minR: 0, maxR: 0, minC: 0, maxC: 0, rows: 0, cols: 0 }
+      return
+    }
+    this.cellBBox = {
+      minR, maxR, minC, maxC,
+      rows: maxR - minR + 1,
+      cols: maxC - minC + 1,
+    }
+  }
+
+  // Padding del floor según el alto del bbox. El floor se compone de:
+  //   padTop (zona "cielo" del PNG) + bbox (deck donde van los bloques) + padBottom (base decorativa)
+  // padBottom es notablemente mayor que padTop para que la base decorativa quede bien marcada.
+  private getFloorPadding(usedH: number): { padX: number; padTop: number; padBottom: number } {
+    return {
+      padX: 26,
+      padTop:    Math.max(18, Math.round(usedH * 0.12)),
+      padBottom: Math.max(64, Math.round(usedH * 0.40)),
+    }
+  }
+
+  // Calcula el origen (x, y) del grid en píxeles del canvas. La plataforma (floor)
+  // queda centrada verticalmente en el espacio bajo la zona reservada al HUD;
+  // el bbox de celdas queda en la zona "deck" alta del floor, así los bloques nunca
+  // caen sobre la base decorativa inferior.
+  private computeGridOrigin(): { x: number; y: number } {
+    const { CELL_SIZE, WIDTH, HEIGHT } = GAME_CONFIG
+    const { rows, cols, minR, minC } = this.cellBBox
+    const usedW = cols * CELL_SIZE
+    const usedH = rows * CELL_SIZE
+
+    // Zona vertical superior reservada al HUD (botones volver/ajustes en la esquina sup. izq).
+    const HUD_RESERVED_TOP = 64
+
+    const { padTop, padBottom } = this.getFloorPadding(usedH)
+    const floorH = usedH + padTop + padBottom
+
+    // Centrado horizontal del bbox
+    const bboxLeftX = (WIDTH - usedW) / 2
+    // Centrado vertical del FLOOR (no del bbox) — el bbox queda en la zona alta del floor
+    const availH = HEIGHT - HUD_RESERVED_TOP
+    const floorTopY = HUD_RESERVED_TOP + Math.max(0, (availH - floorH) / 2)
+    const bboxTopY = floorTopY + padTop
+
+    return {
+      x: bboxLeftX - minC * CELL_SIZE,
+      y: bboxTopY - minR * CELL_SIZE,
+    }
+  }
+
+  // Pinta una "isla" de floor (hierba/arena/lava/galaxia) detrás de las celdas.
+  // El padding inferior es proporcional al alto del bbox para que la base decorativa
+  // siempre ocupe la misma fracción visual del floor — los bloques nunca caen sobre ella.
+  private drawFloorPlatform(world: number) {
+    if (this.cellBBox.rows === 0) return
+    const { rows, cols, minR, minC } = this.cellBBox
+    const shape = this.pickFloorShape(rows, cols)
     const key = `floor-${shape}-w${world}`
 
-    const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
-    // Margen alrededor del grid para que el "césped" sobresalga un poco de las celdas
-    const padX = 28
-    const padY = 32
-    const x = GRID_OFFSET_X + minC * CELL_SIZE - padX
-    const y = GRID_OFFSET_Y + minR * CELL_SIZE - padY
-    const w = usedCols * CELL_SIZE + padX * 2
-    const h = usedRows * CELL_SIZE + padY * 2
+    const { CELL_SIZE } = GAME_CONFIG
+    const bboxH = rows * CELL_SIZE
+    const { padX, padTop, padBottom } = this.getFloorPadding(bboxH)
+    const x = this.gridOriginX + minC * CELL_SIZE - padX
+    const y = this.gridOriginY + minR * CELL_SIZE - padTop
+    const w = cols * CELL_SIZE + padX * 2
+    const h = bboxH + padTop + padBottom
 
     this.floorImage?.destroy()
     this.floorImage = this.add.image(x + w / 2, y + h / 2, key)
@@ -179,75 +240,81 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.cellImages = []
   }
 
-  // Devuelve el key de bloque a usar para una celda dada (default/star/plant/moon) según su tipo y estado
+  // Devuelve el key de bloque a usar para una celda dada según su tipo y estado.
+  // - light  → estrella (siempre, encendida o no — el halo se dibuja por encima)
+  // - wall   → luna (block-moon)
+  // - variable → bloque variable (block-variable, se tinta según varColor)
   private blockKeyForCell(cell: { type: string; lit?: boolean; varColor?: string }): string | null {
     switch (cell.type) {
       case 'plant':    return 'block-plant'
-      case 'light':    return cell.lit ? 'block-star' : 'block-default'
+      case 'light':    return 'block-star'
       case 'floor':    return 'block-default'
       case 'wall':     return 'block-moon'
-      case 'variable': return null
+      case 'variable': return 'block-variable'
       case 'empty':
       default:         return null
     }
   }
 
+  // Tinte (0xRRGGBB) que aplicamos al bloque variable según su color actual
+  private tintForVarColor(vc?: string): number | null {
+    switch (vc) {
+      case 'red':    return 0xef4444
+      case 'blue':   return 0x60a5fa
+      case 'purple': return 0xa78bfa
+      default:       return null
+    }
+  }
+
   // Renderiza toda la cuadrícula: dibuja cada celda según su tipo (floor, wall, light, plant, variable)
+  // Los bloques son ligeramente más pequeños que CELL_SIZE para que el robot quede
+  // visible sin solaparse (queda un margen "aire" entre celdas).
   renderGrid() {
   this.gridGraphics.clear()
   this.clearCellImages()
-  const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
+  const { CELL_SIZE } = GAME_CONFIG
   const grid = this.levelState.grid
   const g = this.gridGraphics
+
+  // Tamaño visible del bloque: ~78% del cell, alto ligeramente mayor para incluir la base 3D
+  const BLOCK_W = Math.round(CELL_SIZE * 0.82)
+  const BLOCK_H = Math.round(CELL_SIZE * 0.82) + 6
 
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[row].length; col++) {
       const cell = grid[row][col]
       if (cell.type === 'empty') continue
-      const x  = GRID_OFFSET_X + col * CELL_SIZE
-      const y  = GRID_OFFSET_Y + row * CELL_SIZE
+      const x  = this.gridOriginX + col * CELL_SIZE
+      const y  = this.gridOriginY + row * CELL_SIZE
       const cx = x + CELL_SIZE / 2
       const cy = y + CELL_SIZE / 2
 
-      // ── 1) Si la celda tiene una imagen de bloque asignada, la dibujamos en lugar del rect procedural
       const blockKey = this.blockKeyForCell(cell as any)
       if (blockKey) {
         const img = this.add.image(cx, cy, blockKey)
-          .setDisplaySize(CELL_SIZE + 4, CELL_SIZE + 8) // +8 alto para incluir la base 3D del bloque
+          .setDisplaySize(BLOCK_W, BLOCK_H)
           .setOrigin(0.5, 0.5)
           .setDepth(-10)
+        // Variables: tinte según color actual; sin color, gris suave
+        if (cell.type === 'variable') {
+          const tint = this.tintForVarColor(cell.varColor)
+          if (tint !== null) img.setTint(tint)
+          else img.setTint(0xcbd5e1)
+        }
+        // Luces: si está apagada se oscurece el bloque; encendida queda con su color natural
+        if (cell.type === 'light') {
+          if (cell.lit) img.clearTint()
+          else img.setTint(0x4a5568)
+        }
         this.cellImages.push(img)
 
-        // Si la luz está encendida, añadimos un halo brillante por encima del bloque
+        // Halo brillante encima de las luces encendidas
         if (cell.type === 'light' && cell.lit) {
-          g.fillStyle(0xffffff, 0.35)
-          g.fillCircle(cx, cy - 4, 16)
-          g.fillStyle(0xffffff, 0.75)
-          drawStar(g, cx, cy - 4, 5, 3, 7)
+          g.fillStyle(0xfde68a, 0.45)
+          g.fillCircle(cx, cy - 4, 22)
+          g.fillStyle(0xffffff, 0.85)
+          drawStar(g, cx, cy - 4, 5, 4, 9)
         }
-        continue
-      }
-
-      // ── 2) Render procedural de fallback (variables, etc.) — se mantiene para no perder la lógica de color
-      if (cell.type === 'variable') {
-        const colors = {
-          red:  { base: 0x7f1d1d, fill: 0xef4444, glow: 0xfca5a5, border: 0xf87171 },
-          blue: { base: 0x1e3a5f, fill: 0x3b82f6, glow: 0x93c5fd, border: 0x60a5fa },
-           purple: { base: 0x4a1d96, fill: 0x8b5cf6, glow: 0xc4b5fd, border: 0xa78bfa },
-          none: { base: 0x1f2937, fill: 0x374151, glow: 0x6b7280, border: 0x4b5563 },
-        }
-        const vc = cell.varColor ?? 'none'
-        const pal = colors[vc]
-        g.fillStyle(0x000000, 0.4)
-        g.fillRoundedRect(x + 3, y + 6, CELL_SIZE - 4, CELL_SIZE - 4, 8)
-        g.fillStyle(pal.base, 1)
-        g.fillRoundedRect(x + 1, y + 5, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-        g.fillStyle(pal.fill, 1)
-        g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 5, 8)
-        g.fillStyle(pal.glow, 0.3)
-        g.fillRoundedRect(x + 6, y + 4, CELL_SIZE - 12, 6, 3)
-        g.lineStyle(2, pal.border, 0.9)
-        g.strokeRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
       }
     }
   }
@@ -259,13 +326,18 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.wonThisLevel = false
   const def = this.levelManager.loadLevel(index)
   this.levelState = this.levelManager.buildState(def)
+  // Calcular bbox y origen ANTES de crear el robot, para que su posición use el origen recentrado
+  this.computeBBox()
+  const origin = this.computeGridOrigin()
+  this.gridOriginX = origin.x
+  this.gridOriginY = origin.y
   this.robot?.destroy()
-  this.robot = new Robot(this, def.robotStart)
+  this.robot = new Robot(this, def.robotStart, { x: this.gridOriginX, y: this.gridOriginY })
   const world = this.getWorldFromIndex(index)
   this.drawWorldBackground(world)
   this.drawFloorPlatform(world)
   this.renderGrid()
-  this.drawVarLabels()   
+  this.drawVarLabels()
   this.sfx.levelStart()
   if (!this.sfx.isMuted()) this.sfx.startMusic()
   this.bridge.emit('level-loaded', {
@@ -287,7 +359,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.varLetterLabels = []
   this.varValueLabels  = []
 
-  const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
+  const { CELL_SIZE } = GAME_CONFIG
   const grid = this.levelState.grid
   const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
   let idx = 0
@@ -295,8 +367,8 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
       if (grid[r][c].type !== 'variable') continue
-      const x = GRID_OFFSET_X + c * CELL_SIZE + CELL_SIZE / 2
-      const y = GRID_OFFSET_Y + r * CELL_SIZE + CELL_SIZE / 2
+      const x = this.gridOriginX + c * CELL_SIZE + CELL_SIZE / 2
+      const y = this.gridOriginY + r * CELL_SIZE + CELL_SIZE / 2
 
       // Letra fija arriba (A / B / C)
       this.varLetterLabels.push(

@@ -40,10 +40,11 @@ export class BootScene extends Phaser.Scene {
     }
 
     // ── Bloques 3D para las celdas del grid ──
-    this.load.image('block-default', 'assets/blocks/type=default.png')
-    this.load.image('block-star',    'assets/blocks/type=star.png')
-    this.load.image('block-plant',   'assets/blocks/type=plant.png')
-    this.load.image('block-moon',    'assets/blocks/type=moon.png')
+    this.load.image('block-default',  'assets/blocks/type=default.png')
+    this.load.image('block-star',     'assets/blocks/type=star.png')
+    this.load.image('block-plant',    'assets/blocks/type=plant.png')
+    this.load.image('block-moon',     'assets/blocks/type=moon.png')
+    this.load.image('block-variable', 'assets/blocks/variable/block.png')
   }
 
   create() {

@@ -335,11 +335,11 @@ function LevelNode({
         }}
       >
         <img
-          src={completed ? '/assets/header/estrellas1.png' : '/assets/header/sinestrellas.png'}
-          alt="" aria-hidden="true"
-          className="absolute inset-0 w-full h-full"
-          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
-        />
+  src={completed ? '/assets/header/estrellas1.png' : '/assets/header/sinestrellas.png'}
+  alt="" aria-hidden="true"
+  className="absolute top-0 left-0 h-full w-full scale-x-[1.2] origin-center"
+  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
+/>
         <span
           style={{
             position: 'absolute',

@@ -171,45 +171,83 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     }
   }
 
-  // Padding del floor según el alto del bbox. El floor se compone de:
-  //   padTop (zona "cielo" del PNG) + bbox (deck donde van los bloques) + padBottom (base decorativa)
-  // padBottom es notablemente mayor que padTop para que la base decorativa quede bien marcada.
-  private getFloorPadding(usedH: number): { padX: number; padTop: number; padBottom: number } {
-    return {
-      padX: 26,
-      padTop:    Math.max(18, Math.round(usedH * 0.12)),
-      padBottom: Math.max(64, Math.round(usedH * 0.40)),
-    }
-  }
-
-  // Calcula el origen (x, y) del grid en píxeles del canvas. La plataforma (floor)
-  // queda centrada verticalmente en el espacio bajo la zona reservada al HUD;
-  // el bbox de celdas queda en la zona "deck" alta del floor, así los bloques nunca
-  // caen sobre la base decorativa inferior.
-  private computeGridOrigin(): { x: number; y: number } {
+  // Calcula posición y padding del floor de forma adaptativa para que SIEMPRE quepa en el canvas.
+  // Se intenta padding proporcional (12% arriba, 40% abajo); si el floor no cabe ni siquiera
+  // pegado a 8 px del borde superior, se comprime primero la base decorativa (padBottom) y
+  // luego, si hace falta, el padTop. Como último recurso se permite invadir la zona del HUD.
+  // Devuelve todo lo que necesitan computeGridOrigin y drawFloorPlatform.
+  private computeFloorLayout(): {
+    padX: number; padTop: number; padBottom: number;
+    floorTopY: number; bboxTopY: number; bboxLeftX: number;
+    usedW: number; usedH: number;
+  } {
     const { CELL_SIZE, WIDTH, HEIGHT } = GAME_CONFIG
-    const { rows, cols, minR, minC } = this.cellBBox
+    const { rows, cols } = this.cellBBox
     const usedW = cols * CELL_SIZE
     const usedH = rows * CELL_SIZE
 
-    // Zona vertical superior reservada al HUD (botones volver/ajustes en la esquina sup. izq).
-    const HUD_RESERVED_TOP = 64
+    const HUD_RESERVED_TOP = 64  // ideal: bajo los botones flotantes
+    const MIN_TOP = 8            // mínimo absoluto: el floor puede invadir el HUD si no cabe
+    const PAD_TOP_MIN = 12       // mínimo del margen "cielo" tras compresión
+    const PAD_BOTTOM_MIN = 12    // mínimo de base decorativa tras compresión
 
-    const { padTop, padBottom } = this.getFloorPadding(usedH)
-    const floorH = usedH + padTop + padBottom
+    // Padding ideal proporcional al alto del bbox
+    const padX = 26
+    let padTop    = Math.max(18, Math.round(usedH * 0.12))
+    let padBottom = Math.max(64, Math.round(usedH * 0.40))
+    let floorH = usedH + padTop + padBottom
 
-    // Centrado horizontal del bbox
-    const bboxLeftX = (WIDTH - usedW) / 2
-    // Centrado vertical del FLOOR (no del bbox) — el bbox queda en la zona alta del floor
-    const availH = HEIGHT - HUD_RESERVED_TOP
-    const floorTopY = HUD_RESERVED_TOP + Math.max(0, (availH - floorH) / 2)
+    // Compresión adaptativa si no cabe. Recortar primero base, luego cielo, y si aún no cabe
+    // permitir reducir hasta 0 (último recurso para niveles enormes tipo espiral 8×8).
+    const maxFloorH = HEIGHT - MIN_TOP
+    let overflow = floorH - maxFloorH
+    if (overflow > 0) {
+      const cutBot = Math.min(overflow, Math.max(0, padBottom - PAD_BOTTOM_MIN))
+      padBottom -= cutBot; overflow -= cutBot
+    }
+    if (overflow > 0) {
+      const cutTop = Math.min(overflow, Math.max(0, padTop - PAD_TOP_MIN))
+      padTop -= cutTop; overflow -= cutTop
+    }
+    if (overflow > 0) {
+      // Sacrificar mínimos antes que recortar el bbox (los bloques nunca se cortan)
+      const cutBot2 = Math.min(overflow, padBottom)
+      padBottom -= cutBot2; overflow -= cutBot2
+      if (overflow > 0) {
+        const cutTop2 = Math.min(overflow, padTop)
+        padTop -= cutTop2; overflow -= cutTop2
+      }
+    }
+    floorH = usedH + padTop + padBottom
+
+    // Posición vertical del floor: ideal centrado bajo HUD; si no cabe centrado, subir.
+    const idealTop = HUD_RESERVED_TOP + (HEIGHT - HUD_RESERVED_TOP - floorH) / 2
+    const maxTop   = HEIGHT - floorH  // bottom no puede salirse del canvas
+    const floorTopY = Math.max(MIN_TOP, Math.min(idealTop, maxTop))
     const bboxTopY = floorTopY + padTop
 
+    const bboxLeftX = (WIDTH - usedW) / 2
+
+    return { padX, padTop, padBottom, floorTopY, bboxTopY, bboxLeftX, usedW, usedH }
+  }
+
+  // Origen (x, y) del grid en píxeles. El bbox queda en la zona deck del floor.
+  private computeGridOrigin(): { x: number; y: number } {
+    const { CELL_SIZE } = GAME_CONFIG
+    const { minR, minC } = this.cellBBox
+    const layout = this.computeFloorLayout()
     return {
-      x: bboxLeftX - minC * CELL_SIZE,
-      y: bboxTopY - minR * CELL_SIZE,
+      x: layout.bboxLeftX - minC * CELL_SIZE,
+      y: layout.bboxTopY  - minR * CELL_SIZE,
     }
   }
+
+  private getFloorPadding(bboxH: number): { padX: number; padTop: number; padBottom: number } {
+  const padX      = 26
+  const padTop    = Math.max(18, Math.round(bboxH * 0.12))
+  const padBottom = Math.max(64, Math.round(bboxH * 0.40))
+  return { padX, padTop, padBottom }
+}
 
   // Pinta una "isla" de floor (hierba/arena/lava/galaxia) detrás de las celdas.
   // El padding inferior es proporcional al alto del bbox para que la base decorativa

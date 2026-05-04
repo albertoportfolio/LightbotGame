@@ -368,11 +368,11 @@ function GameScreen({
   return (
     <div style={{
       height: '100dvh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
-      background: 'linear-gradient(160deg, #0d1b2e 0%, #0a0a1e 100%)',
+      background: 'linear-gradient(180deg, #c8eaff 0%, #9fd9f5 100%)',
       paddingBottom: 'env(safe-area-inset-bottom)',
     }}>
       <header className="flex items-center justify-between px-4 py-2"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
+        style={{ borderBottom: '1px solid rgba(56,189,248,0.25)', background: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>
         <div className="flex items-center gap-2">
           <button onClick={handleBackToMenu}
             className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-semibold"
@@ -421,8 +421,12 @@ function GameScreen({
           aspectRatio: `${GAME_CONFIG.WIDTH} / ${GAME_CONFIG.HEIGHT}`,
           maxWidth: 'calc(100% - 152px)',
         }}>
-          <div className="rounded-2xl overflow-hidden"
-            style={{  height: '100%', boxShadow: '0 0 0 2px rgba(99,179,237,0.2), 0 8px 40px rgba(0,0,0,0.5)' }}>
+          <div className="rounded-3xl overflow-hidden"
+            style={{
+              height: '100%',
+              border: '4px solid #ffffff',
+              boxShadow: '0 0 0 2px rgba(56,189,248,0.45), 0 12px 30px rgba(14,165,233,0.25)',
+            }}>
             <GameWrapper bridge={emitter} />
           </div>
         </div>
@@ -435,8 +439,8 @@ function GameScreen({
         }}>
           <LevelHUD bridge={emitter} />
           <div className="rounded-2xl" style={{
-            flex: 1, overflow: 'auto', padding: '10px',
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)',
+            flex: 1, overflow: 'auto', padding: '8px',
+            background: 'transparent',
           }}>
             <InstructionPanel
               bridge={emitter}

@@ -13,13 +13,16 @@ const DIRECTION_DELTAS: Record<Direction, { dRow: number; dCol: number }> = {
 // Orden cíclico de las direcciones — girar a la derecha avanza +1, girar a la izquierda +3 (mod 4)
 const DIRECTION_ORDER: Direction[] = ['UP', 'RIGHT', 'DOWN', 'LEFT']
 
-// Mapeo de dirección al índice de frame del spritesheet del robot
-const DIRECTION_FRAME: Record<Direction, number> = {
-  DOWN:  0,
-  UP:    1,
-  RIGHT: 2,
-  LEFT:  3,
+// Mapeo de dirección a las texturas pre-redimensionadas: idle (estático) y fly (en movimiento)
+const DIRECTION_FRAME: Record<Direction, { idle: string; fly: string }> = {
+  DOWN:  { idle: 'player-front', fly: 'player-front-fly' },
+  UP:    { idle: 'player-back',  fly: 'player-back-fly'  },
+  RIGHT: { idle: 'player-right', fly: 'player-right-fly' },
+  LEFT:  { idle: 'player-left',  fly: 'player-left-fly'  },
 }
+
+// Los PNGs ya están pre-redimensionados (~118 px de alto máx, 2× para HiDPI); escalamos al tamaño de celda
+const ROBOT_SCALE = (GAME_CONFIG.CELL_SIZE - 4) / 118
 
 // Entidad del robot: gestiona posición, sprite, movimiento, giros, toggle de luces y copia de variables
 export class Robot {
@@ -33,8 +36,9 @@ export class Robot {
     this.state = { ...initialState }
 
     const { x, y } = this.cellToWorld(initialState.row, initialState.col)
-    this.sprite = scene.add.sprite(x, y, 'robot', DIRECTION_FRAME[initialState.direction])
-    this.sprite.setDisplaySize(GAME_CONFIG.CELL_SIZE - 4, GAME_CONFIG.CELL_SIZE - 4)
+    this.sprite = scene.add.sprite(x, y, DIRECTION_FRAME[initialState.direction].idle)
+    this.sprite.setOrigin(0.5, 0.5)
+    this.sprite.setScale(ROBOT_SCALE)
   }
 
   // Devuelve una copia del estado actual del robot (evita mutaciones externas)
@@ -64,7 +68,7 @@ export class Robot {
   turnLeft(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
     this.state.direction = DIRECTION_ORDER[(idx + 3) % 4]
-    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
+    this.setFrameFor(this.state.direction, false)
     return true
   }
 
@@ -72,7 +76,7 @@ export class Robot {
   turnRight(): boolean {
     const idx = DIRECTION_ORDER.indexOf(this.state.direction)
     this.state.direction = DIRECTION_ORDER[(idx + 1) % 4]
-    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
+    this.setFrameFor(this.state.direction, false)
     return true
   }
 
@@ -115,21 +119,30 @@ copyVar(levelState: LevelState): boolean {
     }
   }
 
-  // Anima el sprite del robot hasta la celda destino con un tween suave
+  // Asigna al sprite la textura correcta según dirección y estado (idle/fly)
+  private setFrameFor(direction: Direction, flying: boolean) {
+    const frames = DIRECTION_FRAME[direction]
+    this.sprite.setTexture(flying ? frames.fly : frames.idle)
+  }
+
+  // Anima el sprite del robot hasta la celda destino, mostrando el frame 'fly' durante el tween
   private animateTo(row: number, col: number) {
     const { x, y } = this.cellToWorld(row, col)
+
     this.scene.tweens.add({
       targets: this.sprite,
       x,
       y,
       duration: GAME_CONFIG.MOVE_DURATION_MS,
       ease: 'Cubic.easeInOut',
+      onStart:    () => this.setFrameFor(this.state.direction, true),
+      onComplete: () => this.setFrameFor(this.state.direction, false),
     })
   }
 
   // Actualiza el frame del sprite para reflejar la dirección actual del robot
   draw() {
-    this.sprite.setFrame(DIRECTION_FRAME[this.state.direction])
+    this.setFrameFor(this.state.direction, false)
   }
 
   // Reinicia el robot a su estado inicial: posición, dirección y variable de copia
@@ -138,7 +151,7 @@ copyVar(levelState: LevelState): boolean {
     this.lastVarCell = null;
     const { x, y } = this.cellToWorld(initialState.row, initialState.col)
     this.sprite.setPosition(x, y)
-    this.sprite.setFrame(DIRECTION_FRAME[initialState.direction])
+    this.setFrameFor(initialState.direction, false)
   }
 
   // Destruye el sprite de Phaser para liberar memoria al cambiar de nivel

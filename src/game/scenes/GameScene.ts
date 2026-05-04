@@ -65,6 +65,8 @@ export class GameScene extends Phaser.Scene {
   private robot!: Robot
   private executor!: CommandExecutor
   private bgImage?: Phaser.GameObjects.Image
+  private floorImage?: Phaser.GameObjects.Image
+  private cellImages: Phaser.GameObjects.Image[] = []
   private gridGraphics!: Phaser.GameObjects.Graphics
   private wonThisLevel = false
   private sfx = new SoundManager()
@@ -123,9 +125,77 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
       .setDepth(-100)
   }
 
+  // Elige la forma del floor (1=fina, 2=barra, 3=cuadrado, 4=rect grande) según las dimensiones útiles del grid
+  // Se prioriza una forma cuyo aspect-ratio se acerque al del área ocupada por celdas no vacías
+  private pickFloorShape(rows: number, cols: number): number {
+    const ratio = cols / Math.max(1, rows)
+    if (ratio >= 3.0) return 1   // muy ancho y bajo → tira fina
+    if (ratio >= 1.8) return 2   // ancho moderado → barra
+    if (ratio <= 1.1) return 3   // casi cuadrado → cuadrado
+    return 4                     // proporciones balanceadas → rect grande
+  }
+
+  // Pinta una "isla" de floor (hierba/arena/lava/galaxia) detrás de las celdas, ajustada al tamaño del grid
+  private drawFloorPlatform(world: number) {
+    const grid = this.levelState.grid
+    const rows = grid.length
+    const cols = grid[0]?.length ?? 0
+    // Calcular bounding box de celdas no vacías para que el floor se ajuste al área jugable
+    let minR = rows, maxR = -1, minC = cols, maxC = -1
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (grid[r][c].type !== 'empty') {
+          if (r < minR) minR = r
+          if (r > maxR) maxR = r
+          if (c < minC) minC = c
+          if (c > maxC) maxC = c
+        }
+      }
+    }
+    if (maxR < 0) return
+    const usedRows = maxR - minR + 1
+    const usedCols = maxC - minC + 1
+    const shape = this.pickFloorShape(usedRows, usedCols)
+    const key = `floor-${shape}-w${world}`
+
+    const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
+    // Margen alrededor del grid para que el "césped" sobresalga un poco de las celdas
+    const padX = 28
+    const padY = 32
+    const x = GRID_OFFSET_X + minC * CELL_SIZE - padX
+    const y = GRID_OFFSET_Y + minR * CELL_SIZE - padY
+    const w = usedCols * CELL_SIZE + padX * 2
+    const h = usedRows * CELL_SIZE + padY * 2
+
+    this.floorImage?.destroy()
+    this.floorImage = this.add.image(x + w / 2, y + h / 2, key)
+      .setDisplaySize(w, h)
+      .setDepth(-50)
+  }
+
+  // Limpia los sprites de celdas anteriores (se llaman al recargar nivel o re-renderizar)
+  private clearCellImages() {
+    this.cellImages.forEach(img => img.destroy())
+    this.cellImages = []
+  }
+
+  // Devuelve el key de bloque a usar para una celda dada (default/star/plant/moon) según su tipo y estado
+  private blockKeyForCell(cell: { type: string; lit?: boolean; varColor?: string }): string | null {
+    switch (cell.type) {
+      case 'plant':    return 'block-plant'
+      case 'light':    return cell.lit ? 'block-star' : 'block-default'
+      case 'floor':    return 'block-default'
+      case 'wall':     return 'block-moon'
+      case 'variable': return null
+      case 'empty':
+      default:         return null
+    }
+  }
+
   // Renderiza toda la cuadrícula: dibuja cada celda según su tipo (floor, wall, light, plant, variable)
   renderGrid() {
   this.gridGraphics.clear()
+  this.clearCellImages()
   const { CELL_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } = GAME_CONFIG
   const grid = this.levelState.grid
   const g = this.gridGraphics
@@ -139,38 +209,27 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
       const cx = x + CELL_SIZE / 2
       const cy = y + CELL_SIZE / 2
 
-      if (cell.type === 'wall') {
-        g.fillStyle(0x334155, 1)
-        g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 6)
-        g.fillStyle(0x475569, 1)
-        g.fillRoundedRect(x + 3, y + 3, CELL_SIZE - 6, CELL_SIZE - 6, 4)
-        g.fillStyle(0xffffff, 0.12)
-        g.fillRect(x + 3, y + 3, CELL_SIZE - 6, 4)
-        g.fillRect(x + 3, y + 3, 4, CELL_SIZE - 6)
-        g.fillStyle(0x000000, 0.25)
-        g.fillRect(x + 3, y + CELL_SIZE - 8, CELL_SIZE - 6, 5)
+      // ── 1) Si la celda tiene una imagen de bloque asignada, la dibujamos en lugar del rect procedural
+      const blockKey = this.blockKeyForCell(cell as any)
+      if (blockKey) {
+        const img = this.add.image(cx, cy, blockKey)
+          .setDisplaySize(CELL_SIZE + 4, CELL_SIZE + 8) // +8 alto para incluir la base 3D del bloque
+          .setOrigin(0.5, 0.5)
+          .setDepth(-10)
+        this.cellImages.push(img)
 
-      } else if (cell.type === 'plant') {
-        g.fillStyle(0x000000, 0.4)
-        g.fillRoundedRect(x + 3, y + 6, CELL_SIZE - 4, CELL_SIZE - 4, 8)
-        g.fillStyle(0x78350f, 1)
-        g.fillRoundedRect(x + 1, y + 5, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-        g.fillStyle(0x92400e, 1)
-        g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 5, 8)
-        g.fillStyle(0xa16207, 0.5)
-        g.fillCircle(x + 14, y + 14, 4)
-        g.fillCircle(x + CELL_SIZE - 14, y + 18, 3)
-        g.fillCircle(x + 20, y + CELL_SIZE - 18, 3)
-        g.fillStyle(0xfef3c7, 0.15)
-        g.fillRoundedRect(x + 6, y + 4, CELL_SIZE - 12, 6, 3)
-        g.lineStyle(2, 0x4ade80, 0.9)
-        g.strokeRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-        drawPlantDecal(g, cx, cy - 4)
-        g.fillStyle(0x4ade80, 0.5)
-        g.fillCircle(x + 6, y + 6, 3)
-        g.fillCircle(x + CELL_SIZE - 7, y + 7, 2)
+        // Si la luz está encendida, añadimos un halo brillante por encima del bloque
+        if (cell.type === 'light' && cell.lit) {
+          g.fillStyle(0xffffff, 0.35)
+          g.fillCircle(cx, cy - 4, 16)
+          g.fillStyle(0xffffff, 0.75)
+          drawStar(g, cx, cy - 4, 5, 3, 7)
+        }
+        continue
+      }
 
-      } else if (cell.type === 'variable') {
+      // ── 2) Render procedural de fallback (variables, etc.) — se mantiene para no perder la lógica de color
+      if (cell.type === 'variable') {
         const colors = {
           red:  { base: 0x7f1d1d, fill: 0xef4444, glow: 0xfca5a5, border: 0xf87171 },
           blue: { base: 0x1e3a5f, fill: 0x3b82f6, glow: 0x93c5fd, border: 0x60a5fa },
@@ -189,50 +248,6 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
         g.fillRoundedRect(x + 6, y + 4, CELL_SIZE - 12, 6, 3)
         g.lineStyle(2, pal.border, 0.9)
         g.strokeRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-
-      } else if (cell.type === 'light') {
-        if (cell.lit) {
-          g.fillStyle(0x67e8f9, 0.2)
-          g.fillRoundedRect(x - 5, y - 5, CELL_SIZE + 10, CELL_SIZE + 10, 14)
-          g.fillStyle(0x0e7490, 1)
-          g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-          g.fillStyle(0x22d3ee, 1)
-          g.fillRoundedRect(x + 5, y + 5, CELL_SIZE - 10, CELL_SIZE - 10, 6)
-          g.fillStyle(0xffffff, 0.95); g.fillCircle(cx, cy, 11)
-          g.lineStyle(2, 0xa5f3fc, 0.9)
-          for (let a = 0; a < 8; a++) {
-            const angle = (a / 8) * Math.PI * 2
-            g.lineBetween(
-              cx + Math.cos(angle) * 13, cy + Math.sin(angle) * 13,
-              cx + Math.cos(angle) * 22, cy + Math.sin(angle) * 22
-            )
-          }
-          g.fillStyle(0xffffff, 0.85); drawStar(g, cx, cy, 5, 4, 9)
-        } else {
-          g.fillStyle(0x2e1065, 1)
-          g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-          g.fillStyle(0x4c1d95, 0.6)
-          g.fillRoundedRect(x + 4, y + 4, CELL_SIZE - 8, CELL_SIZE - 8, 6)
-          g.lineStyle(1.5, 0x7c3aed, 0.7)
-          g.strokeRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-          g.fillStyle(0x8b5cf6, 0.35); drawStar(g, cx, cy, 5, 5, 13)
-        }
-
-      } else {
-        // floor
-        g.fillStyle(0x000000, 0.4)
-        g.fillRoundedRect(x + 3, y + 6, CELL_SIZE - 4, CELL_SIZE - 4, 8)
-        g.fillStyle(0x14532d, 1)
-        g.fillRoundedRect(x + 1, y + 5, CELL_SIZE - 2, CELL_SIZE - 2, 8)
-        g.fillStyle(0x22c55e, 1)
-        g.fillRoundedRect(x + 1, y + 1, CELL_SIZE - 2, CELL_SIZE - 5, 8)
-        g.fillStyle(0x4ade80, 0.55)
-        g.fillCircle(x + 13, y + 13, 5)
-        g.fillCircle(x + CELL_SIZE - 14, y + 11, 4)
-        g.fillCircle(x + 16, y + CELL_SIZE - 17, 4)
-        g.fillCircle(x + CELL_SIZE - 15, y + CELL_SIZE - 15, 5)
-        g.fillStyle(0xbbf7d0, 0.5)
-        g.fillRoundedRect(x + 6, y + 4, CELL_SIZE - 12, 7, 4)
       }
     }
   }
@@ -246,7 +261,9 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.levelState = this.levelManager.buildState(def)
   this.robot?.destroy()
   this.robot = new Robot(this, def.robotStart)
-  this.drawWorldBackground(this.getWorldFromIndex(index))
+  const world = this.getWorldFromIndex(index)
+  this.drawWorldBackground(world)
+  this.drawFloorPlatform(world)
   this.renderGrid()
   this.drawVarLabels()   
   this.sfx.levelStart()

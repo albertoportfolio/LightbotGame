@@ -21,48 +21,106 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
   }, [bridge])
 
   return (
-    <div className="flex flex-col px-4 py-2 bg-white/5 rounded-xl border border-white/10 mb-3 gap-1">
+    <div className="flex flex-col gap-2 mb-2">
+      <style>{`
+        .level-banner {
+          background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
+          border: 2px solid #38bdf8;
+          border-radius: 18px;
+          box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
+          padding: 8px 12px;
+        }
+        .level-pill {
+          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+          color: white;
+          text-transform: uppercase;
+          font-weight: 900;
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          padding: 4px 12px;
+          border-radius: 999px;
+          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
+        }
+        .level-name {
+          color: #1e3a8a;
+          font-weight: 900;
+          font-size: 14px;
+          letter-spacing: 0.04em;
+        }
+        .level-section-title {
+          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+          color: white;
+          text-transform: uppercase;
+          font-weight: 800;
+          font-size: 10px;
+          letter-spacing: 0.18em;
+          padding: 4px 10px;
+          border-radius: 999px;
+          width: fit-content;
+          margin: -4px auto 6px;
+          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
+        }
+        .stat-card {
+          flex: 1;
+          background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
+          border: 2px solid #38bdf8;
+          border-radius: 14px;
+          padding: 6px 8px;
+          text-align: center;
+          box-shadow: inset 0 -3px 0 rgba(14,165,233,0.2);
+        }
+        .stat-label {
+          color: #0c4a6e;
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+        }
+        .stat-value {
+          color: #075985;
+          font-weight: 900;
+          font-size: 22px;
+          line-height: 1;
+        }
+      `}</style>
 
-      {/* Fila 1: nivel y nombre */}
-     <div className="flex items-center justify-between">
-  <div className="flex items-center gap-2">
-    <p className="text-xs text-white/50 uppercase tracking-widest whitespace-nowrap">
-      Nivel {currentLevel + 1}
-    </p>
-    <span className="text-white/20">·</span>
-    <p className="text-white font-bold text-sm leading-tight">{levelName}</p>
-  </div>
-  {activeCmd >= 0 && (
-    <div className="text-xs text-yellow-400 font-mono animate-pulse whitespace-nowrap">
-      ▶ Paso {activeCmd + 1}
-    </div>
-  )}
-</div>
-
-      {/* Instrucciones */}
-      {instructions && (
-        <div className="text-xs text-white/60 bg-white/5 rounded-lg px-3 py-2 border border-white/10 leading-relaxed">
-          📋 {instructions}
+      {/* Banner: NIVEL N · NOMBRE */}
+      <div className="level-banner flex flex-col items-center gap-1">
+        <div className="flex items-center gap-2 justify-center">
+          <span className="level-pill">Nivel {currentLevel + 1}</span>
+          <span className="level-name">{levelName}</span>
+          {activeCmd >= 0 && (
+            <span className="text-[10px] text-amber-500 font-bold animate-pulse">▶ Paso {activeCmd + 1}</span>
+          )}
         </div>
-      )}
-
-      {/* Fila 2: comandos e intentos */}
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-white/50 uppercase tracking-widest">Comandos</p>
-          <p className="text-white font-mono text-lg leading-tight">
-            {queue.length}<span className="text-white/30"> / {maxCommands}</span>
+        {instructions && (
+          <p className="text-[11px] text-sky-900/80 text-center font-semibold leading-snug">
+            {instructions}
           </p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-white/50 uppercase tracking-widest">Intentos</p>
-          <p className={`font-mono text-lg leading-tight ${attempts >= maxAttempts - 1 ? 'text-red-400' : 'text-white'}`}>
-            {maxAttempts - attempts}
-            <span className="text-white/30"> restantes</span>
-          </p>
-        </div>
+        )}
       </div>
 
+      {/* Card Comandos / Intentos */}
+      <div className="rounded-2xl px-3 py-3" style={{
+        background: 'linear-gradient(180deg, #ffffff 0%, #ecfeff 100%)',
+        border: '2px solid #38bdf8',
+        boxShadow: '0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18)',
+      }}>
+        <p className="level-section-title">Enciende todas las luces</p>
+        <div className="flex gap-2">
+          <div className="stat-card">
+            <p className="stat-label">Logrados</p>
+            <p className="stat-value">{queue.length}<span className="text-sky-700/60 text-base">/{maxCommands}</span></p>
+          </div>
+          <div className="stat-card">
+            <p className="stat-label">Intentos</p>
+            <p className={`stat-value ${attempts >= maxAttempts - 1 ? 'text-rose-500' : ''}`}>
+              {maxAttempts - attempts}
+              <span className="text-sky-700/60 text-[10px] ml-1 font-bold">RESTANTES</span>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

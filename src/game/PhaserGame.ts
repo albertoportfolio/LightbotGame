@@ -23,7 +23,14 @@ export function createPhaserGame(
       width: GAME_CONFIG.WIDTH,
       height: GAME_CONFIG.HEIGHT,
     },
-  
+    // Mipmaps trilineales: imprescindibles para que el atlas del robot
+    // (frames ~280 px reducidos a ~60 px) se vea nítido en lugar de borroso
+    render: {
+      antialias: true,
+      pixelArt: false,
+      roundPixels: false,
+      mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+    },
     parent,
     backgroundColor: '#1a1a2e',
     scene: [BootScene, GameScene],

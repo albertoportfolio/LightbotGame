@@ -42,7 +42,7 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id })
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : isDimmed ? 0.5 : 1,
@@ -51,25 +51,26 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
   return (
     <div
       ref={setNodeRef}
-      style={{ ...style, backgroundColor: meta.bgColor }}
+      style={style}
       {...attributes}
       {...listeners}
       className={`
-        relative flex flex-col items-center justify-center
-        w-14 h-14 rounded-xl cursor-grab select-none
-        border-2 transition-all text-white text-xl font-bold
-        ${isActive ? 'border-yellow-400 scale-105 shadow-lg shadow-yellow-400/30' : 'border-white/20'}
-        hover:border-white/50 hover:scale-105
+        relative cursor-grab select-none transition-all
+        ${isActive ? 'scale-110 drop-shadow-[0_0_10px_rgba(250,204,21,0.7)]' : ''}
+        hover:scale-105
       `}
       title={meta.label}
     >
-      <span className="text-2xl leading-none">{meta.icon}</span>
-      <span className="text-[9px] mt-1 opacity-70 font-normal text-center leading-tight">
-        {meta.label}
-      </span>
+      <img
+        src={meta.chipSprite}
+        alt={meta.label}
+        draggable={false}
+        className="block h-9 w-auto select-none pointer-events-none"
+        style={{ filter: isActive ? 'brightness(1.15)' : undefined }}
+      />
       {showRemove && (
         <button
-          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center hover:bg-red-600 z-10"
+          className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full text-[10px] text-white flex items-center justify-center hover:bg-red-600 z-10"
           onPointerDown={(e) => { e.stopPropagation() }}
           onClick={(e) => { e.stopPropagation(); onRemove?.() }}
         >
@@ -102,21 +103,18 @@ function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) 
       ref={setNodeRef}
       disabled={isFull}
       onClick={onAdd}
-      style={{ backgroundColor: meta.bgColor, opacity: isDragging ? 0.4 : 1 }}
+      style={{ opacity: isDragging ? 0.4 : 1, padding: 0, background: 'transparent', border: 'none' }}
       {...attributes}
       {...listeners}
-      className={`
-        flex flex-col items-center justify-center
-        w-14 h-14 rounded-xl text-white border-2 border-white/20
-        transition-all hover:border-white/50 hover:scale-105 cursor-grab
-        disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100
-      `}
+      className="cursor-grab transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       title={meta.label}
     >
-      <span className="text-2xl leading-none">{meta.icon}</span>
-      <span className="text-[9px] mt-1 opacity-70 font-normal text-center leading-tight">
-        {meta.label}
-      </span>
+      <img
+        src={meta.paletteSprite}
+        alt={meta.label}
+        draggable={false}
+        className="block w-14 h-14 select-none pointer-events-none"
+      />
     </button>
   )
 }
@@ -128,9 +126,9 @@ function CommandPalette() {
   const visibleCommands = allowedCommands ?? ALL_COMMANDS
 
   return (
-    <div className="mb-4">
-      <p className="text-xs text-white/50 uppercase tracking-widest mb-2">Comandos Disponibles</p>
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-3 rounded-2xl px-3 py-3 hud-card hud-card--commands">
+      <p className="hud-card-title">Comandos Disponibles</p>
+      <div className="flex flex-wrap gap-2 justify-center">
         {visibleCommands.map((cmd) => (
           <DraggablePaletteButton
             key={cmd}
@@ -141,7 +139,7 @@ function CommandPalette() {
         ))}
       </div>
       {isFull && (
-        <p className="text-xs text-red-400 mt-1">NO PUEDES AÑADIR MAS COMANDOS! ({maxCommands} max)</p>
+        <p className="text-xs text-red-500 mt-2 text-center font-bold">NO PUEDES AÑADIR MÁS COMANDOS ({maxCommands} max)</p>
       )}
     </div>
   )
@@ -165,13 +163,17 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
   const emptySlots = Array.from({ length: maxCommands - slots.length })
 
   return (
-    <div>
-      <p className="text-xs text-white/50 uppercase tracking-widest mb-2">
-        Introduce Comandos ({slots.length}/{maxCommands})
+    <div className="rounded-2xl px-3 py-3 hud-card hud-card--queue">
+      <p className="hud-card-title">
+        Introduce Comandos
       </p>
       <div
         ref={setNodeRef}
-        className="flex flex-wrap gap-2 min-h-[80px] p-3 rounded-xl bg-white/5 border border-dashed border-white/20"
+        className="flex flex-wrap gap-2 min-h-[88px] p-3 rounded-xl"
+        style={{
+          background: 'rgba(186,230,253,0.55)',
+          border: '2px dashed rgba(56,189,248,0.55)',
+        }}
       >
         <SortableContext items={slots.map(s => s.id)} strategy={rectSortingStrategy}>
           {slots.map((slot, i) => (
@@ -189,12 +191,18 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
         {emptySlots.map((_, i) => (
           <div
             key={`empty-${i}`}
-            className="w-14 h-14 rounded-xl border-2 border-dashed border-white/10 opacity-30"
+            className="rounded-xl"
+            style={{
+              width: 70,
+              height: 36,
+              background: 'rgba(255,255,255,0.55)',
+              border: '1px dashed rgba(56,189,248,0.4)',
+            }}
           />
         ))}
         {slots.length === 0 && (
-          <p className="text-white/30 text-sm self-center w-full text-center py-2">
-            Haz click en los comandos para añadirlos aqui
+          <p className="text-sky-700/70 text-xs self-center w-full text-center py-2">
+            Arrastra o haz click en los comandos para añadirlos aquí
           </p>
         )}
       </div>
@@ -469,7 +477,53 @@ if (textMode) {
 
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="flex flex-col gap-4 h-full">
+      <style>{`
+        .hud-card {
+          background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
+          border: 2px solid #38bdf8;
+          box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
+        }
+        .hud-card-title {
+          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+          color: white;
+          text-transform: uppercase;
+          font-weight: 800;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-align: center;
+          padding: 4px 10px;
+          margin: -6px auto 10px;
+          border-radius: 999px;
+          width: fit-content;
+          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
+        }
+        .action-btn {
+          flex: 1;
+          padding: 14px 0;
+          border-radius: 14px;
+          font-weight: 900;
+          font-size: 17px;
+          letter-spacing: 0.14em;
+          color: white;
+          text-shadow: 0 2px 2px rgba(0,0,0,0.18);
+          border: 2px solid rgba(0,0,0,0.08);
+          transition: transform 0.08s;
+          cursor: pointer;
+        }
+        .action-btn:active:not(:disabled) { transform: translateY(2px); }
+        .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .action-btn--run {
+          background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
+          box-shadow: 0 4px 0 #15803d, 0 6px 14px rgba(34,197,94,0.35);
+        }
+        .action-btn--reset {
+          background: linear-gradient(180deg, #fde68a 0%, #facc15 100%);
+          color: #78350f;
+          text-shadow: 0 1px 0 rgba(255,255,255,0.4);
+          box-shadow: 0 4px 0 #ca8a04, 0 6px 14px rgba(250,204,21,0.35);
+        }
+      `}</style>
+      <div className="flex flex-col gap-3 h-full">
         <CommandPalette />
 
         <QueueArea
@@ -493,20 +547,20 @@ if (textMode) {
             💀 GAME OVER — Pulsa Resetear
           </div>
         )}
-        <div className="flex gap-2 mt-auto">
+        <div className="flex gap-3 mt-auto">
           <button
             disabled={queue.length === 0 || isRunning || showNextLevel}
             onClick={handleRun}
-            className="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="action-btn action-btn--run"
           >
-            <span>▶</span> Ejecutar
+            EJECUTAR
           </button>
           <button
             disabled={isRunning}
             onClick={handleReset}
-            className="flex-1 py-3 rounded-xl font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="action-btn action-btn--reset"
           >
-            <img src="/assets/buttons/icon/Propiedad%201=redo_btn.png" alt="" className="w-6 h-6 select-none" /> Resetear nivel
+            RESETEAR
           </button>
         </div>
 
@@ -523,18 +577,14 @@ if (textMode) {
       {/* Drag overlay so cursor shows the dragged chip */}
       <DragOverlay dropAnimation={null}>
         {draggingCommand ? (
-          <div
-            style={{ backgroundColor: COMMAND_META[draggingCommand].bgColor }}
-            className="w-14 h-14 rounded-xl border-2 border-white/50 flex flex-col items-center justify-center text-white opacity-90 shadow-xl"
-          >
-            <span className="text-2xl">{COMMAND_META[draggingCommand].icon}</span>
-          </div>
+          <img
+            src={COMMAND_META[draggingCommand].chipSprite}
+            alt=""
+            className="h-9 w-auto select-none drop-shadow-xl opacity-95 pointer-events-none"
+            draggable={false}
+          />
         ) : null}
       </DragOverlay>
     </DndContext>
-
-
   )
-
-
 }

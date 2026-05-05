@@ -155,32 +155,37 @@ function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onP
           <h1 className="start-nav-title select-none">MAESTRO BOT</h1>
         </header>
 
-        <div className="flex-1 flex flex-col items-center px-6 py-5">
+        <div className="flex-1 flex flex-col items-center px-6 py-5 min-h-0">
+          {/* Imagen del título: encoge con la altura del viewport para que la card
+              quepa entera incluso en móvil-landscape sin necesidad de scroll. */}
           <img
             src="/assets/header/title.png"
             alt="Maestro Bot"
-            className="select-none mt-6"
+            className="select-none mt-6 flex-shrink"
             style={{
               width: 270,
+              maxWidth: '100%',
               height: 'auto',
+              maxHeight: 'min(170px, 26dvh)',
+              objectFit: 'contain',
               filter: 'drop-shadow(0 6px 14px rgba(80,95,255,0.35))',
             }}
           />
           <p
-            className="text-center mt-5 text-sm px-4"
+            className="text-center mt-5 text-sm px-4 flex-shrink-0"
             style={{ color: '#666', fontFamily: 'Nunito, sans-serif', fontWeight: 600 }}
           >
             ¡Programa al robot y enciende las luces!
           </p>
 
-          <div className="flex-1" />
+          <div className="flex-1 min-h-0" />
 
-          <button onClick={onStart} className="start-btn-cyan" aria-label="Jugar">
+          <button onClick={onStart} className="start-btn-cyan flex-shrink-0" aria-label="Jugar">
             JUGAR
           </button>
 
           <div
-            className="flex items-center justify-center gap-5 mt-4"
+            className="flex items-center justify-center gap-5 mt-4 flex-shrink-0"
             style={{ fontSize: 11, color: '#888' }}
           >
             <button

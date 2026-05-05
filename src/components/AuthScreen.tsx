@@ -80,12 +80,13 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-hidden p-4"
+      className="fixed inset-0 overflow-y-auto overflow-x-hidden"
       style={{
         backgroundImage: "url('/assets/backgrounds/menu/sky 1.png')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundColor: '#9FE3D8',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
       <style>{`
@@ -219,6 +220,9 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
         style={{ bottom: '6%', left: 0, width: '100%', opacity: 0.7, animation: 'cloudSlow 24s ease-in-out infinite alternate-reverse' }}
       />
 
+      {/* Wrapper de scroll: min-h-full centra cuando entra todo y permite crecer +
+          que el viewport empuje al outer (overflow-y-auto) en móvil / pantallas cortas. */}
+      <div className="relative min-h-full flex items-center justify-center p-4">
       <div
         className="auth-card relative flex flex-col rounded-3xl overflow-hidden"
         style={{
@@ -226,7 +230,6 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
           height: cardHeight,
           minHeight: cardMinHeight,
           maxWidth: 'calc(100vw - 32px)',
-          maxHeight: 'calc(100dvh - 32px)',
           background: 'white',
           boxShadow: '0 24px 60px rgba(0,0,0,0.28), 0 8px 16px rgba(0,0,0,0.15)',
         }}
@@ -353,6 +356,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   )

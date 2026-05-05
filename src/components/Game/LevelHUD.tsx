@@ -3,12 +3,15 @@ import { useEffect, useState } from 'react'
 import Phaser from 'phaser'
 import { useGameStore } from '../../store/gameStore'
 
-// Props del HUD superior: recibe el bridge para escuchar eventos de ejecución
 interface LevelHUDProps {
   bridge: Phaser.Events.EventEmitter
 }
 
-// HUD del nivel: muestra nombre, instrucciones, comandos usados/máximo, intentos restantes y paso activo
+// HUD superior. Diseño en public/resultado_final/paleta_HUD_final.png:
+// - Barra navy con pill amarilla "NIVEL N" + nombre de nivel.
+// - Una sola tarjeta turquesa que contiene la pill de objetivo y, debajo,
+//   dos sub-tarjetas (Comandos / Intentos) del MISMO turquesa que la madre,
+//   con los números en azul navy (no se invierten los colores).
 export function LevelHUD({ bridge }: LevelHUDProps) {
   const { currentLevel, queue, maxCommands, levelName, instructions } = useGameStore()
   const [activeCmd, setActiveCmd] = useState(-1)
@@ -20,103 +23,134 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
     return () => { bridge.off('command-executed', onExecuted) }
   }, [bridge])
 
+  const remaining = maxAttempts - attempts
+  const levelLabel = String(currentLevel + 1).padStart(2, '0')
+
   return (
-    <div className="flex flex-col gap-2 mb-2">
+    <div className="flex flex-col gap-3">
       <style>{`
-        .level-banner {
-          background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
-          border: 2px solid #38bdf8;
-          border-radius: 18px;
-          box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
-          padding: 8px 12px;
+        .hud-header {
+          background: #505FFF;
+          border-radius: 16px;
+          padding: 10px 14px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          box-shadow: 0 3px 0 rgba(0,0,0,0.18);
         }
-        .level-pill {
-          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-          color: white;
-          text-transform: uppercase;
+        .hud-header__pill {
+          background: linear-gradient(180deg, #ffd34a 0%, #f5a623 100%);
+          color: #5a3500;
           font-weight: 900;
-          font-size: 10px;
-          letter-spacing: 0.18em;
+          font-size: 11px;
+          letter-spacing: 0.16em;
           padding: 4px 12px;
           border-radius: 999px;
-          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
-        }
-        .level-name {
-          color: #1e3a8a;
-          font-weight: 900;
-          font-size: 14px;
-          letter-spacing: 0.04em;
-        }
-        .level-section-title {
-          background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
-          color: white;
+          text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+          box-shadow: 0 2px 0 rgba(146,64,14,0.45);
           text-transform: uppercase;
-          font-weight: 800;
-          font-size: 10px;
-          letter-spacing: 0.18em;
-          padding: 4px 10px;
-          border-radius: 999px;
-          width: fit-content;
-          margin: -4px auto 6px;
-          box-shadow: 0 2px 0 rgba(37,99,235,0.5);
         }
+        .hud-header__name {
+          color: #ffffff;
+          font-weight: 900;
+          font-size: 13px;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.25);
+        }
+        .hud-active {
+          color: #fde68a;
+          font-size: 10px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          margin-left: 4px;
+        }
+
+        /* Tarjeta madre cyan que envuelve objetivo + stats */
+        .hud-info-card {
+          background: #8de8ff;
+          border-radius: 18px;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .hud-objective-pill {
+          background: #00ccff;
+          color: white;
+          font-weight: 900;
+          text-transform: uppercase;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-align: center;
+          padding: 6px 12px;
+          border-radius: 999px;
+        }
+        .stat-row { display: flex; gap: 10px; }
         .stat-card {
           flex: 1;
-          background: linear-gradient(180deg, #e0f2fe 0%, #bae6fd 100%);
-          border: 2px solid #38bdf8;
+          background: #00ccff;
           border-radius: 14px;
-          padding: 6px 8px;
+          padding: 8px 10px 10px;
           text-align: center;
-          box-shadow: inset 0 -3px 0 rgba(14,165,233,0.2);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 4px;
         }
-        .stat-label {
-          color: #0c4a6e;
-          font-size: 9px;
-          font-weight: 800;
+        .stat-card__label {
+          color: white;
+          font-weight: 900;
           letter-spacing: 0.18em;
+          font-size: 10px;
           text-transform: uppercase;
         }
-        .stat-value {
-          color: #075985;
+        .stat-card__value {
+          color: white;
           font-weight: 900;
-          font-size: 22px;
+          font-size: 26px;
           line-height: 1;
+          
         }
+        .stat-card__suffix {
+          color: #34477c;
+          font-size: 16px;
+          font-weight: 900;
+        }
+        .stat-card__inline-suffix {
+          color: #34477c;
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.14em;
+          margin-left: 4px;
+        }
+        .stat-card--danger { background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%); }
+        .stat-card--danger .stat-card__label,
+        .stat-card--danger .stat-card__value,
+        .stat-card--danger .stat-card__inline-suffix { color: #7f1d1d; }
       `}</style>
 
-      {/* Banner: NIVEL N · NOMBRE */}
-      <div className="level-banner flex flex-col items-center gap-1">
-        <div className="flex items-center gap-2 justify-center">
-          <span className="level-pill">Nivel {currentLevel + 1}</span>
-          <span className="level-name">{levelName}</span>
-          {activeCmd >= 0 && (
-            <span className="text-[10px] text-amber-500 font-bold animate-pulse">▶ Paso {activeCmd + 1}</span>
-          )}
-        </div>
-        {instructions && (
-          <p className="text-[11px] text-sky-900/80 text-center font-semibold leading-snug">
-            {instructions}
-          </p>
-        )}
+      <div className="hud-header">
+        <span className="hud-header__pill">Nivel {levelLabel}</span>
+        <span className="hud-header__name">{levelName}</span>
+       
       </div>
 
-      {/* Card Comandos / Intentos */}
-      <div className="rounded-2xl px-3 py-3" style={{
-        background: 'linear-gradient(180deg, #ffffff 0%, #ecfeff 100%)',
-        border: '2px solid #38bdf8',
-        boxShadow: '0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18)',
-      }}>
-        <p className="level-section-title">Enciende todas las luces</p>
-        <div className="flex gap-2">
+      <div className="hud-info-card">
+        {instructions && <p className="hud-objective-pill">{instructions}</p>}
+        <div className="stat-row">
           <div className="stat-card">
-            <p className="stat-label">Logrados</p>
-            <p className="stat-value">{queue.length}<span className="text-sky-700/60 text-base">/{maxCommands}</span></p>
+            <span className="stat-card__label">Comandos</span>
+            <p className="stat-card__value">
+              {queue.length}<span className="stat-card__suffix">/{maxCommands}</span>
+            </p>
           </div>
-          <div className="stat-card">
-            <p className="stat-label">Intentos</p>
-            <p className={`stat-value ${attempts >= maxAttempts - 1 ? 'text-rose-500' : ''}`}>
-              {maxAttempts - attempts}
-              <span className="text-sky-700/60 text-[10px] ml-1 font-bold">RESTANTES</span>
+          <div className={`stat-card ${remaining <= 1 ? 'stat-card--danger' : ''}`}>
+            <span className="stat-card__label">Intentos</span>
+            <p className="stat-card__value">
+              {remaining}
+              <span className="stat-card__inline-suffix">RESTANTES</span>
             </p>
           </div>
         </div>

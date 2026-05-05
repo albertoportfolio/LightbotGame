@@ -200,6 +200,137 @@ Each rectangle in `<PathConnector>` uses `animation: connectorPulse 1.6s ease-in
 
 The level node now uses `blocks/type=default.png` for **every** level; visual variants are achieved via CSS `filter` on the same image rather than swapping the source. The other `blocks/type=...png` files (plant/star/moon) are **available** for future use (e.g. a boss level or a star-collection bonus level) but the current implementation does not swap them.
 
+### 8) In-game HUD, command palette and level-complete modal
+
+Reference visuals (sources of truth, kept under `public/resultado_final/`):
+
+- `paleta_HUD_final.png` — the right-hand sidebar (HUD + palette + queue + action buttons) on the game screen
+- `pantalla_nivel_final.png` — the full game screen, showing how the sidebar sits next to the Phaser canvas with margins
+- `nextlevel_modal.png` — the "¡NIVEL SUPERADO!" modal that opens on `level-complete`
+
+#### Layout / spacing rules
+
+The sidebar is **one outer rounded WHITE card** wrapping three stacked sections — *not* a cyan card. Cyan is only used inside, for the section cards themselves. This contrast is what gives the sidebar its layered feel.
+
+The whole `<main>` element uses `padding: 20px; gap: 16px` so both the Phaser canvas and the sidebar have visible margins on all sides — they must **not** go edge-to-edge with the screen.
+
+The wrapper lives in `App.tsx` `GameScreen` (the div around `<LevelHUD />` + `<InstructionPanel />`):
+
+```tsx
+<div className="rounded-3xl" style={{
+  flex: 1, overflow: 'auto', padding: '14px',
+  background: '#ffffff',
+  boxShadow: '0 8px 24px rgba(14,165,233,0.18)',
+  display: 'flex', flexDirection: 'column', gap: '12px',
+}}>
+  <LevelHUD bridge={emitter} />
+  <InstructionPanel … />
+</div>
+```
+
+#### Color palette — the strict rules
+
+The sidebar is **monochromatic turquoise** on white. Don't introduce dark-blue card backgrounds (a previous version had navy stat cards — this is wrong; the user explicitly rejected it). Dark navy is reserved for the **header bar** and the **modal header**; everywhere else, navy is for **text only**.
+
+| Token | Value | Used for |
+|---|---|---|
+| **Outer panel** | `#ffffff` (white) with `boxShadow: 0 8px 24px rgba(14,165,233,0.18)` | the sidebar wrapper card and the modal body |
+| **Card cyan (parent)** | `linear-gradient(180deg, #b8e7fb 0%, #a3def8 100%)` | `.hud-info-card`, `.hud-card` (palette + queue) — all the same cyan |
+| **Card cyan (sub-pill)** | `linear-gradient(180deg, #d4f1ff 0%, #bfe6fa 100%)` | objective pill, stat-card body, queue dashed-area, section-title pill — slightly lighter cyan that nests inside the parent cyan |
+| **Navy header** | `linear-gradient(180deg, #2f3192 0%, #262877 100%)` | dark bar at the top of the HUD and the modal header — **the only non-cyan surface in the sidebar** |
+| **Yellow level pill** | `linear-gradient(180deg, #ffd34a 0%, #f5a623 100%)` with `#5a3500` text | "NIVEL N" badge inside the navy header |
+| **Number ink (navy)** | `#1e3a8a` for digits, `rgba(30,58,138,0.55)` for `/N` suffix | COMANDOS/INTENTOS values, RESTANTES suffix, all section-pill text |
+| **Stat card danger** | `linear-gradient(180deg, #fecaca 0%, #fca5a5 100%)` body, `#7f1d1d` ink | swap onto INTENTOS card when `remaining <= 1` |
+| **Action btn — green** | `linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%)`, shadow `0 5px 0 #2f7a1c` | EJECUTAR + modal SIGUIENTE |
+| **Action btn — yellow** | `linear-gradient(180deg, #ffd84a 0%, #f5b32a 100%)`, shadow `0 5px 0 #b8770b` | RESETEAR + modal REPETIR |
+
+#### Section-pill style (replaces the old "straddling pill" idea)
+
+Section titles ("ENCIENDE TODAS LAS LUCES", "COMANDOS DISPONIBLES", "INTRODUCE COMANDOS") sit **inside** their card as a centered light-cyan rounded pill — *not* overlapping the top edge. Use:
+
+```css
+.hud-card-title {
+  background: linear-gradient(180deg, #d4f1ff 0%, #bfe6fa 100%);
+  color: #1f3a8a;
+  font-weight: 900; font-size: 11px; letter-spacing: 0.16em;
+  text-transform: uppercase; text-align: center;
+  padding: 6px 12px; border-radius: 999px;
+  width: fit-content; margin: 0 auto;
+}
+```
+
+The card itself just uses regular `padding: 10px` — no need for `padding-top: 20px` since the pill no longer hangs above.
+
+#### HUD structure (`src/components/Game/LevelHUD.tsx`)
+
+1. `.hud-header` — navy bar, yellow `Nivel NN` pill (zero-padded) + uppercase level name. Active-step indicator (`▶ Paso N`) appears here while `command-executed` is firing.
+2. `.hud-info-card` (cyan parent) **wraps both** the objective pill *and* the two stat cards. This is one of the user's hard requirements: objective + stats must be visually grouped in one container, not stacked as siblings.
+   - Inside: `.hud-objective-pill` carrying `instructions`, then `.stat-row` with two `.stat-card`s.
+   - Stat cards are **the same cyan as the parent** (slightly lighter sub-pill cyan to differentiate). The big number inside is navy text (`#1e3a8a`), not white.
+
+#### Palette / queue (`src/components/Game/InstructionPanel.tsx`)
+
+- Both `CommandPalette` and `QueueArea` use the same `.hud-card` (parent cyan).
+- Section title is a centered `.hud-card-title` pill, then content below.
+- Palette tile is **just the PNG**, no card behind it. `state=*.png` already includes the coloured rounded background, white icon and Spanish label — render as `.palette-tile` (transparent button) with `drop-shadow(0 3px 0 rgba(0,0,0,0.18))` on the `<img>` for the 3D lift.
+- Queue uses `.queue-area` (sub-pill cyan fill). Empty cells are `.queue-empty-cell` (56×56, dashed navy border, transparent fill so the cyan parent shows through).
+
+#### Action buttons — keep them structurally identical
+
+EJECUTAR and RESETEAR must be the **same shape, size, padding, font, and shadow geometry** — only the gradient and shadow color differ. The shared `.action-btn` class enforces this; never apply per-button overrides to padding/radius/font, or they will visually drift.
+
+```css
+.action-btn { flex: 1; padding: 14px 0; border-radius: 16px;
+              font-weight: 900; font-size: 17px; letter-spacing: 0.18em;
+              color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,0.22);
+              border: none; text-transform: uppercase; cursor: pointer; }
+.action-btn--run   { background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
+                     box-shadow: 0 5px 0 #2f7a1c; }
+.action-btn--reset { background: linear-gradient(180deg, #ffd84a 0%, #f5b32a 100%);
+                     box-shadow: 0 5px 0 #b8770b; }
+```
+
+#### Level-complete modal (`LevelCompleteModal` in `App.tsx`)
+
+- The DOM is **wrapper → card → contents**, not card-with-button-inside:
+
+  ```tsx
+  <div className="lc-card-wrap">       {/* position: relative; overflow: visible */}
+    <button className="lc-close" />     {/* sibling, not child of lc-card */}
+    <div className="lc-card">           {/* overflow: hidden so navy header is clipped */}
+      <div className="lc-header">…</div>
+      <div className="lc-body">…</div>
+    </div>
+  </div>
+  ```
+
+  This split is **load-bearing**: `.lc-card` needs `overflow: hidden` so the navy `.lc-header` background is clipped by the rounded corners; but the close button uses negative offsets (`top: -18px; left: -18px`) and would be clipped if it were inside the card. Putting it on `.lc-card-wrap` (which has `overflow: visible`) keeps it visible while preserving the rounded header. **Do not move the button back into `.lc-card`** — it will disappear behind the rounded corner mask.
+
+- Close-button styling: light-purple gradient `linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 100%)`, 46×46, drop-shadow `0 4px 0 #8b5cf6` (matches the chunky 3D feel of the action buttons).
+- **Don't draw the X with the `×` glyph.** That character renders at the font's x-height, not at the line box's geometric center, so it always looks slightly off in a circle no matter how you tweak `line-height` / `padding`. Instead, draw two crossed bars with `::before` / `::after` and the button has no text content (use `aria-label` for accessibility):
+
+  ```css
+  .lc-close { font-size: 0; color: transparent; /* + the gradient/size above */ }
+  .lc-close::before,
+  .lc-close::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 22px; height: 4px;
+    border-radius: 2px;
+    background: #ffffff;
+  }
+  .lc-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+  .lc-close::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+  ```
+
+  This is the clean fix — geometric centering, no font-metric guesswork. Apply the same pattern any time you need a perfectly centered X / + / cross inside a small circular button.
+- `.lc-header` reuses the navy gradient. Text is always `¡Nivel Superado!` — don't truncate on the last level; instead change the `.lc-question` body copy.
+- Centerpiece is `assets/header/estrellas1.png` (orange pill with 3 stars on top), sized ~230×145 with a `drop-shadow`. **Overlay the `NIVEL N` text on the orange portion** via an absolutely-positioned span (`bottom: 10%`, white bold text, brown text-shadow). Don't crop the asset — the stars need to be visible.
+- Pass `levelNumber={currentLevel + 1}` from the store. The modal stays mounted while `levelComplete === true`, so reading `currentLevel` is stable until the user clicks SIGUIENTE.
+
+**Why the strict color rules matter**: the user has corrected the visuals once already because dark-navy stat cards broke the monochromatic feel. If you ever feel tempted to add a vibrant background to "make a card pop", resist — it almost always breaks the family. Use type-weight, navy ink, and the sub-pill cyan instead.
+
 ## Important Gotchas
 
 - **Do not delete** `src/types/game.types.ts` types — only rendering changes.

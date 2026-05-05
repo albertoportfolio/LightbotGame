@@ -29,49 +29,88 @@ import { parseTextCommands } from '../../game/logic/textCommandParser'
 function PanelStyles() {
   return (
     <style>{`
+      /* Tarjeta cyan unificada — mismo turquesa que la tarjeta info del HUD */
       .hud-card {
-        background: linear-gradient(180deg, #ffffff 0%, #ecfeff 100%);
-        border: 2px solid #38bdf8;
-        box-shadow: 0 3px 0 rgba(14,165,233,0.35), 0 6px 14px rgba(56,189,248,0.18);
+        background: #8de8ff;
+        border-radius: 18px;
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
       }
+      /* Pill de título: mismo turquesa pero un poco más claro, texto navy */
       .hud-card-title {
-        background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%);
+        background: #00ccff;
         color: white;
         text-transform: uppercase;
-        font-weight: 800;
+        font-weight: 900;
         font-size: 11px;
         letter-spacing: 0.16em;
         text-align: center;
-        padding: 4px 10px;
-        margin: -6px auto 10px;
+        padding: 6px 12px;
         border-radius: 999px;
         width: fit-content;
-        box-shadow: 0 2px 0 rgba(37,99,235,0.5);
+        margin: 0 auto;
       }
+      .palette-tile {
+        background: transparent;
+        padding: 0;
+        border: none;
+        cursor: grab;
+        transition: transform 0.08s ease;
+      }
+      .palette-tile:hover:not(:disabled) { transform: translateY(-2px); }
+      .palette-tile:active:not(:disabled) { transform: translateY(1px); }
+      .palette-tile:disabled { opacity: 0.4; cursor: not-allowed; }
+      .palette-tile img { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.18)); }
+      .palette-grid {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+      .queue-area {
+        background: #d4f1ff;
+        border-radius: 14px;
+        min-height: 96px;
+        padding: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-content: flex-start;
+        justify-content: flex-start;
+      }
+      .queue-empty-cell {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background: transparent;
+        border: 2px dashed rgba(31,58,138,0.35);
+      }
+      /* Botones EJECUTAR / RESETEAR — geometría idéntica, sólo cambia el color */
       .action-btn {
         flex: 1;
         padding: 14px 0;
-        border-radius: 14px;
+        border-radius: 16px;
         font-weight: 900;
         font-size: 17px;
-        letter-spacing: 0.14em;
-        color: white;
-        text-shadow: 0 2px 2px rgba(0,0,0,0.18);
-        border: 2px solid rgba(0,0,0,0.08);
+        letter-spacing: 0.18em;
+        color: #ffffff;
+        text-shadow: 0 2px 0 rgba(0,0,0,0.22);
+        border: none;
         transition: transform 0.08s;
         cursor: pointer;
+        text-transform: uppercase;
       }
       .action-btn:active:not(:disabled) { transform: translateY(2px); }
       .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
       .action-btn--run {
-        background: linear-gradient(180deg, #86efac 0%, #22c55e 100%);
-        box-shadow: 0 4px 0 #15803d, 0 6px 14px rgba(34,197,94,0.35);
+        background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
+        box-shadow: 0 5px 0 #2f7a1c;
       }
       .action-btn--reset {
-        background: linear-gradient(180deg, #fde68a 0%, #facc15 100%);
-        color: #78350f;
-        text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-        box-shadow: 0 4px 0 #ca8a04, 0 6px 14px rgba(250,204,21,0.35);
+        background: linear-gradient(180deg, #ffd84a 0%, #f5b32a 100%);
+        box-shadow: 0 5px 0 #b8770b;
       }
     `}</style>
   )
@@ -157,17 +196,17 @@ function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) 
       ref={setNodeRef}
       disabled={isFull}
       onClick={onAdd}
-      style={{ opacity: isDragging ? 0.4 : 1, padding: 0, background: 'transparent', border: 'none' }}
+      style={{ opacity: isDragging ? 0.4 : 1 }}
       {...attributes}
       {...listeners}
-      className="cursor-grab transition-transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
+      className="palette-tile"
       title={meta.label}
     >
       <img
         src={meta.paletteSprite}
         alt={meta.label}
         draggable={false}
-        className="block w-14 h-14 select-none pointer-events-none"
+        className="block w-16 h-16 select-none pointer-events-none"
         style={{ objectFit: 'contain' }}
       />
     </button>
@@ -180,9 +219,9 @@ function CommandPalette() {
   const visibleCommands = allowedCommands ?? ALL_COMMANDS
 
   return (
-    <div className="mb-3 rounded-2xl px-3 py-3 hud-card hud-card--commands">
+    <div className="hud-card hud-card--commands">
       <p className="hud-card-title">Comandos Disponibles</p>
-      <div className="flex flex-wrap gap-2 justify-center">
+      <div className="palette-grid">
         {visibleCommands.map((cmd) => (
           <DraggablePaletteButton
             key={cmd}
@@ -193,7 +232,7 @@ function CommandPalette() {
         ))}
       </div>
       {isFull && (
-        <p className="text-xs text-red-500 mt-2 text-center font-bold">NO PUEDES AÑADIR MÁS COMANDOS ({maxCommands} max)</p>
+        <p className="text-xs text-rose-700 text-center font-bold">NO PUEDES AÑADIR MÁS COMANDOS ({maxCommands} max)</p>
       )}
     </div>
   )
@@ -215,16 +254,9 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
   const emptySlots = Array.from({ length: maxCommands - slots.length })
 
   return (
-    <div className="rounded-2xl px-3 py-3 hud-card hud-card--queue">
+    <div className="hud-card hud-card--queue">
       <p className="hud-card-title">Introduce Comandos</p>
-      <div
-        ref={setNodeRef}
-        className="flex flex-wrap gap-2 min-h-[88px] p-3 rounded-xl"
-        style={{
-          background: 'rgba(186,230,253,0.55)',
-          border: '2px dashed rgba(56,189,248,0.55)',
-        }}
-      >
+      <div ref={setNodeRef} className="queue-area">
         <SortableContext items={slots.map(s => s.id)} strategy={rectSortingStrategy}>
           {slots.map((slot, i) => (
             <CommandChip
@@ -239,22 +271,8 @@ function QueueArea({ slots, activeCommandIndex, maxCommands, isRunning, onRemove
           ))}
         </SortableContext>
         {emptySlots.map((_, i) => (
-          <div
-            key={`empty-${i}`}
-            className="rounded-xl"
-            style={{
-              width: 56,
-              height: 56,
-              background: 'rgba(255,255,255,0.55)',
-              border: '1px dashed rgba(56,189,248,0.4)',
-            }}
-          />
+          <div key={`empty-${i}`} className="queue-empty-cell" />
         ))}
-        {slots.length === 0 && (
-          <p className="text-sky-700/70 text-xs self-center w-full text-center py-2">
-            Arrastra o haz click en los comandos para añadirlos aquí
-          </p>
-        )}
       </div>
     </div>
   )
@@ -323,7 +341,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
           rows={4}
           className="w-full rounded-xl px-3 py-2 font-mono text-sm resize-none focus:outline-none disabled:opacity-50"
           style={{
-            background: 'rgba(186,230,253,0.55)',
+            background: 'white',
             border: '2px dashed rgba(56,189,248,0.55)',
             color: '#0c4a6e',
           }}
@@ -514,7 +532,7 @@ export function InstructionPanel({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <PanelStyles />
-      <div className="flex flex-col gap-3 h-full">
+      <div className="flex flex-col gap-3">
         <CommandPalette />
 
         <QueueArea
@@ -526,12 +544,12 @@ export function InstructionPanel({
         />
 
         {isGameOver && (
-          <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700 mb-2">
+          <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700">
             💀 GAME OVER — Pulsa Resetear
           </div>
         )}
 
-        <div className="flex gap-3 mt-auto">
+        <div className="flex gap-3">
           <button
             disabled={queue.length === 0 || isRunning || showNextLevel}
             onClick={handleRun}
@@ -547,15 +565,6 @@ export function InstructionPanel({
             RESETEAR
           </button>
         </div>
-
-        {showNextLevel && (
-          <button
-            onClick={onNextLevel}
-            className="w-full py-3 rounded-xl font-bold text-white bg-yellow-500 hover:bg-yellow-400 transition-colors animate-pulse"
-          >
-            🏆 Siguiente Nivel →
-          </button>
-        )}
       </div>
 
       {/* Overlay: misma imagen que paleta y cola → sin cambio visual al arrastrar */}

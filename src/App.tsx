@@ -210,46 +210,183 @@ function StartScreen({ onStart, onPrivacy, onTerms }: { onStart: () => void; onP
 
 // ─── LevelCompleteModal ───────────────────────────────────────────────────────
 
-// Modal que aparece al completar un nivel: opciones de siguiente, repetir o volver a niveles
-function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels }: {
+// Modal que aparece al completar un nivel.
+// Diseño: public/resultado_final/nextlevel_modal.png — header navy "¡NIVEL SUPERADO!",
+// estrellas1.png (badge naranja con 3 estrellas) como centerpiece con "NIVEL N" superpuesto,
+// pregunta motivacional, botones REPETIR (amarillo) y SIGUIENTE (verde), cierre X arriba a la izq.
+function LevelCompleteModal({ hasNext, onNext, onReplay, onLevels, levelNumber }: {
   hasNext: boolean
   onNext: () => void
   onReplay: () => void
   onLevels: () => void
+  levelNumber: number
 }) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50" role="dialog" aria-label="Nivel completado"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}>
-      <div className="relative flex flex-col items-center gap-5 px-10 py-10 rounded-3xl text-center"
-        style={{
-          background: 'linear-gradient(145deg, #1a2a4a, #0d1b2e)',
-          border: '2px solid rgba(246,224,94,0.4)',
-          boxShadow: '0 0 60px rgba(246,224,94,0.2)', maxWidth: 380, width: '90%',
-        }}>
-        <div className="text-5xl" role="img" aria-label="Trofeo">🏆</div>
-        <div className="flex gap-1 text-3xl" aria-hidden="true">{'⭐'.repeat(3)}</div>
-        <h2 className="font-black text-3xl"
-          style={{ background: 'linear-gradient(135deg, #f6e05e, #fc8181)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          {hasNext ? '¡Nivel Superado!' : '¡Lo lograste todo!'}
-        </h2>
-        <p className="text-white/60 text-sm">
-          {hasNext ? '¿Preparado para el siguiente desafío?' : 'Has completado todos los niveles 🎉'}
-        </p>
-        <div className="flex gap-3 w-full">
-          {hasNext && (
-            <button onClick={onNext} className="flex-1 py-3 rounded-xl font-black text-lg text-black"
-              style={{ background: 'linear-gradient(135deg, #f6e05e, #f6ad55)' }}>
-              Siguiente →
-            </button>
-          )}
-          <button onClick={onReplay} className="flex-1 py-3 rounded-xl font-bold text-white"
-            style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)' }}>
-            Repetir
-          </button>
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      role="dialog"
+      aria-label="Nivel completado"
+      style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(2px)' }}
+    >
+      <style>{`
+        /* Wrapper externo: NO recorta para que el botón de cerrar pueda sobresalir.
+           El card hijo conserva overflow:hidden para clipar el header navy a la esquina redondeada. */
+        .lc-card-wrap {
+          position: relative;
+          width: 92%;
+          max-width: 380px;
+          overflow: visible;
+        }
+        .lc-card {
+          background: linear-gradient(180deg, #c9eafc 0%, #b6e3fb 100%);
+          border: 5px solid #ffffff;
+          border-radius: 26px;
+          box-shadow: 0 12px 0 rgba(56,189,248,0.25), 0 18px 40px rgba(14,165,233,0.35);
+          width: 100%;
+          overflow: hidden;
+          position: relative;
+        }
+        .lc-header {
+          background: #505FFF;
+          color: #ffffff;
+          font-weight: 900;
+          font-size: 18px;
+          letter-spacing: 0.16em;
+          text-align: center;
+          padding: 14px 16px;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.25);
+          text-transform: uppercase;
+        }
+        .lc-body {
+          padding: 28px 24px 22px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          align-items: center;
+        }
+        .lc-stars {
+          position: relative;
+          width: 230px;
+          height: 145px;
+          display: flex;
+          justify-content: center;
+        }
+        .lc-stars img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 6px 0 rgba(0,0,0,0.18));
+        }
+        .lc-stars__label {
+          position: absolute;
+          bottom: 18%;
+          left: 0;
+          right: 0;
+          text-align: center;
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 20px;
+          letter-spacing: 0.16em;
+          text-shadow: 0 2px 0 rgba(146,64,14,0.55);
+          pointer-events: none;
+        }
+        .lc-question {
+          background: linear-gradient(180deg, #d3f0ff 0%, #b9e6ff 100%);
+          color: #1f3a8a;
+          font-weight: 900;
+          font-size: 12px;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          padding: 10px 16px;
+          border-radius: 14px;
+          text-align: center;
+          width: 100%;
+          box-shadow: inset 0 -2px 0 rgba(56,189,248,0.45);
+        }
+        .lc-actions { display: flex; gap: 12px; width: 100%; }
+        .lc-btn {
+          flex: 1;
+          padding: 14px 0;
+          border-radius: 16px;
+          font-weight: 900;
+          font-size: 16px;
+          letter-spacing: 0.18em;
+          color: #ffffff;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.22);
+          border: none;
+          cursor: pointer;
+          transition: transform 0.08s;
+        }
+        .lc-btn:active { transform: translateY(2px); }
+        .lc-btn--replay {
+          background: linear-gradient(180deg, #ffd84a 0%, #f5b32a 100%);
+          box-shadow: 0 5px 0 #b8770b, 0 8px 16px rgba(245,179,42,0.35);
+        }
+        .lc-btn--next {
+          background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
+          box-shadow: 0 5px 0 #2f7a1c, 0 8px 16px rgba(95,191,63,0.35);
+        }
+        /* La X se compone de dos barras rotadas (pseudo-elementos) en lugar del glifo "×",
+           porque ese carácter se renderiza sobre la x-height de la fuente y nunca queda
+           geométricamente centrado en un círculo. Las barras sí lo están. */
+        .lc-close {
+          position: absolute;
+          top: -18px;
+          left: -18px;
+          width: 46px;
+          height: 46px;
+          border-radius: 999px;
+          background: linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 100%);
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          font-size: 0;
+          color: transparent;
+          box-shadow: 0 4px 0 #8b5cf6, 0 6px 14px rgba(139,92,246,0.35);
+          z-index: 10;
+        }
+        .lc-close::before,
+        .lc-close::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 22px;
+          height: 4px;
+          border-radius: 2px;
+          background: #ffffff;
+        }
+        .lc-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+        .lc-close::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+        .lc-close:active {
+          transform: translateY(2px);
+          box-shadow: 0 2px 0 #8b5cf6, 0 4px 10px rgba(139,92,246,0.35);
+        }
+      `}</style>
+
+      <div className="lc-card-wrap">
+        <button className="lc-close" onClick={onLevels} aria-label="Cerrar y volver a niveles" />
+        <div className="lc-card">
+          <div className="lc-header">¡Nivel Superado!</div>
+
+        <div className="lc-body">
+          <div className="lc-stars">
+            <img src="/assets/header/estrellas1.png" alt="" draggable={false} />
+            <span className="lc-stars__label">NIVEL {levelNumber}</span>
+          </div>
+
+          <p className="lc-question">
+            {hasNext ? '¿Preparado para el siguiente desafío?' : '¡Has completado todos los niveles!'}
+          </p>
+
+          <div className="lc-actions">
+            <button onClick={onReplay} className="lc-btn lc-btn--replay">REPETIR</button>
+            {hasNext && (
+              <button onClick={onNext} className="lc-btn lc-btn--next">SIGUIENTE</button>
+            )}
+          </div>
         </div>
-        <button onClick={onLevels} className="w-full py-2 rounded-xl text-white/50 text-sm hover:text-white transition-colors">
-          ← Seleccionar nivel
-        </button>
+        </div>
       </div>
     </div>
   )
@@ -276,7 +413,7 @@ function GameScreen({
   muted, volume, isActive, initialLevel, onLevelCompleted,
 }: GameScreenProps) {
   const { emitter, runCommands, resetLevel, loadLevel, setMute, setVolume, stopMusic, startMusic } = useGameBridge()
-  const { queue, clearQueue, resetAttempts } = useGameStore()
+  const { queue, clearQueue, resetAttempts, currentLevel } = useGameStore()
 
   const [levelComplete, setLevelComplete] = useState(false)
   const [hasNext, setHasNext] = useState(false)
@@ -430,11 +567,21 @@ function GameScreen({
           display: 'flex', flexDirection: 'column', gap: '6px',
           overflow: 'hidden',
         }}>
-          <LevelHUD bridge={emitter} />
-          <div className="rounded-2xl" style={{
-            flex: 1, overflow: 'auto', padding: '8px',
-            background: 'transparent',
-          }}>
+          <div
+            className="rounded-3xl"
+            style={{
+              flex: 1,
+              overflow: 'auto',
+              padding: '12px',
+              background: 'linear-gradient(180deg, #c9eafc 0%, #b6e3fb 100%)',
+              border: '5px solid #ffffff',
+              boxShadow: '0 6px 0 rgba(56,189,248,0.25), 0 12px 26px rgba(14,165,233,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <LevelHUD bridge={emitter} />
             <InstructionPanel
               bridge={emitter}
               onRun={() => runCommands(queue)}
@@ -448,10 +595,10 @@ function GameScreen({
       {levelComplete && (
         <LevelCompleteModal
           hasNext={hasNext}
+          levelNumber={currentLevel + 1}
           onNext={handleNextLevel}
           onReplay={handleReset}
           onLevels={handleBackToLevels}
-
         />
       )}
     </div>

@@ -91,29 +91,44 @@ function getFloorTileForZone(zoneId: number): string {
   }
 }
 
-// ─── Layout: una sola plataforma con zigzag interno ──────────────────────────
+// ─── Layout constants ─────────────────────────────────────────────────────────
 
 const ZONE_WIDTH = 1800
 const PLATFORM_LEFT = 70
 const PLATFORM_WIDTH = ZONE_WIDTH - 140
-const PLATFORM_HEIGHT = 300           // plataforma alta para contener el zigzag
+const PLATFORM_HEIGHT = 300
 
-// Posición Y de la única plataforma (% del contenedor)
 const PLATFORM_TOP_PCT = 20
+const PLATFORM_EXTRA_DESKTOP_PX = 40
 
-// Offsets internos dentro de la plataforma para las dos filas del zigzag
-const ZIGZAG_TOP_OFFSET = 24          // fila superior dentro de la plataforma
-const ZIGZAG_BOT_OFFSET = 120         // fila inferior dentro de la plataforma
+// Mobile scale factor (15% smaller)
+const MOBILE_SCALE = 0.85
 
-const NODE_W = 86
-const NODE_H = 90
+// Hook simple para detectar escritorio
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)')
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+  return isDesktop
+}
+
+// Base layout values (desktop)
+const BASE_ZIGZAG_TOP_OFFSET = 24
+const BASE_ZIGZAG_BOT_OFFSET = 120
+const BASE_NODE_W = 86
+const BASE_NODE_H = 90
 const NODES_PER_ZONE = 10
 
 const NODE_AREA_LEFT = PLATFORM_LEFT + 80
 const NODE_AREA_RIGHT = PLATFORM_LEFT + PLATFORM_WIDTH - 80
 const NODE_PITCH = (NODE_AREA_RIGHT - NODE_AREA_LEFT) / (NODES_PER_ZONE - 1)
 
-// Zigzag: índices pares → fila top interna, impares → fila bot interna
 const NODE_POSITIONS = Array.from({ length: NODES_PER_ZONE }, (_, i) => ({
   x: NODE_AREA_LEFT + i * NODE_PITCH,
   row: (i % 2 === 0 ? 'top' : 'bot') as 'top' | 'bot',
@@ -187,6 +202,10 @@ function ZigzagConnector({
   toRow,
   accent,
   containerHeightPx,
+  extraOffsetPx = 0,
+  zigzagTopOffset,
+  zigzagBotOffset,
+  nodeH,
 }: {
   fromX: number
   toX: number
@@ -194,12 +213,16 @@ function ZigzagConnector({
   toRow: 'top' | 'bot'
   accent: string
   containerHeightPx: number
+  extraOffsetPx?: number
+  zigzagTopOffset: number
+  zigzagBotOffset: number
+  nodeH: number
 }) {
-  // Y en px del centro del nodo para cada fila interna
   const nodeY = (row: 'top' | 'bot') =>
     PLATFORM_TOP_PCT / 100 * containerHeightPx
-    + (row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET)
-    + NODE_H / 2
+    + extraOffsetPx
+    + (row === 'top' ? zigzagTopOffset : zigzagBotOffset)
+    + nodeH / 2
 
   const y1 = nodeY(fromRow)
   const y2 = nodeY(toRow)
@@ -273,7 +296,7 @@ function PathConnector({ fromX, toX, y, accent }: {
 // ─── Nodo de nivel ────────────────────────────────────────────────────────────
 
 function LevelNode({
-  levelIndex, info, completed, locked, active, zone, onClick,
+  levelIndex, info, completed, locked, active, zone, onClick, nodeW, nodeH,
 }: {
   levelIndex: number
   info: LevelInfo
@@ -282,6 +305,8 @@ function LevelNode({
   active: boolean
   zone: typeof ZONES[0]
   onClick: () => void
+  nodeW: number
+  nodeH: number
 }) {
   const [hov, setHov] = useState(false)
   const [g1] = zone.nodeGrad
@@ -293,7 +318,7 @@ function LevelNode({
       : ''
 
   return (
-    <div style={{ position: 'relative', width: NODE_W, height: NODE_H + 18 }}>
+    <div style={{ position: 'relative', width: nodeW, height: nodeH + 18 }}>
       {hov && !locked && (
         <div
           className="absolute pointer-events-none"
@@ -335,11 +360,11 @@ function LevelNode({
         }}
       >
         <img
-  src={completed ? '/assets/header/estrellas1.png' : '/assets/header/sinestrellas.png'}
-  alt="" aria-hidden="true"
-  className="absolute top-0 left-0 h-full w-full scale-x-[1.2] origin-center"
-  style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
-/>
+          src={completed ? '/assets/header/estrellas1.png' : '/assets/header/sinestrellas.png'}
+          alt="" aria-hidden="true"
+          className="absolute top-0 left-0 h-full w-full scale-x-[1.2] origin-center"
+          style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
+        />
         <span
           style={{
             position: 'absolute',
@@ -365,7 +390,7 @@ function LevelNode({
 
       {active && !completed && (
         <div className="absolute rounded-full pointer-events-none" style={{
-          width: NODE_W + 10, height: NODE_W + 10, top: '40%', left: '50%',
+          width: nodeW + 10, height: nodeW + 10, top: '40%', left: '50%',
           transform: 'translate(-50%,-50%)',
           background: `radial-gradient(circle, ${g1}50, transparent 70%)`,
           animation: 'activePulse 1.8s ease-out infinite',
@@ -380,8 +405,8 @@ function LevelNode({
         aria-label={locked ? `Nivel ${levelIndex + 1}, bloqueado` : `Nivel ${levelIndex + 1}: ${info.name}`}
         style={{
           position: 'relative',
-          width: NODE_W,
-          height: NODE_H,
+          width: nodeW,
+          height: nodeH,
           background: 'transparent',
           border: 'none',
           padding: 0,
@@ -418,8 +443,6 @@ function LevelNode({
           </span>
         </div>
       </button>
-
-    
     </div>
   )
 }
@@ -446,6 +469,18 @@ function ZoneSection({
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerH, setContainerH] = useState(600)
+  const isDesktop = useIsDesktop()
+
+  // Scale-dependent layout values
+  const scale = isDesktop ? 1 : MOBILE_SCALE
+  const zigzagTopOffset = BASE_ZIGZAG_TOP_OFFSET * scale
+  const zigzagBotOffset = BASE_ZIGZAG_BOT_OFFSET * scale
+  const nodeW = BASE_NODE_W * scale
+  const nodeH = BASE_NODE_H * scale
+  const platformHeight = PLATFORM_HEIGHT * scale
+
+  const badgeTopPx = isDesktop ? 40 : 4
+  const platformExtraPx = isDesktop ? PLATFORM_EXTRA_DESKTOP_PX : 0
 
   useEffect(() => {
     const el = containerRef.current
@@ -537,8 +572,8 @@ function ZoneSection({
       <img
         src={`/assets/world-badges/world-${zone.id + 1}.png`}
         alt={zone.name}
-        className="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none select-none"
-        style={{ zIndex: 5, width: 520, height: 'auto' }}
+        className="absolute left-1/2 -translate-x-1/2 pointer-events-none select-none"
+        style={{ zIndex: 5, width: 520, height: 'auto', top: badgeTopPx }}
       />
 
       {/* ── Única plataforma ── */}
@@ -548,9 +583,9 @@ function ZoneSection({
         className="absolute pointer-events-none select-none"
         style={{
           left: PLATFORM_LEFT,
-          top: `${PLATFORM_TOP_PCT}%`,
+          top: `calc(${PLATFORM_TOP_PCT}% + ${platformExtraPx}px)`,
           width: PLATFORM_WIDTH,
-          height: PLATFORM_HEIGHT,
+          height: platformHeight,
           zIndex: 2,
           filter: 'drop-shadow(0 12px 16px rgba(0,0,0,0.5))',
         }}
@@ -561,22 +596,21 @@ function ZoneSection({
         const next = NODE_POSITIONS[i + 1]
 
         if (pos.row === next.row) {
-          // Misma fila interna → conector horizontal
           const y =
             PLATFORM_TOP_PCT / 100 * containerH
-            + (pos.row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET)
-            + NODE_H / 2
+            + platformExtraPx
+            + (pos.row === 'top' ? zigzagTopOffset : zigzagBotOffset)
+            + nodeH / 2
           return (
             <PathConnector
               key={`conn-${i}`}
-              fromX={pos.x + NODE_W / 2 - 4}
-              toX={next.x - NODE_W / 2 + 4}
+              fromX={pos.x + nodeW / 2 - 4}
+              toX={next.x - nodeW / 2 + 4}
               y={y}
               accent={zone.accent}
             />
           )
         }
-        // Filas distintas → conector en L interno
         return (
           <ZigzagConnector
             key={`conn-${i}`}
@@ -586,6 +620,10 @@ function ZoneSection({
             toRow={next.row}
             accent={zone.accent}
             containerHeightPx={containerH}
+            extraOffsetPx={platformExtraPx}
+            zigzagTopOffset={zigzagTopOffset}
+            zigzagBotOffset={zigzagBotOffset}
+            nodeH={nodeH}
           />
         )
       })}
@@ -595,7 +633,7 @@ function ZoneSection({
         const info = levelInfo[levelIndex]
         if (!info) return null
         const pos = NODE_POSITIONS[i]
-        const internalOffset = pos.row === 'top' ? ZIGZAG_TOP_OFFSET : ZIGZAG_BOT_OFFSET
+        const internalOffset = pos.row === 'top' ? zigzagTopOffset : zigzagBotOffset
         const completed = completedLevels.includes(levelIndex)
         const locked = levelIndex > 0 && !completedLevels.includes(levelIndex - 1)
         const active = levelIndex === nextLevel
@@ -606,7 +644,7 @@ function ZoneSection({
             style={{
               position: 'absolute',
               left: pos.x,
-              top: `calc(${PLATFORM_TOP_PCT}% + ${internalOffset}px)`,
+              top: `calc(${PLATFORM_TOP_PCT}% + ${internalOffset + platformExtraPx}px)`,
               transform: 'translateX(-50%)',
               zIndex: 10,
             }}
@@ -619,6 +657,8 @@ function ZoneSection({
               active={active}
               zone={zone}
               onClick={() => onSelectLevel(levelIndex)}
+              nodeW={nodeW}
+              nodeH={nodeH}
             />
           </div>
         )
@@ -643,6 +683,13 @@ export function LevelSelectScreen({
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrollX, setScrollX] = useState(0)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const isDesktop = useIsDesktop()
+  const platformExtraPx = isDesktop ? PLATFORM_EXTRA_DESKTOP_PX : 0
+
+  // Scale-dependent values for bridge positioning
+  const scale = isDesktop ? 1 : MOBILE_SCALE
+  const zigzagBotOffset = BASE_ZIGZAG_BOT_OFFSET * scale
+  const nodeH = BASE_NODE_H * scale
 
   const nextLevel = completedLevels.length < levelInfo.length
     ? Math.max(0, ...completedLevels.map(i => i + 1).filter(i => i < levelInfo.length))
@@ -790,7 +837,7 @@ export function LevelSelectScreen({
               className="absolute pointer-events-none select-none"
               style={{
                 left: ZONE_WIDTH * (i + 1) - 88,
-                top: `calc(${PLATFORM_TOP_PCT}% + ${ZIGZAG_BOT_OFFSET + NODE_H - 100}px)`,
+                top: `calc(${PLATFORM_TOP_PCT}% + ${zigzagBotOffset + nodeH - 100 + platformExtraPx}px)`,
                 width: 170,
                 height: 'auto',
                 zIndex: 6,
@@ -896,8 +943,6 @@ export function LevelSelectScreen({
         >▶</button>
       )}
 
-      {/* Indicadores de mundo — círculos conectados (ver public/resultado_final/mundos_pasar.png).
-          Cada mundo tiene un color temático propio; el activo se realza con escala + halo. */}
       <style>{`
         .world-nav {
           position: fixed;
@@ -939,8 +984,6 @@ export function LevelSelectScreen({
       <div className="world-nav">
         {ZONES.map((zone, i) => {
           const active = scrollX >= i * ZONE_WIDTH - 100 && scrollX < (i + 1) * ZONE_WIDTH - 100
-          // Color de círculo por mundo — temático y bien diferenciado.
-          // Mundo 1 (grass) = verde, Mundo 2 (beach) = amarillo, Mundo 3 (space) = morado, Mundo 4 (lava) = rojo.
           const circleColor = ['#7dd35d', '#fbbf24', '#a78bfa', '#ef4444'][i] ?? zone.accent
           return (
             <div key={zone.id} className="flex items-center">

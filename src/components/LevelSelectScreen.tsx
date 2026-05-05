@@ -896,24 +896,62 @@ export function LevelSelectScreen({
         >▶</button>
       )}
 
-      {/* Indicadores de mundo */}
-      <div className="fixed bottom-4 left-1/2 z-30 flex items-center gap-2" style={{ transform: 'translateX(-50%)' }}>
+      {/* Indicadores de mundo — círculos conectados (ver public/resultado_final/mundos_pasar.png).
+          Cada mundo tiene un color temático propio; el activo se realza con escala + halo. */}
+      <style>{`
+        .world-nav {
+          position: fixed;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 30;
+          display: flex;
+          align-items: center;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: rgba(15,23,42,0.55);
+          backdrop-filter: blur(6px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+        }
+        .world-circle {
+          width: 38px;
+          height: 38px;
+          border-radius: 999px;
+          border: 4px solid #ffffff;
+          padding: 0;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          display: block;
+        }
+        .world-circle:hover { transform: scale(1.06); }
+        .world-circle--active {
+          transform: scale(1.18);
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 0 14px rgba(255,255,255,0.5);
+        }
+        .world-connector {
+          width: 14px;
+          height: 6px;
+          background: #ffffff;
+          border-radius: 3px;
+          flex-shrink: 0;
+        }
+      `}</style>
+      <div className="world-nav">
         {ZONES.map((zone, i) => {
           const active = scrollX >= i * ZONE_WIDTH - 100 && scrollX < (i + 1) * ZONE_WIDTH - 100
+          // Color de círculo por mundo — temático y bien diferenciado.
+          // Mundo 1 (grass) = verde, Mundo 2 (beach) = amarillo, Mundo 3 (space) = morado, Mundo 4 (lava) = rojo.
+          const circleColor = ['#7dd35d', '#fbbf24', '#a78bfa', '#ef4444'][i] ?? zone.accent
           return (
-            <button
-              key={zone.id}
-              onClick={() => scrollRef.current?.scrollTo({ left: i * ZONE_WIDTH, behavior: 'smooth' })}
-              style={{
-                width: active ? 32 : 10, height: 10,
-                borderRadius: 6,
-                background: active ? zone.accent : 'rgba(255,255,255,0.3)',
-                border: '2px solid rgba(255,255,255,0.4)',
-                transition: 'all 0.3s ease',
-                boxShadow: active ? `0 0 10px ${zone.accent}` : 'none',
-                cursor: 'pointer',
-              }}
-            />
+            <div key={zone.id} className="flex items-center">
+              <button
+                onClick={() => scrollRef.current?.scrollTo({ left: i * ZONE_WIDTH, behavior: 'smooth' })}
+                aria-label={`Ir a ${zone.name}`}
+                className={`world-circle ${active ? 'world-circle--active' : ''}`}
+                style={{ background: circleColor }}
+              />
+              {i < ZONES.length - 1 && <div className="world-connector" />}
+            </div>
           )
         })}
       </div>

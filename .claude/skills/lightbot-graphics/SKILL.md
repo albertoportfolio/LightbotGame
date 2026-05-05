@@ -331,6 +331,43 @@ EJECUTAR and RESETEAR must be the **same shape, size, padding, font, and shadow 
 
 **Why the strict color rules matter**: the user has corrected the visuals once already because dark-navy stat cards broke the monochromatic feel. If you ever feel tempted to add a vibrant background to "make a card pop", resist — it almost always breaks the family. Use type-weight, navy ink, and the sub-pill cyan instead.
 
+### 9) World-pass indicator on the level-select screen
+
+Reference: `public/resultado_final/mundos_pasar.png` — 4 colored circles connected by short white horizontal bars, sitting on top of a dark translucent pill at the bottom of `LevelSelectScreen`.
+
+This replaces the old "active grows into a pill, others stay tiny dots" indicator. The new pattern is:
+
+- One circle per world (4 total), 38×38, `border: 4px solid #ffffff`, no background (the world color fills it).
+- Between adjacent circles: a `14×6` white pill (`border-radius: 3px`) — these are the connector bars.
+- The whole strip sits on a `rgba(15,23,42,0.55)` rounded pill with `backdrop-filter: blur(6px)` so the circles + bars read clearly against any background.
+- Active world: `transform: scale(1.18)` + `box-shadow: 0 0 0 3px rgba(255,255,255,0.4), 0 0 14px rgba(255,255,255,0.5)` (white halo). The white border alone isn't enough contrast for "active" state because every circle has the same white border.
+- **Each world uses a distinct thematic color**, NOT `zone.accent` (the existing accent palette has two oranges and isn't visually distinct enough):
+
+  | World | Theme | Circle color |
+  |---|---|---|
+  | 1 | Tierra de Luces (grass) | `#7dd35d` (verde) |
+  | 2 | Isla del Código (beach) | `#fbbf24` (amarillo) |
+  | 3 | Galaxia Robot (space) | `#a78bfa` (morado) |
+  | 4 | Volcán Digital (lava) | `#ef4444` (rojo) |
+
+  Hardcode this array inside the indicator component — don't try to derive it from `ZONES` (which currently has clashing oranges for worlds 1 and 4).
+
+DOM structure:
+
+```tsx
+<div className="world-nav">
+  {ZONES.map((zone, i) => (
+    <div key={zone.id} className="flex items-center">
+      <button className={`world-circle ${active ? 'world-circle--active' : ''}`}
+              style={{ background: COLORS[i] }} />
+      {i < ZONES.length - 1 && <div className="world-connector" />}
+    </div>
+  ))}
+</div>
+```
+
+The `<div className="flex items-center">` wrapping each circle + its trailing connector is what keeps each pair tightly packed; gap on the parent wouldn't work because we want zero gap *between* circle and connector but a clear gap between sibling pairs (which the connector itself provides).
+
 ## Important Gotchas
 
 - **Do not delete** `src/types/game.types.ts` types — only rendering changes.

@@ -27,25 +27,25 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
   const levelLabel = String(currentLevel + 1).padStart(2, '0')
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
       <style>{`
         .hud-header {
           background: #505FFF;
-          border-radius: 16px;
-          padding: 10px 14px;
+          border-radius: 14px;
+          padding: 7px 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
+          gap: 8px;
           box-shadow: 0 3px 0 rgba(0,0,0,0.18);
         }
         .hud-header__pill {
           background: linear-gradient(180deg, #ffd34a 0%, #f5a623 100%);
           color: #5a3500;
           font-weight: 900;
-          font-size: 11px;
-          letter-spacing: 0.16em;
-          padding: 4px 12px;
+          font-size: 9px;
+          letter-spacing: 0.14em;
+          padding: 3px 10px;
           border-radius: 999px;
           text-shadow: 0 1px 0 rgba(255,255,255,0.5);
           box-shadow: 0 2px 0 rgba(146,64,14,0.45);
@@ -54,14 +54,14 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
         .hud-header__name {
           color: #ffffff;
           font-weight: 900;
-          font-size: 13px;
-          letter-spacing: 0.18em;
+          font-size: 11px;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           text-shadow: 0 2px 0 rgba(0,0,0,0.25);
         }
         .hud-active {
           color: #fde68a;
-          font-size: 10px;
+          font-size: 9px;
           font-weight: 800;
           letter-spacing: 0.08em;
           margin-left: 4px;
@@ -70,60 +70,59 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
         /* Tarjeta madre cyan que envuelve objetivo + stats */
         .hud-info-card {
           background: #8de8ff;
-          border-radius: 18px;
-          padding: 10px;
+          border-radius: 14px;
+          padding: 8px;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
         }
         .hud-objective-pill {
           background: #00ccff;
           color: white;
           font-weight: 900;
           text-transform: uppercase;
-          font-size: 11px;
-          letter-spacing: 0.16em;
+          font-size: 9px;
+          letter-spacing: 0.14em;
           text-align: center;
-          padding: 6px 12px;
+          padding: 5px 10px;
           border-radius: 999px;
         }
-        .stat-row { display: flex; gap: 10px; }
+        .stat-row { display: flex; gap: 8px; }
         .stat-card {
           flex: 1;
           background: #00ccff;
-          border-radius: 14px;
-          padding: 8px 10px 10px;
+          border-radius: 12px;
+          padding: 6px 8px 7px;
           text-align: center;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 4px;
+          gap: 2px;
         }
         .stat-card__label {
           color: white;
           font-weight: 900;
-          letter-spacing: 0.18em;
-          font-size: 10px;
+          letter-spacing: 0.14em;
+          font-size: 9px;
           text-transform: uppercase;
         }
         .stat-card__value {
           color: white;
           font-weight: 900;
-          font-size: 26px;
+          font-size: 22px;
           line-height: 1;
-
         }
         .stat-card__suffix {
           color: #34477c;
-          font-size: 16px;
+          font-size: 13px;
           font-weight: 900;
         }
         .stat-card__inline-suffix {
           color: #34477c;
-          font-size: 11px;
+          font-size: 9px;
           font-weight: 900;
-          letter-spacing: 0.14em;
-          margin-left: 4px;
+          letter-spacing: 0.12em;
+          margin-left: 3px;
         }
         .stat-card--danger { background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%); }
         .stat-card--danger .stat-card__label,

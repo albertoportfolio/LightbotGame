@@ -511,7 +511,12 @@ function GameScreen({
     <div style={{
       height: '100dvh', width: '100vw', overflow: 'hidden',
       display: 'flex', flexDirection: 'column',
-      background: 'linear-gradient(180deg, #c8eaff 0%, #9fd9f5 100%)',
+      // Fondo del mundo activo (10 niveles por mundo, índice 0-39).
+      // background-{1..4}.png se sirve desde public/assets/backgrounds.
+      backgroundImage: `url('/assets/backgrounds/background-${Math.floor(currentLevel / 10) + 1}.png')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       paddingTop: 'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
       position: 'relative',
@@ -556,34 +561,32 @@ function GameScreen({
           aspectRatio: `${GAME_CONFIG.WIDTH} / ${GAME_CONFIG.HEIGHT}`,
           maxWidth: 'calc(100% - 152px)',
         }}>
-          <div className="rounded-3xl overflow-hidden"
-            style={{
-              height: '100%',
-              border: '4px solid #ffffff',
-              boxShadow: '0 0 0 2px rgba(56,189,248,0.45), 0 12px 30px rgba(14,165,233,0.25)',
-            }}>
+          <div style={{ height: '100%', overflow: 'hidden' }}>
             <GameWrapper bridge={emitter} />
           </div>
         </div>
-        {/* Paleta de comandos — derecha: ocupa el espacio restante */}
+        {/* Paleta de comandos — derecha: cap 375 (ancho), padding 20px arriba/abajo
+           para que la card resulte 40px más baja que el main. */}
         <div style={{
-          flex: 1, minWidth: 0,
+          flex: '0 1 auto', minWidth: 0,
+          width: '100%', maxWidth: 375,
           alignSelf: 'stretch',
-          display: 'flex', flexDirection: 'column', gap: '6px',
+          display: 'flex', flexDirection: 'column', gap: '5px',
           overflow: 'hidden',
+          paddingTop: 20, paddingBottom: 20,
         }}>
           <div
             className="rounded-3xl"
             style={{
               flex: 1,
               overflow: 'auto',
-              padding: '12px',
+              padding: '10px',
               background: 'linear-gradient(180deg, #c9eafc 0%, #b6e3fb 100%)',
-              border: '5px solid #ffffff',
-              boxShadow: '0 6px 0 rgba(56,189,248,0.25), 0 12px 26px rgba(14,165,233,0.18)',
+              border: '4px solid #ffffff',
+              boxShadow: '0 5px 0 rgba(56,189,248,0.25), 0 10px 22px rgba(14,165,233,0.18)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '8px',
             }}
           >
             <LevelHUD bridge={emitter} />

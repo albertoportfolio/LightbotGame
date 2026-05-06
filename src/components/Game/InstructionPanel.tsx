@@ -32,11 +32,11 @@ function PanelStyles() {
       /* Tarjeta cyan unificada — mismo turquesa que la tarjeta info del HUD */
       .hud-card {
         background: #8de8ff;
-        border-radius: 18px;
-        padding: 10px;
+        border-radius: 14px;
+        padding: 8px;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
       /* Pill de título: mismo turquesa pero un poco más claro, texto navy */
       .hud-card-title {
@@ -44,10 +44,10 @@ function PanelStyles() {
         color: white;
         text-transform: uppercase;
         font-weight: 900;
-        font-size: 11px;
-        letter-spacing: 0.16em;
+        font-size: 9px;
+        letter-spacing: 0.14em;
         text-align: center;
-        padding: 6px 12px;
+        padding: 5px 10px;
         border-radius: 999px;
         width: fit-content;
         margin: 0 auto;
@@ -58,43 +58,45 @@ function PanelStyles() {
         border: none;
         cursor: grab;
         transition: transform 0.08s ease;
+        flex-shrink: 0;
       }
       .palette-tile:hover:not(:disabled) { transform: translateY(-2px); }
       .palette-tile:active:not(:disabled) { transform: translateY(1px); }
       .palette-tile:disabled { opacity: 0.4; cursor: not-allowed; }
       .palette-tile img { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.18)); }
+      /* Forzar todos los comandos en una sola fila — sin wrap aunque queden ajustados */
       .palette-grid {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
-        gap: 8px;
+        gap: 4px;
       }
       .queue-area {
         background: #d4f1ff;
-        border-radius: 14px;
-        min-height: 96px;
-        padding: 10px;
+        border-radius: 12px;
+        min-height: 76px;
+        padding: 8px;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
         align-content: flex-start;
         justify-content: flex-start;
       }
       .queue-empty-cell {
-        width: 56px;
-        height: 56px;
-        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
         background: transparent;
         border: 2px dashed rgba(31,58,138,0.35);
       }
       /* Botones EJECUTAR / RESETEAR — geometría idéntica, sólo cambia el color */
       .action-btn {
         flex: 1;
-        padding: 14px 0;
-        border-radius: 16px;
+        padding: 12px 0;
+        border-radius: 14px;
         font-weight: 900;
-        font-size: 17px;
-        letter-spacing: 0.18em;
+        font-size: 14px;
+        letter-spacing: 0.16em;
         color: #ffffff;
         text-shadow: 0 2px 0 rgba(0,0,0,0.22);
         border: none;
@@ -106,11 +108,11 @@ function PanelStyles() {
       .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
       .action-btn--run {
         background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
-        box-shadow: 0 5px 0 #2f7a1c;
+        box-shadow: 0 4px 0 #2f7a1c;
       }
       .action-btn--reset {
         background: linear-gradient(180deg, #ffd84a 0%, #f5b32a 100%);
-        box-shadow: 0 5px 0 #b8770b;
+        box-shadow: 0 4px 0 #b8770b;
       }
     `}</style>
   )
@@ -156,8 +158,9 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
         src={meta.paletteSprite}
         alt={meta.label}
         draggable={false}
-        className="block w-14 h-14 select-none pointer-events-none"
+        className="block select-none pointer-events-none"
         style={{
+          width: 44, height: 44,
           objectFit: 'contain',
           filter: isActive ? 'brightness(1.15)' : undefined,
         }}
@@ -206,8 +209,8 @@ function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) 
         src={meta.paletteSprite}
         alt={meta.label}
         draggable={false}
-        className="block w-16 h-16 select-none pointer-events-none"
-        style={{ objectFit: 'contain' }}
+        className="block select-none pointer-events-none"
+        style={{ width: 48, height: 48, objectFit: 'contain' }}
       />
     </button>
   )
@@ -573,8 +576,8 @@ export function InstructionPanel({
           <img
             src={COMMAND_META[draggingCommand].paletteSprite}
             alt=""
-            className="block w-14 h-14 select-none drop-shadow-xl opacity-95 pointer-events-none"
-            style={{ objectFit: 'contain' }}
+            className="block select-none drop-shadow-xl opacity-95 pointer-events-none"
+            style={{ width: 44, height: 44, objectFit: 'contain' }}
             draggable={false}
           />
         ) : null}

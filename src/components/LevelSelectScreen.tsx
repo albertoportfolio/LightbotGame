@@ -28,7 +28,7 @@ const ZONES = [
     skyBot: '#c8f5a0',
     groundCol: '#5d9e3a',
     groundStripe: '#4a8a2d',
-    accent: '#ff6b35',
+    accent: '#1a8f00',
     nodeGrad: ['#ffe066', '#ff6b35'],
     cloudCol: 'white',
     decorations: ['🌸', '🌼', '🍄', '🌲', '🦋', '🐝'],
@@ -193,33 +193,20 @@ function FloatingDeco({ emoji, x, y, delay, size }: {
   )
 }
 
-// ─── Conector en L entre nodos de distinta fila (zigzag interno) ──────────────
+// ─── Conector en L entre nodos de distinta fila (zigzag) ─────────────────────
 
 function ZigzagConnector({
-  fromX,
-  toX,
-  fromRow,
-  toRow,
-  accent,
-  containerHeightPx,
-  extraOffsetPx = 0,
-  zigzagTopOffset,
-  zigzagBotOffset,
-  nodeH,
+  fromX, toX, fromRow, toRow, accent,
+  containerHeightPx, extraOffsetPx = 0,
+  zigzagTopOffset, zigzagBotOffset, nodeH,
 }: {
-  fromX: number
-  toX: number
-  fromRow: 'top' | 'bot'
-  toRow: 'top' | 'bot'
-  accent: string
-  containerHeightPx: number
-  extraOffsetPx?: number
-  zigzagTopOffset: number
-  zigzagBotOffset: number
-  nodeH: number
+  fromX: number; toX: number
+  fromRow: 'top' | 'bot'; toRow: 'top' | 'bot'
+  accent: string; containerHeightPx: number; extraOffsetPx?: number
+  zigzagTopOffset: number; zigzagBotOffset: number; nodeH: number
 }) {
   const nodeY = (row: 'top' | 'bot') =>
-    PLATFORM_TOP_PCT / 100 * containerHeightPx
+    (PLATFORM_TOP_PCT / 100) * containerHeightPx
     + extraOffsetPx
     + (row === 'top' ? zigzagTopOffset : zigzagBotOffset)
     + nodeH / 2
@@ -227,44 +214,37 @@ function ZigzagConnector({
   const y1 = nodeY(fromRow)
   const y2 = nodeY(toRow)
   const midX = (fromX + toX) / 2
-  const yMin = Math.min(y1, y2)
-  const yMax = Math.max(y1, y2)
-  const thickness = 16
 
-  const baseStyle = {
-    position: 'absolute' as const,
-    background: accent,
-    borderRadius: 4,
-    boxShadow: `0 2px 0 rgba(0,0,0,0.35), 0 0 8px ${accent}aa`,
-    zIndex: 4,
-    animation: 'connectorPulse 1.6s ease-in-out infinite',
-    pointerEvents: 'none' as const,
-  }
-
+  // Path en L: horizontal → vertical → horizontal
+  const d = `M ${fromX} ${y1} H ${midX} V ${y2} H ${toX}`
+  
   return (
-    <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 4 }}>
-      <div style={{
-        ...baseStyle,
-        left: fromX,
-        top: y1 - thickness / 2,
-        width: midX - fromX + thickness / 2,
-        height: thickness,
-      }} />
-      <div style={{
-        ...baseStyle,
-        left: midX - thickness / 2,
-        top: yMin - thickness / 2,
-        width: thickness,
-        height: yMax - yMin + thickness,
-      }} />
-      <div style={{
-        ...baseStyle,
-        left: midX - thickness / 2,
-        top: y2 - thickness / 2,
-        width: toX - midX + thickness / 2,
-        height: thickness,
-      }} />
-    </div>
+    <svg
+      aria-hidden="true"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%',
+               overflow: 'visible', pointerEvents: 'none', zIndex: 4 }}
+    >
+      <defs>
+        <filter id={`glow-${accent.replace('#', '')}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      {/* Trazo principal con glow */}
+      <path
+        d={d} fill="none"
+        stroke={accent} strokeWidth={20}
+        strokeLinecap="round" strokeLinejoin="round"
+        filter={`url(#glow-${accent.replace('#', '')})`}
+        opacity={0.95}
+      />
+      {/* Highlight sutil en el borde superior para dar volumen */}
+      <path
+        d={d} fill="none"
+        stroke="rgba(255,255,255,0.3)" strokeWidth={1.5}
+        strokeLinecap="round" strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
@@ -273,26 +253,34 @@ function ZigzagConnector({
 function PathConnector({ fromX, toX, y, accent }: {
   fromX: number; toX: number; y: number; accent: string
 }) {
-  const thickness = 16
   return (
-    <div
+    <svg
       aria-hidden="true"
       className="absolute pointer-events-none"
-      style={{
-        left: fromX,
-        top: y - thickness / 2,
-        width: toX - fromX,
-        height: thickness,
-        background: accent,
-        borderRadius: 4,
-        boxShadow: `0 2px 0 rgba(0,0,0,0.35), 0 0 8px ${accent}aa`,
-        zIndex: 4,
-        animation: 'connectorPulse 1.6s ease-in-out infinite',
-      }}
-    />
+      style={{ inset: 0, width: '100%', height: '100%',
+               overflow: 'visible', zIndex: 4 }}
+    >
+      <defs>
+        <filter id={`glow-path-${accent.replace('#', '')}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
+      <path
+        d={`M ${fromX} ${y} H ${toX}`} fill="none"
+        stroke={accent} strokeWidth={20}
+        strokeLinecap="round"
+        filter={`url(#glow-path-${accent.replace('#', '')})`}
+        opacity={0.95}
+      />
+      <path
+        d={`M ${fromX} ${y - 1} H ${toX}`} fill="none"
+        stroke="rgba(255,255,255,0.28)" strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
-
 // ─── Nodo de nivel ────────────────────────────────────────────────────────────
 
 function LevelNode({

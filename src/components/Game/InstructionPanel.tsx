@@ -83,8 +83,8 @@ function PanelStyles() {
         justify-content: flex-start;
       }
       .queue-empty-cell {
-        width: 44px;
-        height: 44px;
+        width: 54px;
+        height: 54px;
         border-radius: 10px;
         background: transparent;
         border: 2px dashed rgba(31,58,138,0.35);
@@ -160,7 +160,7 @@ function CommandChip({ command, id, isActive, isDimmed, showRemove, onRemove }: 
         draggable={false}
         className="block select-none pointer-events-none"
         style={{
-          width: 44, height: 44,
+          width: 54, height: 54,
           objectFit: 'contain',
           filter: isActive ? 'brightness(1.15)' : undefined,
         }}

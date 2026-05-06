@@ -570,7 +570,7 @@ function GameScreen({
            a izquierda+derecha la centran en el hueco que queda tras el canvas. */}
         <div style={{
           flex: '0 1 auto', minWidth: 0,
-          width: '100%', maxWidth: 395,
+          width: '100%', maxWidth: 485,
           alignSelf: 'stretch',
           display: 'flex', flexDirection: 'column', gap: '5px',
           overflow: 'hidden',

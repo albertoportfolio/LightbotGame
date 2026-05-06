@@ -32,7 +32,6 @@ export function createPhaserGame(
       mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
     },
     parent,
-    backgroundColor: '#1a1a2e',
     scene: [BootScene, GameScene],
     // Disable default keyboard capture so React can still handle keys
     input: {
@@ -40,9 +39,9 @@ export function createPhaserGame(
         capture: [],
       },
     },
-    // Transparent canvas background so Tailwind body color shows through
-    // (set to false and use backgroundColor instead for a solid background)
-    transparent: false,
+    // Canvas transparente: el fondo del mundo lo pinta la página (App.tsx)
+    // como background-image — no se duplica dentro del canvas.
+    transparent: true,
   }
 
   const game = new Phaser.Game(config)

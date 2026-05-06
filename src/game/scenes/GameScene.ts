@@ -64,7 +64,6 @@ export class GameScene extends Phaser.Scene {
   private levelState!: LevelState
   private robot!: Robot
   private executor!: CommandExecutor
-  private bgImage?: Phaser.GameObjects.Image
   private floorImage?: Phaser.GameObjects.Image
   private cellImages: Phaser.GameObjects.Image[] = []
   private gridGraphics!: Phaser.GameObjects.Graphics
@@ -118,16 +117,6 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   // Devuelve el ID del mundo (1..4) según el índice del nivel: 0-9→1, 10-19→2, 20-29→3, 30-39→4
   private getWorldFromIndex(index: number): number {
     return Math.min(4, Math.floor(index / 10) + 1)
-  }
-
-  // Pinta el background del mundo correspondiente, sustituyendo cualquier imagen previa
-  private drawWorldBackground(world: number) {
-    const W = GAME_CONFIG.WIDTH
-    const H = GAME_CONFIG.HEIGHT
-    this.bgImage?.destroy()
-    this.bgImage = this.add.image(W / 2, H / 2, 'bg-' + world)
-      .setDisplaySize(W, H)
-      .setDepth(-100)
   }
 
   // Elige la forma del floor para la plataforma del nivel.
@@ -372,7 +361,6 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   this.robot?.destroy()
   this.robot = new Robot(this, def.robotStart, { x: this.gridOriginX, y: this.gridOriginY })
   const world = this.getWorldFromIndex(index)
-  this.drawWorldBackground(world)
   this.drawFloorPlatform(world)
   this.renderGrid()
   this.drawVarLabels()

@@ -565,15 +565,17 @@ function GameScreen({
             <GameWrapper bridge={emitter} />
           </div>
         </div>
-        {/* Paleta de comandos — derecha: cap 375 (ancho), padding 20px arriba/abajo
-           para que la card resulte 40px más baja que el main. */}
+        {/* Paleta de comandos: cap 395 (ancho), padding 30px arriba/abajo
+           para que la card resulte 60px más baja que el main. Las margenes auto
+           a izquierda+derecha la centran en el hueco que queda tras el canvas. */}
         <div style={{
           flex: '0 1 auto', minWidth: 0,
-          width: '100%', maxWidth: 375,
+          width: '100%', maxWidth: 395,
           alignSelf: 'stretch',
           display: 'flex', flexDirection: 'column', gap: '5px',
           overflow: 'hidden',
-          paddingTop: 20, paddingBottom: 20,
+          paddingTop: 30, paddingBottom: 30,
+          marginLeft: 'auto', marginRight: 'auto',
         }}>
           <div
             className="rounded-3xl"

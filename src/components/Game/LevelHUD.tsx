@@ -111,7 +111,7 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
           font-weight: 900;
           font-size: 26px;
           line-height: 1;
-          
+
         }
         .stat-card__suffix {
           color: #34477c;

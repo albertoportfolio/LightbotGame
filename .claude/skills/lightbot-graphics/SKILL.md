@@ -1,7 +1,7 @@
 ---
 name: lightbot-graphics
 description: Use this skill when the user asks to "integrate the new graphics", "use the assets", "load the sprites", "change the background of world X", "use the player atlas", "show the world badge", "use the new buttons", "draw the level nodes with the block PNGs", or works on replacing procedurally-drawn graphics with the PNG/atlas assets stored under `public/assets/`. Trigger when the user mentions backgrounds, blocks, bridges, buttons, floor panels, player atlas, world badges, or any subdirectory inside `public/assets/`.
-version: 0.1.0
+version: 0.2.0
 ---
 
 # Lightbot Graphics Integration
@@ -119,10 +119,11 @@ Decorative bottom: `drawFloorPlatform` adds extra `padBottom` (≈56 px) so the 
 
 ### 6) Buttons (HUD icons)
 
-`buttons/icon/` files have a Figma-style prefix `Propiedad 1=...`. Two options:
+`buttons/icon/` files have a Figma-style prefix `Propiedad 1=...`. Three options:
 
-- **Rename the files** to remove the `Propiedad 1=` prefix (recommended — cleaner imports and easier to reference).
+- **Rename the files** to remove the `Propiedad 1=` prefix (cleaner imports and easier to reference).
 - **Quote the URL**: in CSS, ` background: url("/assets/buttons/icon/Propiedad 1=home_btn.png")` works because of URL escaping.
+- **URL-encode the space**: in JSX `<img src>` and `url(...)`, write `Propiedad%201=name_btn.png`. This is the most portable form and what `TutorProfileScreen.tsx` uses today (the literal space in `src` works in modern browsers but Vite's dev-server occasionally rewrites paths, so encoding is safer). The `=` in the filename does not need encoding.
 
 Map to existing UI:
 
@@ -131,11 +132,42 @@ Map to existing UI:
 | `home_btn.png` | "Volver al menú" button in the game screen |
 | `back_btn.png` | "Atrás" navigation in level select / settings |
 | `redo_btn.png` | "Reiniciar nivel" button |
-| `settings_btn.png` | Settings gear |
+| `settings_btn.png` | Settings gear in HUD; **and** the per-user "edit" action in `TutorProfileScreen` `UserCard` |
 | `volume_btn.png` / `volume_btn-no.png` | Mute toggle (swap on `isMuted` state) |
 | `menu_btn.png` | Hamburger menu |
-| `close_btn.png` | Modal close |
+| `close_btn.png` | Modal close; **and** the per-user "delete" action in `TutorProfileScreen` `UserCard` |
 | `user_btn.png` | Profile / user button |
+
+#### Pattern: PNG icon inside a transparent `<button>` (React)
+
+When using these icons as action buttons inside React components (not Phaser), the cleanest pattern is a transparent button wrapping the `<img>`. The PNG already includes the colored background, border and shadow — the `<button>` itself contributes only the click target and the `:active` translate. Example from `TutorProfileScreen` `UserCard`:
+
+```tsx
+<button onClick={onEdit} className="tut-iconbtn-img" title="Editar" aria-label="Editar usuario">
+  <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" />
+</button>
+```
+
+```css
+.tut-iconbtn-img {
+  width: 34px; height: 34px;
+  border: none; cursor: pointer; padding: 0;
+  background: transparent; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.08s;
+}
+.tut-iconbtn-img:active { transform: translateY(1px); }
+.tut-iconbtn-img img {
+  width: 100%; height: 100%; object-fit: contain;
+  display: block; pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18));
+}
+```
+
+Notes:
+- `pointer-events: none` on the `<img>` so clicks bubble straight to the `<button>` (otherwise the `<img>` becomes the event target and `e.currentTarget` differs from the button).
+- `alt=""` is correct: the `<button>` already has `aria-label`, so the image is decorative — giving it alt text would announce it twice in screen readers.
+- Don't add a colored CSS background to `.tut-iconbtn-img` — the PNG has its own colored circle; doubling it produces an off-color halo behind the asset.
 
 ### 7) Level-select map — single platform + node blocks + animated connectors
 
@@ -367,6 +399,88 @@ DOM structure:
 ```
 
 The `<div className="flex items-center">` wrapping each circle + its trailing connector is what keeps each pair tightly packed; gap on the parent wouldn't work because we want zero gap *between* circle and connector but a clear gap between sibling pairs (which the connector itself provides).
+
+### 10) "Comic-card" style — `SettingsScreen`, `TutorProfileScreen` and all their modals
+
+Reference visuals (under `public/resultado_final/`):
+
+- `ajustes_final.png` — the settings card (cyan body, music toggle, custom split slider, GUARDAR Y VOLVER button)
+- `perfil_tutor.png` — the tutor profile card (white body, tutor row, user list with cyan avatars and PNG action buttons)
+
+Both screens — and **every modal that opens from them** (Crear/Editar/Borrar usuario, Modificar Nombre, Eliminar Cuenta) — share the same chassis as `LevelCompleteModal` (see `App.tsx:222`). The chassis is **load-bearing**: any new modal/dialog spawned from these screens must use the same DOM split, otherwise the X button gets clipped or the navy/purple header doesn't round.
+
+#### DOM split (mandatory)
+
+```tsx
+<div className="xxx-modal-bg">                     {/* fixed full-screen veil */}
+  <div className="xxx-modal-wrap">                 {/* position: relative; overflow: VISIBLE */}
+    <button className="xxx-close" onClick={...} /> {/* sibling — pokes outside the card */}
+    <div className="xxx-modal-card">               {/* overflow: HIDDEN — clips header to corners */}
+      <div className="xxx-modal-header">{title}</div>   {/* solid #505FFF bar */}
+      <div className="xxx-modal-body">{children}</div>  {/* white (modals) or cyan (settings) */}
+    </div>
+  </div>
+</div>
+```
+
+The wrap MUST have `overflow: visible` so the close button (negative `top`/`right` offsets) pokes outside; the inner card MUST have `overflow: hidden` so the rounded corners clip the colored header. Reversing these breaks the look — see the comment in `LevelCompleteModal` for the same trade-off.
+
+#### Color tokens
+
+| Token | Value | Used for |
+|---|---|---|
+| Header | `#505FFF` | Top bar of every card and modal |
+| Card body (screens — settings) | `linear-gradient(180deg, #c9eafc 0%, #b6e3fb 100%)` | `SettingsScreen` body (cyan, matches `ajustes_final.png`) |
+| Card body (screens — tutor + ALL modals) | `#ffffff` | `TutorProfileScreen` body and every modal body |
+| Card border | `5px solid #ffffff` | Every chassis |
+| Card shadow | `0 12px 0 rgba(56,189,248,0.25), 0 18px 40px rgba(14,165,233,0.35)` | Every chassis |
+| Close button (X) | `linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 100%)`, shadow `0 4px 0 #8b5cf6` | The 46×46 purple circle, top-right (`top: -18px; right: -18px`) on screens and modals; on `LevelCompleteModal` it's top-left (`left: -18px`) — that's the only positional difference |
+| Inner panel (settings + user-list) | `#f3f5f9` | `.stg-panel` and `.tut-users-card` — the gray rounded sub-card that nests inside the body |
+| Action btn — green (save) | `linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%)`, shadow `0 5px 0 #2f7a1c` | "GUARDAR Y VOLVER", every form's submit, EJECUTAR (HUD) |
+| Action btn — danger (delete) | `linear-gradient(180deg, #fca5a5 0%, #ef4444 100%)`, shadow `0 4px 0 #b91c1c` | "Eliminar" / "Borrar" in confirm dialogs |
+| Action btn — cancel (neutral) | `#e5e7eb`, shadow `0 4px 0 #94a3b8` | "Cancelar" |
+
+> The cancel/danger pair lives in a `.tut-btn-row` (flex, gap 10) so both confirmation dialogs (Eliminar Cuenta, Borrar Usuario) look identical.
+
+#### The X button — same fix as `LevelCompleteModal`
+
+Don't draw the X with the `×` glyph (renders off-center). Use two crossed bars via `::before`/`::after`:
+
+```css
+.tut-close::before, .tut-close::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 22px; height: 4px; border-radius: 2px; background: #ffffff;
+}
+.tut-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+.tut-close::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+```
+
+The button itself has `font-size: 0; color: transparent;` and an `aria-label` for screen readers — no text content.
+
+#### Modal helpers (Tutor screen)
+
+The tutor modals share four reusable bricks. **New modals should compose these instead of building bespoke styling**, otherwise they'll drift out of family:
+
+- `<ModalOverlay title="..." onClose={...}>` — owns the bg + wrap + close + header. Children render inside the body.
+- `<ModalInput label="..." value={...} onChange={...} />` — `.tut-input-group` + `.tut-input` (white-on-light, focuses to `#505FFF` border).
+- `<ModalSubmit loading={...} label="..." />` — green 3D submit button. Use this for non-destructive form submits.
+- `<ErrorBanner message={...} />` — red `.tut-error-banner` for inline errors.
+
+Confirm dialogs (Borrar / Eliminar) don't use `<ModalSubmit>` — they use a `.tut-btn-row` with one `.tut-btn--cancel` and one `.tut-btn--danger`, so the destructive intent is obvious.
+
+#### Custom volume slider (settings)
+
+`SettingsScreen` replaces the native `<input type="range">` with a div-based slider so it can have an irregular split-color fill (green over purple). Pattern:
+
+```tsx
+<div ref={trackRef} className="stg-track"
+  onPointerDown={(e) => { e.currentTarget.setPointerCapture(e.pointerId); setVolumeFromPointer(e.clientX) }}
+  onPointerMove={(e) => { if (e.buttons === 1) setVolumeFromPointer(e.clientX) }}>
+  <div className="stg-fill" style={{ width: `${volume * 100}%` }} />
+</div>
+```
+
+The handler uses `getBoundingClientRect()` (returns viewport coords like `clientX`, so no scroll/transform math), clamps to `[0,1]`, and snaps to 5% steps (`Math.round(clamped * 20) / 20`) to match the original `<input type="range" step={0.05}>` precision. `setPointerCapture` keeps the drag active even when the cursor leaves the track — this is why the clamp is non-optional.
 
 ## Important Gotchas
 

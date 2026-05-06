@@ -217,9 +217,9 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
   return (
     <div
-      className="relative flex flex-col items-center overflow-y-auto py-8"
+      className="relative flex flex-col items-center overflow-y-auto py-8 px-4"
       style={{
-        height: '100dvh',
+        minHeight: '100dvh',
         background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)',
       }}
     >
@@ -240,170 +240,274 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
         />
       ))}
 
-      {/* Main card */}
-      <div
-        className="relative z-10 flex flex-col gap-5 px-6 py-8 rounded-3xl w-full"
-        style={{
-          background: 'rgba(255,255,255,0.06)',
-          backdropFilter: 'blur(12px)',
-          border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 60px rgba(100,150,255,0.2)',
-          maxWidth: 480,
-        }}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={onBack}
-            className="text-white/50 hover:text-white text-xl transition-colors leading-none"
-          >
-            ←
-          </button>
-          <h2
-            className="font-black text-xl tracking-wide"
-            style={{
-              background: 'linear-gradient(135deg, #63b3ed, #f6e05e)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Perfil del Tutor
-          </h2>
-          <div style={{ width: 24 }} />
-        </div>
+      <style>{`
+        .tut-wrap { position: relative; width: 100%; max-width: 400px; overflow: visible; z-index: 10; }
+        .tut-card {
+          background: #ffffff;
+          border: 5px solid #ffffff;
+          border-radius: 26px;
+          box-shadow: 0 12px 0 rgba(56,189,248,0.25), 0 18px 40px rgba(14,165,233,0.35);
+          width: 100%; overflow: hidden; position: relative;
+        }
+        .tut-header {
+          background: #505FFF; color: #ffffff;
+          font-weight: 900; font-size: 20px; letter-spacing: 0.18em;
+          text-align: center; padding: 16px 16px;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.25); text-transform: uppercase;
+        }
+        .tut-body { padding: 20px 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+        .tut-tutor { display: flex; align-items: center; gap: 14px; padding: 4px 4px; }
+        .tut-avatar {
+          width: 48px; height: 48px; border-radius: 999px;
+          display: flex; align-items: center; justify-content: center;
+          font-weight: 900; font-size: 20px; color: #ffffff;
+          flex-shrink: 0; box-shadow: 0 3px 0 rgba(0,0,0,0.18);
+        }
+        .tut-avatar--dark { background: linear-gradient(180deg, #2b2b35 0%, #18181f 100%); }
+        .tut-avatar--cyan { background: linear-gradient(180deg, #5eead4 0%, #2dd4bf 100%); box-shadow: 0 3px 0 #0e7490; }
+        .tut-tutor-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .tut-tutor-name-row { display: flex; align-items: center; gap: 6px; }
+        .tut-tutor-name {
+          color: #1f2937; font-weight: 900; font-size: 15px;
+          letter-spacing: 0.06em; text-transform: uppercase;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .tut-tutor-edit {
+          width: 22px; height: 22px; border: none; padding: 0; cursor: pointer;
+          background: transparent; color: #6b7280; font-size: 12px;
+          display: flex; align-items: center; justify-content: center;
+        }
+        .tut-tutor-email { color: #6b7280; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tut-section-label {
+          color: #6b7280; font-weight: 900; font-size: 12px;
+          letter-spacing: 0.18em; text-transform: uppercase; padding-left: 4px;
+        }
+        .tut-active-pill {
+          background: rgba(99,179,237,0.18); color: #1f3a8a;
+          border: 1px solid rgba(99,179,237,0.45);
+          padding: 6px 10px; border-radius: 10px; font-size: 12px;
+        }
+        .tut-error {
+          background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca;
+          padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 700;
+        }
+        .tut-users-card {
+          background: #f3f5f9; border-radius: 18px; padding: 10px;
+          display: flex; flex-direction: column; gap: 8px;
+          box-shadow: inset 0 -2px 0 rgba(0,0,0,0.04);
+          max-height: 60vh; overflow-y: auto;
+        }
+        .tut-empty { color: #6b7280; font-size: 13px; text-align: center; padding: 14px 0; }
+        .tut-user-row {
+          display: flex; align-items: center; gap: 6px;
+          padding: 8px 10px; border-radius: 14px;
+          background: #ffffff; border: 2px solid transparent;
+          transition: border-color 150ms;
+        }
+        .tut-user-row.is-active { border-color: #67e8f9; background: #ecfeff; }
+        .tut-user-info { flex: 1; min-width: 0; }
+        .tut-user-name { color: #1f2937; font-weight: 800; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .tut-user-level { color: #6b7280; font-size: 11px; }
+        .tut-pill {
+          padding: 4px 9px; border-radius: 999px;
+          font-weight: 800; font-size: 10px; letter-spacing: 0.04em;
+          border: none; cursor: pointer; flex-shrink: 0;
+          text-transform: capitalize;
+        }
+        .tut-pill--active { background: #e5e7eb; color: #4b5563; cursor: default; }
+        .tut-pill--choose { background: #cffafe; color: #0e7490; }
+        .tut-pill--choose:hover { background: #a5f3fc; }
+        .tut-iconbtn-img {
+          width: 34px; height: 34px;
+          border: none; cursor: pointer; padding: 0;
+          background: transparent; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          transition: transform 0.08s;
+        }
+        .tut-iconbtn-img:active { transform: translateY(1px); }
+        .tut-iconbtn-img img {
+          width: 100%; height: 100%; object-fit: contain;
+          display: block; pointer-events: none;
+          filter: drop-shadow(0 2px 2px rgba(0,0,0,0.18));
+        }
+        .tut-add {
+          background: #ffffff; border: 2px dashed #cbd5e1;
+          color: #475569; padding: 12px; border-radius: 14px;
+          font-weight: 800; font-size: 13px; letter-spacing: 0.06em;
+          cursor: pointer; text-transform: uppercase;
+          transition: background 150ms;
+        }
+        .tut-add:hover { background: #f1f5f9; }
+        .tut-account { display: flex; gap: 10px; }
+        .tut-account-btn {
+          flex: 1; padding: 10px 0; border-radius: 12px;
+          font-weight: 800; font-size: 12px; cursor: pointer; border: none;
+          letter-spacing: 0.04em;
+        }
+        .tut-account-btn--logout { background: #fef3c7; color: #92400e; }
+        .tut-account-btn--delete { background: #fee2e2; color: #b91c1c; }
+        .tut-close {
+          position: absolute; top: -18px; right: -18px;
+          width: 46px; height: 46px; border-radius: 999px;
+          background: linear-gradient(180deg, #d8b4fe 0%, #c4b5fd 100%);
+          border: none; cursor: pointer; padding: 0; font-size: 0; color: transparent;
+          box-shadow: 0 4px 0 #8b5cf6, 0 6px 14px rgba(139,92,246,0.35);
+          z-index: 10;
+        }
+        .tut-close::before, .tut-close::after {
+          content: ''; position: absolute; top: 50%; left: 50%;
+          width: 22px; height: 4px; border-radius: 2px; background: #ffffff;
+        }
+        .tut-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+        .tut-close::after  { transform: translate(-50%, -50%) rotate(-45deg); }
+        .tut-close:active {
+          transform: translateY(2px);
+          box-shadow: 0 2px 0 #8b5cf6, 0 4px 10px rgba(139,92,246,0.35);
+        }
 
-        {/* Tutor info */}
-        {tutor && (
-          <div
-            className="flex items-center gap-4 px-4 py-4 rounded-2xl"
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }}
-          >
-            <div
-              className="flex items-center justify-center rounded-full font-black text-lg"
-              style={{
-                width: 52,
-                height: 52,
-                background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-                color: '#fff',
-                flexShrink: 0,
-              }}
-            >
-              {tutor.initials}
-            </div>
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-white font-bold text-base truncate">
-                  {tutor.fullName || 'Sin nombre'}
-                </span>
-                <button
-                  onClick={openEditProfile}
-                  className="w-6 h-6 flex items-center justify-center rounded-md text-white/40 hover:text-white hover:bg-white/10 transition-all text-xs flex-shrink-0"
-                  title="Editar nombre"
-                >
-                  ✏️
-                </button>
+        /* ── Modal: misma "tarjeta cómic" con header morado y body blanco ── */
+        .tut-modal-bg {
+          position: fixed; inset: 0; z-index: 50;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+          padding: 24px 16px;
+        }
+        .tut-modal-wrap { position: relative; width: 100%; max-width: 340px; overflow: visible; }
+        .tut-modal-card {
+          background: #ffffff;
+          border: 5px solid #ffffff;
+          border-radius: 26px;
+          box-shadow: 0 12px 0 rgba(56,189,248,0.25), 0 18px 40px rgba(14,165,233,0.35);
+          width: 100%; overflow: hidden; position: relative;
+        }
+        .tut-modal-header {
+          background: #505FFF; color: #ffffff;
+          font-weight: 900; font-size: 17px; letter-spacing: 0.16em;
+          text-align: center; padding: 14px 16px;
+          text-shadow: 0 2px 0 rgba(0,0,0,0.25); text-transform: uppercase;
+        }
+        .tut-modal-body {
+          padding: 18px 18px 18px;
+          display: flex; flex-direction: column; gap: 12px;
+        }
+        .tut-modal-text { color: #475569; font-size: 13px; line-height: 1.45; }
+        .tut-modal-text strong { color: #0f172a; }
+        .tut-modal-text--danger { color: #b91c1c; font-weight: 800; }
+
+        .tut-input-group { display: flex; flex-direction: column; gap: 6px; }
+        .tut-input-label {
+          color: #475569; font-weight: 800; font-size: 11px;
+          letter-spacing: 0.16em; text-transform: uppercase;
+        }
+        .tut-input {
+          width: 100%; padding: 11px 14px; border-radius: 12px;
+          font-size: 14px; font-weight: 600; color: #0f172a;
+          background: #f3f5f9;
+          border: 2px solid #e2e8f0;
+          outline: none; transition: border-color 150ms, background 150ms;
+        }
+        .tut-input::placeholder { color: #94a3b8; font-weight: 500; }
+        .tut-input:focus { border-color: #505FFF; background: #ffffff; }
+
+        .tut-submit {
+          width: 100%; padding: 13px 0; border-radius: 14px;
+          font-weight: 900; font-size: 14px; letter-spacing: 0.14em;
+          color: #ffffff; text-shadow: 0 2px 0 rgba(0,0,0,0.22);
+          border: none; cursor: pointer; text-transform: uppercase;
+          background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
+          box-shadow: 0 4px 0 #2f7a1c, 0 6px 14px rgba(95,191,63,0.35);
+          transition: transform 0.08s;
+        }
+        .tut-submit:active { transform: translateY(2px); box-shadow: 0 2px 0 #2f7a1c; }
+        .tut-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .tut-btn-row { display: flex; gap: 10px; }
+        .tut-btn {
+          flex: 1; padding: 12px 0; border-radius: 14px;
+          font-weight: 900; font-size: 13px; letter-spacing: 0.1em;
+          border: none; cursor: pointer; text-transform: uppercase;
+          transition: transform 0.08s;
+        }
+        .tut-btn:active { transform: translateY(2px); }
+        .tut-btn--cancel {
+          background: #e5e7eb; color: #475569;
+          box-shadow: 0 4px 0 #94a3b8;
+        }
+        .tut-btn--danger {
+          background: linear-gradient(180deg, #fca5a5 0%, #ef4444 100%);
+          color: #ffffff; text-shadow: 0 2px 0 rgba(0,0,0,0.22);
+          box-shadow: 0 4px 0 #b91c1c, 0 6px 14px rgba(239,68,68,0.35);
+        }
+        .tut-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .tut-error-banner {
+          background: #fee2e2; color: #b91c1c;
+          border: 1px solid #fecaca;
+          padding: 10px 12px; border-radius: 12px;
+          font-size: 13px; font-weight: 700;
+        }
+      `}</style>
+
+      <div className="tut-wrap">
+        <button className="tut-close" onClick={onBack} aria-label="Cerrar perfil" />
+        <div className="tut-card">
+          <div className="tut-header">PERFIL DEL TUTOR</div>
+          <div className="tut-body">
+            {tutor && (
+              <div className="tut-tutor">
+                <div className="tut-avatar tut-avatar--dark">
+                  {(tutor.initials || tutor.fullName?.charAt(0) || 'P').toUpperCase()}
+                </div>
+                <div className="tut-tutor-info">
+                  <div className="tut-tutor-name-row">
+                    <span className="tut-tutor-name">{tutor.fullName || 'Profesor'}</span>
+                    <button className="tut-tutor-edit" onClick={openEditProfile} title="Editar nombre">✏️</button>
+                  </div>
+                  <span className="tut-tutor-email">{tutor.email}</span>
+                </div>
               </div>
-              <span className="text-white/50 text-sm truncate">{tutor.email}</span>
+            )}
+
+            <div className="tut-section-label">Usuarios</div>
+
+            {error && <div className="tut-error">{error}</div>}
+
+            <div className="tut-users-card">
+              {selectedUser && (
+                <div className="tut-active-pill">
+                  Usuario activo: <strong>{selectedUser.name}</strong>
+                </div>
+              )}
+
+              {loading ? (
+                <p className="tut-empty">Cargando usuarios...</p>
+              ) : users.length === 0 ? (
+                <p className="tut-empty">No hay usuarios. Crea uno para empezar.</p>
+              ) : (
+                users.map((user) => (
+                  <UserCard
+                    key={user.id}
+                    user={user}
+                    isSelected={selectedUser?.id === user.id}
+                    onSelect={() => handleSelectUser(user)}
+                    onEdit={() => openEdit(user)}
+                    onDelete={() => openDelete(user)}
+                  />
+                ))
+              )}
+
+              <button className="tut-add" onClick={openCreate}>+ Añadir usuario</button>
+            </div>
+
+            <div className="tut-account">
+              <button className="tut-account-btn tut-account-btn--logout" onClick={handleLogout}>
+                Cerrar sesión
+              </button>
+              <button className="tut-account-btn tut-account-btn--delete" onClick={openDeleteAccount}>
+                Eliminar cuenta
+              </button>
             </div>
           </div>
-        )}
-
-        {/* Account action buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={handleLogout}
-            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-            style={{
-              background: 'rgba(252,129,129,0.15)',
-              border: '1px solid rgba(252,129,129,0.3)',
-              color: '#fc8181',
-            }}
-          >
-            Cerrar sesión
-          </button>
-          <button
-            onClick={openDeleteAccount}
-            className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95"
-            style={{
-              background: 'rgba(220,38,38,0.15)',
-              border: '1px solid rgba(220,38,38,0.3)',
-              color: '#ef4444',
-            }}
-          >
-            Eliminar cuenta
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
-
-        {/* Users section header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-white font-bold text-base">Usuarios</h3>
-          <button
-            onClick={openCreate}
-            className="px-3 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95"
-            style={{
-              background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-              color: '#fff',
-            }}
-          >
-            + Nuevo
-          </button>
-        </div>
-
-        {/* Selected user indicator */}
-        {selectedUser && (
-          <div
-            className="flex items-center justify-between px-3 py-2 rounded-xl text-sm"
-            style={{
-              background: 'rgba(99,179,237,0.12)',
-              border: '1px solid rgba(99,179,237,0.3)',
-            }}
-          >
-            <span className="text-white/70">
-              Usuario activo: <strong className="text-white">{selectedUser.name}</strong>
-            </span>
-          </div>
-        )}
-
-        {/* Error */}
-        {error && (
-          <div
-            className="px-4 py-2.5 rounded-xl text-sm font-semibold"
-            style={{
-              background: 'rgba(252,129,129,0.15)',
-              border: '1px solid rgba(252,129,129,0.3)',
-              color: '#fc8181',
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        {/* Users list */}
-        <div className="flex flex-col gap-2" style={{ maxHeight: 320, overflowY: 'auto' }}>
-          {loading ? (
-            <p className="text-white/40 text-sm text-center py-4">Cargando usuarios...</p>
-          ) : users.length === 0 ? (
-            <p className="text-white/40 text-sm text-center py-4">
-              No hay usuarios. Crea uno para empezar.
-            </p>
-          ) : (
-            users.map((user) => (
-              <UserCard
-                key={user.id}
-                user={user}
-                isSelected={selectedUser?.id === user.id}
-                onSelect={() => handleSelectUser(user)}
-                onEdit={() => openEdit(user)}
-                onDelete={() => openDelete(user)}
-              />
-            ))
-          )}
         </div>
       </div>
 
@@ -411,19 +515,9 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
       {/* Create modal */}
       {modal === 'create' && (
-        <ModalOverlay onClose={() => setModal('none')}>
-          <h3
-            className="font-black text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Nuevo Usuario
-          </h3>
+        <ModalOverlay title="Nuevo Usuario" onClose={() => setModal('none')}>
           {formError && <ErrorBanner message={formError} />}
-          <form onSubmit={handleCreate} className="flex flex-col gap-4">
+          <form onSubmit={handleCreate} className="flex flex-col gap-3">
             <ModalInput
               label="Nombre"
               value={formName}
@@ -438,19 +532,9 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
       {/* Edit modal */}
       {modal === 'edit' && editingUser && (
-        <ModalOverlay onClose={() => setModal('none')}>
-          <h3
-            className="font-black text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #f6e05e, #f6ad55)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Modificar Usuario
-          </h3>
+        <ModalOverlay title="Modificar Usuario" onClose={() => setModal('none')}>
           {formError && <ErrorBanner message={formError} />}
-          <form onSubmit={handleUpdate} className="flex flex-col gap-4">
+          <form onSubmit={handleUpdate} className="flex flex-col gap-3">
             <ModalInput
               label="Nombre"
               value={formName}
@@ -472,19 +556,9 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
       {/* Edit profile name modal */}
       {modal === 'editProfile' && (
-        <ModalOverlay onClose={() => setModal('none')}>
-          <h3
-            className="font-black text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Modificar Nombre
-          </h3>
+        <ModalOverlay title="Modificar Nombre" onClose={() => setModal('none')}>
           {formError && <ErrorBanner message={formError} />}
-          <form onSubmit={handleUpdateProfile} className="flex flex-col gap-4">
+          <form onSubmit={handleUpdateProfile} className="flex flex-col gap-3">
             <ModalInput
               label="Nombre completo"
               value={profileName}
@@ -499,101 +573,53 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
       {/* Delete account confirm modal */}
       {modal === 'deleteAccount' && (
-        <ModalOverlay onClose={() => setModal('none')}>
-          <h3
-            className="font-black text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #fc8181, #f56565)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Eliminar Cuenta
-          </h3>
+        <ModalOverlay title="Eliminar Cuenta" onClose={() => setModal('none')}>
           {formError && <ErrorBanner message={formError} />}
-          <p className="text-white/60 text-sm">
+          <p className="tut-modal-text">
             Esta acción eliminará permanentemente tu cuenta, todos tus usuarios y su progreso.
-            <strong className="text-white"> No se puede deshacer.</strong>
+            <strong> No se puede deshacer.</strong>
           </p>
-          <p className="text-white/60 text-sm">
-            Escribe <strong className="text-red-400">{tutor?.email}</strong> para confirmar:
+          <p className="tut-modal-text">
+            Escribe <strong className="tut-modal-text--danger">{tutor?.email}</strong> para confirmar:
           </p>
           <input
             type="text"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
             placeholder={tutor?.email || ''}
-            className="w-full px-4 py-3 rounded-xl text-white text-sm font-medium outline-none transition-all"
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
-            }}
-            onFocus={(e) => (e.target.style.borderColor = 'rgba(252,129,129,0.5)')}
-            onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
+            className="tut-input"
           />
-          <div className="flex gap-3">
-            <button
-              onClick={() => setModal('none')}
-              className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm"
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
-              }}
-            >
+          <div className="tut-btn-row">
+            <button onClick={() => setModal('none')} className="tut-btn tut-btn--cancel">
               Cancelar
             </button>
             <button
               onClick={handleDeleteAccount}
               disabled={formLoading || !shouldAllowDelete()}
-              className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, #fc8181, #f56565)',
-                color: '#fff',
-              }}
+              className="tut-btn tut-btn--danger"
             >
-              {formLoading ? 'Eliminando...' : 'Eliminar cuenta'}
+              {formLoading ? 'Eliminando...' : 'Eliminar'}
             </button>
           </div>
         </ModalOverlay>
       )}
 
-      {/* Delete confirm modal */}
+      {/* Delete user confirm modal */}
       {modal === 'delete' && editingUser && (
-        <ModalOverlay onClose={() => setModal('none')}>
-          <h3
-            className="font-black text-lg"
-            style={{
-              background: 'linear-gradient(135deg, #fc8181, #f56565)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Borrar Usuario
-          </h3>
+        <ModalOverlay title="Borrar Usuario" onClose={() => setModal('none')}>
           {formError && <ErrorBanner message={formError} />}
-          <p className="text-white/60 text-sm">
-            ¿Seguro que quieres borrar a <strong className="text-white">{editingUser.name}</strong>?
+          <p className="tut-modal-text">
+            ¿Seguro que quieres borrar a <strong>{editingUser.name}</strong>?
             Esta acción no se puede deshacer.
           </p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => setModal('none')}
-              className="flex-1 py-2.5 rounded-xl font-bold text-white text-sm"
-              style={{
-                background: 'rgba(255,255,255,0.1)',
-                border: '1px solid rgba(255,255,255,0.2)',
-              }}
-            >
+          <div className="tut-btn-row">
+            <button onClick={() => setModal('none')} className="tut-btn tut-btn--cancel">
               Cancelar
             </button>
             <button
               onClick={handleDelete}
               disabled={formLoading}
-              className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-95 disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, #fc8181, #f56565)',
-                color: '#fff',
-              }}
+              className="tut-btn tut-btn--danger"
             >
               {formLoading ? 'Borrando...' : 'Borrar'}
             </button>
@@ -606,7 +632,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-// Tarjeta de usuario con avatar, nombre, nivel y botones de seleccionar/editar/borrar
+// Tarjeta de usuario con avatar cyan, nombre, nivel, badge de estado y botones de editar/borrar
 function UserCard({
   user,
   isSelected,
@@ -621,111 +647,57 @@ function UserCard({
   onDelete: () => void
 }) {
   return (
-    <div
-      className="flex items-center gap-3 px-3 py-3 rounded-xl transition-all"
-      style={{
-        background: isSelected
-          ? 'rgba(99,179,237,0.15)'
-          : 'rgba(255,255,255,0.04)',
-        border: isSelected
-          ? '1px solid rgba(99,179,237,0.4)'
-          : '1px solid rgba(255,255,255,0.08)',
-      }}
-    >
-      {/* Avatar */}
-      <div
-        className="flex items-center justify-center rounded-full font-bold text-sm"
-        style={{
-          width: 36,
-          height: 36,
-          background: isSelected
-            ? 'linear-gradient(135deg, #63b3ed, #48bb78)'
-            : 'rgba(255,255,255,0.1)',
-          color: '#fff',
-          flexShrink: 0,
-        }}
-      >
+    <div className={`tut-user-row ${isSelected ? 'is-active' : ''}`}>
+      <div className="tut-avatar tut-avatar--cyan" style={{ width: 40, height: 40, fontSize: 16 }}>
         {user.name?.charAt(0).toUpperCase() ?? '?'}
       </div>
-
-      {/* Info */}
-      <div className="flex flex-col flex-1 min-w-0">
-        <span className="text-white font-semibold text-sm truncate">{user.name}</span>
-        <span className="text-white/40 text-xs">
-          Nivel: {user.currentLevel +1}
-        </span>
+      <div className="tut-user-info">
+        <div className="tut-user-name">{user.name}</div>
+        <div className="tut-user-level">Nivel: {user.currentLevel + 1}</div>
       </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <button
-          onClick={onSelect}
-          className="px-2 py-1 rounded-lg text-xs font-bold transition-all active:scale-95"
-          style={{
-            background: isSelected
-              ? 'rgba(255,255,255,0.1)'
-              : 'rgba(99,179,237,0.2)',
-            color: isSelected ? 'rgba(255,255,255,0.5)' : '#63b3ed',
-            border: '1px solid transparent',
-          }}
-          title={isSelected ? 'Ya seleccionado' : 'Seleccionar'}
-        >
-          {isSelected ? 'Activo' : 'Elegir'}
-        </button>
-        <button
-          onClick={onEdit}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-all text-sm"
-          title="Editar"
-        >
-          ✏️
-        </button>
-        <button
-          onClick={onDelete}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-all text-sm"
-          title="Borrar"
-        >
-          🗑️
-        </button>
-      </div>
+      <button
+        onClick={onSelect}
+        disabled={isSelected}
+        className={`tut-pill ${isSelected ? 'tut-pill--active' : 'tut-pill--choose'}`}
+        title={isSelected ? 'Ya seleccionado' : 'Seleccionar'}
+      >
+        {isSelected ? 'Activo' : 'Elegir'}
+      </button>
+      <button onClick={onEdit} className="tut-iconbtn-img" title="Editar" aria-label="Editar usuario">
+        <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" />
+      </button>
+      <button onClick={onDelete} className="tut-iconbtn-img" title="Borrar" aria-label="Borrar usuario">
+        <img src="/assets/buttons/icon/Propiedad%201=close_btn.png" alt="" />
+      </button>
     </div>
   )
 }
 
-// Overlay modal con fondo oscuro y blur — envuelve el contenido de cualquier modal
+// Overlay modal con la "tarjeta cómic": header morado con título + body blanco + X morada arriba-derecha.
+// `title` se renderiza como header; los hijos van dentro del body.
 function ModalOverlay({
+  title,
   onClose,
   children,
 }: {
+  title: string
   onClose: () => void
   children: React.ReactNode
 }) {
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center z-50"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
-    >
-      <div
-        className="relative flex flex-col gap-4 px-6 py-6 rounded-2xl w-full"
-        style={{
-          background: 'linear-gradient(145deg, #1a2a4a, #0d1b2e)',
-          border: '2px solid rgba(255,255,255,0.12)',
-          boxShadow: '0 0 40px rgba(100,150,255,0.15)',
-          maxWidth: 380,
-        }}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-4 text-white/30 hover:text-white text-lg transition-colors"
-        >
-          ✕
-        </button>
-        {children}
+    <div className="tut-modal-bg">
+      <div className="tut-modal-wrap">
+        <button className="tut-close" onClick={onClose} aria-label="Cerrar" />
+        <div className="tut-modal-card">
+          <div className="tut-modal-header">{title}</div>
+          <div className="tut-modal-body">{children}</div>
+        </div>
       </div>
     </div>
   )
 }
 
-// Input reutilizable para modales con label y estilo glassmorphism
+// Input reutilizable para modales con label uppercase y estilo claro
 function ModalInput({
   label,
   type = 'text',
@@ -742,57 +714,30 @@ function ModalInput({
   required?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-white/50 text-xs uppercase tracking-widest font-semibold">
-        {label}
-      </label>
+    <div className="tut-input-group">
+      <label className="tut-input-label">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full px-4 py-3 rounded-xl text-white text-sm font-medium outline-none transition-all"
-        style={{
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(255,255,255,0.12)',
-        }}
-        onFocus={(e) => (e.target.style.borderColor = 'rgba(99,179,237,0.5)')}
-        onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
+        className="tut-input"
       />
     </div>
   )
 }
 
-// Botón de submit para modales con estado de carga
+// Botón de submit verde 3D con estado de carga
 function ModalSubmit({ loading, label }: { loading: boolean; label: string }) {
   return (
-    <button
-      type="submit"
-      disabled={loading}
-      className="w-full py-3 rounded-xl font-black text-white text-sm transition-all active:scale-95 disabled:opacity-50"
-      style={{
-        background: 'linear-gradient(135deg, #63b3ed, #48bb78)',
-        boxShadow: '0 3px 0 #1a365d',
-      }}
-    >
+    <button type="submit" disabled={loading} className="tut-submit">
       {loading ? 'Cargando...' : label}
     </button>
   )
 }
 
-// Banner rojo reutilizable para mostrar mensajes de error
+// Banner rojo reutilizable para mostrar mensajes de error en modales
 function ErrorBanner({ message }: { message: string }) {
-  return (
-    <div
-      className="px-4 py-2 rounded-xl text-sm font-semibold"
-      style={{
-        background: 'rgba(252,129,129,0.15)',
-        border: '1px solid rgba(252,129,129,0.3)',
-        color: '#fc8181',
-      }}
-    >
-      {message}
-    </div>
-  )
+  return <div className="tut-error-banner">{message}</div>
 }

@@ -1,7 +1,7 @@
 ---
 name: lightbot-graphics
 description: Use this skill when the user asks to "integrate the new graphics", "use the assets", "load the sprites", "change the background of world X", "use the player atlas", "show the world badge", "use the new buttons", "draw the level nodes with the block PNGs", or works on replacing procedurally-drawn graphics with the PNG/atlas assets stored under `public/assets/`. Trigger when the user mentions backgrounds, blocks, bridges, buttons, floor panels, player atlas, world badges, or any subdirectory inside `public/assets/`.
-version: 0.2.0
+version: 0.3.0
 ---
 
 # Lightbot Graphics Integration
@@ -400,14 +400,20 @@ DOM structure:
 
 The `<div className="flex items-center">` wrapping each circle + its trailing connector is what keeps each pair tightly packed; gap on the parent wouldn't work because we want zero gap *between* circle and connector but a clear gap between sibling pairs (which the connector itself provides).
 
-### 10) "Comic-card" style — `SettingsScreen`, `TutorProfileScreen` and all their modals
+### 10) "Comic-card" style — `SettingsScreen`, `TutorProfileScreen`, `UserSelectScreen` and all their modals
 
 Reference visuals (under `public/resultado_final/`):
 
 - `ajustes_final.png` — the settings card (cyan body, music toggle, custom split slider, GUARDAR Y VOLVER button)
 - `perfil_tutor.png` — the tutor profile card (white body, tutor row, user list with cyan avatars and PNG action buttons)
+- `player_select.png` — the player-select card (white body, "Hola, Usuario" greeting, gray inner panel with cyan-avatar rows + green play-arrow on the current user + dashed "+ Añadir usuario")
 
-Both screens — and **every modal that opens from them** (Crear/Editar/Borrar usuario, Modificar Nombre, Eliminar Cuenta) — share the same chassis as `LevelCompleteModal` (see `App.tsx:222`). The chassis is **load-bearing**: any new modal/dialog spawned from these screens must use the same DOM split, otherwise the X button gets clipped or the navy/purple header doesn't round.
+All three screens — and **every modal that opens from them** (Crear/Editar/Borrar usuario, Modificar Nombre, Eliminar Cuenta) — share the same chassis as `LevelCompleteModal` (see `App.tsx:222`). The chassis is **load-bearing**: any new modal/dialog spawned from these screens must use the same DOM split, otherwise the X button gets clipped or the navy/purple header doesn't round.
+
+`UserSelectScreen` reuses the chassis verbatim with `usr-` prefixed classes (parallel to `tut-` in `TutorProfileScreen`). It adds two pieces specific to player-select:
+
+1. **Green play-arrow circle** on the row matching `selectedUser?.id`. Drawn as a CSS triangle (`border-left: 9px solid white; border-top/bottom: 6px transparent`) inside a green 3D circle — same technique family as the X button (CSS shapes for perfect geometric centering, no font-glyph quirks).
+2. **Three-mode body** that dispatches on `users.length`: `0` → empty + `<CreateForm>` inline; `1` → auto-select via `useEffect` and skip render; `2+` → list with `usr-row`s + `+ Añadir usuario` toggling to `<CreateForm>`. The auto-select-on-1 path is why the screen only renders for 0 or ≥2 — a single user means there's nothing to choose.
 
 #### DOM split (mandatory)
 

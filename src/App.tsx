@@ -550,6 +550,24 @@ function GameScreen({
         </button>
       </div>
       <style>{`
+        /* Reglas base del sidebar (desktop). El paddingBottom alto es lo que
+           recorta el card .rounded-3xl para que mt-auto no cree un hueco enorme
+           entre la cola y los botones. Está aquí (no inline) para que el media
+           query mobile pueda sobreescribirlo sin pelear con specificity. */
+        .gs-sidebar {
+          padding-top: 15px;
+          padding-bottom: 90px;
+        }
+        /* Móvil en LANDSCAPE — el viewport es ancho (>768 px) así que el layout
+           desktop sigue activo, pero la altura es pequeña (<500 px). El
+           paddingBottom: 90 deja un bloque grande de world-bg debajo del card.
+           Aquí lo anulamos para que el card cyan ocupe todo el alto disponible. */
+        @media (max-height: 500px) {
+          .gs-sidebar {
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+          }
+        }
         /* Móvil portrait / tablet estrecho: layout en columna para que la paleta
            tenga el ancho completo y todo quepa con el mínimo scroll posible. */
         @media (max-width: 768px) {
@@ -569,21 +587,28 @@ function GameScreen({
           .gs-sidebar {
             max-width: 100% !important;
             width: 100% !important;
-            /* 2 px sólo arriba y abajo — el resto del card pega borde a borde */
-            padding-top: 2px !important;
-            padding-bottom: 2px !important;
+            /* Sin padding vertical — el card pega borde a borde del viewport.
+               El paddingBottom: 70 inline (desktop) queda anulado aquí. */
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
             flex: 1 1 auto !important;
             min-height: 0 !important;
           }
-          /* Tarjeta interna (.rounded-3xl) — sin padding, sin borde, sin
-             border-radius en móvil para que la paleta llegue de borde a borde
-             del viewport y no se pierda ancho con chrome decorativo. */
+          /* Tarjeta interna (.rounded-3xl) — sin padding/borde/border-radius
+             en móvil para que la paleta llegue borde a borde del viewport.
+             Mantiene flex: 1 (inline) para extenderse al fondo del sidebar. */
           .gs-sidebar > div {
             padding: 0 !important;
             gap: 6px !important;
             border-width: 0 !important;
             border-radius: 0 !important;
           }
+          /* La cola crece para absorber el espacio sobrante del card en lugar
+             de dejarlo como un bloque cyan vacío entre la cola y los botones.
+             Visualmente la zona de "introduce comandos" se siente espaciosa,
+             que es semánticamente correcto — es el área de trabajo del usuario. */
+          .hud-card--queue { flex: 1 1 auto !important; }
+          .hud-card--queue .queue-area { flex: 1 1 auto !important; }
           /* Reducir gap-3 de Tailwind dentro de la sidebar (panel y botones) */
           .gs-sidebar .gap-3 { gap: 6px !important; }
           .gs-sidebar .gap-2 { gap: 4px !important; }
@@ -614,7 +639,9 @@ function GameScreen({
           alignSelf: 'stretch',
           display: 'flex', flexDirection: 'column', gap: '5px',
           overflow: 'hidden',
-          paddingTop: 15, paddingBottom: 40,
+          /* paddingTop/Bottom ahora viven en la clase .gs-sidebar (en el
+             <style> de arriba), para que el media query mobile pueda
+             sobreescribirlos por orden de cascada. */
           marginLeft: 'auto', marginRight: 'auto',
         }}>
           <div

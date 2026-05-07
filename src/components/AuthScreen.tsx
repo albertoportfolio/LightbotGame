@@ -80,7 +80,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
 
   return (
     <div
-      className="fixed inset-0 overflow-y-auto overflow-x-hidden"
+      className={`auth-outer auth-outer--${view} fixed inset-0 overflow-y-auto overflow-x-hidden`}
       style={{
         backgroundImage: "url('/assets/backgrounds/menu/sky 1.png')",
         backgroundSize: 'cover',
@@ -205,6 +205,27 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
           flex-direction: column;
           gap: 10px;
         }
+
+        /* Spacer flexible que pega el botón al fondo de la card en desktop.
+           En móvil (incluido landscape) lo colapsamos para que el botón quede pegado al formulario.
+           La coma en la media query es OR — aplica si la pantalla es estrecha (portrait)
+           O baja (landscape de móvil), cubriendo ambas orientaciones. */
+        .login-spacer { flex: 1 1 auto; }
+        @media (max-width: 640px), (max-height: 600px) {
+          .login-spacer { display: none; }
+          /* La card del auth se ajusta a su contenido para que no quede
+             un hueco vacío debajo del botón cuando el spacer está colapsado. */
+          .auth-card {
+            height: auto !important;
+            min-height: 0 !important;
+          }
+          /* Anula el gap-3 del form — así fields-box y botón quedan juntos */
+          .login-form { gap: 0 !important; }
+          /* Sin scroll SOLO en login (cabe siempre). Registrarse mantiene el overflow-y-auto
+             porque su formulario + checkboxes de consentimiento puede exceder el viewport. */
+          .auth-outer--login { overflow-y: hidden !important; }
+          .auth-inner--login { overflow-y: visible !important; }
+        }
       `}</style>
 
       <img
@@ -242,7 +263,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
           <h1 className="nav-title select-none">{navTitle}</h1>
         </header>
 
-        <div className="flex-1 flex flex-col px-6 py-5 overflow-y-auto">
+        <div className={`auth-inner auth-inner--${view} flex-1 flex flex-col px-6 py-5 overflow-y-auto`}>
           {error && (
             <div
               className="w-full px-3 py-2 rounded-lg text-xs font-semibold mb-3 flex-shrink-0"
@@ -255,7 +276,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
           {view === 'login' && (
             <>
               <TabSwitcher active="login" onSwitch={switchAuthTab} />
-              <form onSubmit={handleLogin} className="flex flex-col gap-3 mt-4 flex-1">
+              <form onSubmit={handleLogin} className="login-form flex flex-col gap-3 mt-4 flex-1">
                 <div className="fields-box">
                   <FormField
                     label="CORREO ELECTRÓNICO"
@@ -274,7 +295,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
                     required
                   />
                 </div>
-                <div className="flex-1" />
+                <div className="login-spacer" />
                 <button
                   type="submit"
                   disabled={loading}

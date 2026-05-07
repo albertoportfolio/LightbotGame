@@ -81,6 +81,11 @@ const startMusic = useCallback(() => {
   emitter.emit('start-music')
 }, [emitter])
 
+// Pide al SoundManager que desbloquee el AudioContext — debe llamarse desde un gesto del usuario
+const unlockAudio = useCallback(() => {
+  emitter.emit('unlock-audio')
+}, [emitter])
+
 const setVolume = useCallback((v: number) => {
   emitter.emit('set-volume', v)
 }, [emitter])
@@ -95,6 +100,7 @@ const setVolume = useCallback((v: number) => {
     setMute,
     setVolume,
     stopMusic,
-    startMusic
+    startMusic,
+    unlockAudio,
   }
 }

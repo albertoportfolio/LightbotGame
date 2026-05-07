@@ -78,6 +78,7 @@ export class GameScene extends Phaser.Scene {
   private handleToggleMute = () => { this.sfx.toggleMute() }
   private handleSetVolume = (v: number) => { this.sfx.setVolume(v) }
   private handleStartMusic = () => { this.sfx.startMusic() }
+  private handleUnlockAudio = () => { this.sfx.unlock() }
   private varLabels: Phaser.GameObjects.Text[] = [];
   private varLetterLabels: Phaser.GameObjects.Text[] = []
 private varValueLabels:  Phaser.GameObjects.Text[] = []
@@ -98,6 +99,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.on('set-mute', this.handleSetMute, this)
     this.bridge.on('set-volume', this.handleSetVolume)
     this.bridge.on('start-music', this.handleStartMusic)
+    this.bridge.on('unlock-audio', this.handleUnlockAudio)
 
   }
 
@@ -112,6 +114,7 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
     this.bridge.off('set-mute', this.handleSetMute, this)
     this.bridge.off('set-volume', this.handleSetVolume)
     this.bridge.off('start-music', this.handleStartMusic)
+    this.bridge.off('unlock-audio', this.handleUnlockAudio)
   }
 
   // Devuelve el ID del mundo (1..4) según el índice del nivel: 0-9→1, 10-19→2, 20-29→3, 30-39→4

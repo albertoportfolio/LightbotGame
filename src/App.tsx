@@ -417,7 +417,7 @@ function GameScreen({
   onBackToMenu, onBackToLevels, onOpenSettings, onToggleMute,
   muted, volume, isActive, initialLevel, onLevelCompleted,
 }: GameScreenProps) {
-  const { emitter, runCommands, resetLevel, loadLevel, setMute, setVolume, stopMusic, startMusic } = useGameBridge()
+  const { emitter, runCommands, resetLevel, loadLevel, setMute, setVolume, stopMusic, startMusic, unlockAudio } = useGameBridge()
   const { queue, clearQueue, resetAttempts, currentLevel } = useGameStore()
 
   const [levelComplete, setLevelComplete] = useState(false)
@@ -451,6 +451,15 @@ function GameScreen({
     }
     prevActive.current = isActive
   }, [isActive])
+
+  // Móvil: el navegador exige un gesto del usuario para desbloquear el AudioContext.
+  // Capturamos el primer pointerdown en fase de captura — corre antes que cualquier onClick
+  // de React, así el contexto queda 'running' antes de que se dispare ningún sonido.
+  useEffect(() => {
+    const handler = () => unlockAudio()
+    window.addEventListener('pointerdown', handler, { capture: true, passive: true })
+    return () => window.removeEventListener('pointerdown', handler, { capture: true })
+  }, [unlockAudio])
 
   const handleBackToMenu = () => {
     stopMusic()

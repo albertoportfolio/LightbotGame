@@ -9,6 +9,8 @@ export class SoundManager {
   private musicPlaying = false
   private musicTimeout: ReturnType<typeof setTimeout> | null = null
   private _volume = 0.8
+  // Bandera: música solicitada pero el AudioContext está suspendido (móvil sin gesto aún)
+  private pendingMusic = false
 
   // ─── Contexto y nodo maestro ──────────────────────────────────────────────
 
@@ -142,18 +144,24 @@ export class SoundManager {
 
   // ─── Música de fondo ──────────────────────────────────────────────────────
 
-  // Detiene la música de fondo: cancela el timeout del loop y hace fade out del gain
+  // Detiene la música de fondo: cancela el timeout del loop y hace fade out lineal (cancelable)
   stopMusic() {
   this.musicPlaying = false
+  this.pendingMusic = false
   if (this.musicTimeout) {
     clearTimeout(this.musicTimeout)
     this.musicTimeout = null
   }
   if (this.masterGain) {
-    this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
-    this.masterGain.gain.setTargetAtTime(0, this.getCtx().currentTime, 0.3)
+    const ctx = this.getCtx()
+    const now = ctx.currentTime
+    const current = this.masterGain.gain.value
+    // linearRamp en vez de setTargetAtTime: el primero es cancelable por cancelScheduledValues,
+    // el segundo no — su curva exponencial seguiría hacia 0 aunque luego restauremos el volumen.
+    this.masterGain.gain.cancelScheduledValues(now)
+    this.masterGain.gain.setValueAtTime(current, now)
+    this.masterGain.gain.linearRampToValueAtTime(0, now + 0.3)
   }
-  // NO tocar masterGain aquí — el gain lo gestiona toggleMute y startMusic
 }
 
 
@@ -167,12 +175,57 @@ startMusic() {
   }
 
   if (this.musicPlaying || this.muted) return
-  if (this.masterGain) {
-    this.masterGain.gain.cancelScheduledValues(this.getCtx().currentTime)
-    this.masterGain.gain.setValueAtTime(this._volume, this.getCtx().currentTime)
+
+  const ctx = this.getCtx()
+  // Móvil: si el contexto sigue suspendido (aún no hay gesto del usuario que lo desbloquee),
+  // aplaza el arranque y reintenta cuando el contexto pase a 'running'. Si arrancáramos ahora,
+  // los osciladores se programarían contra un reloj congelado y nunca sonarían.
+  if (ctx.state === 'suspended') {
+    this.pendingMusic = true
+    const onState = () => {
+      if (ctx.state === 'running' && this.pendingMusic && !this.muted) {
+        this.pendingMusic = false
+        ctx.removeEventListener('statechange', onState)
+        this.restoreMasterGain()
+        this.musicPlaying = true
+        this.playMusicLoop()
+      }
+    }
+    ctx.addEventListener('statechange', onState)
+    return
   }
+
+  this.restoreMasterGain()
   this.musicPlaying = true
   this.playMusicLoop()
+}
+
+// Restablece el masterGain al volumen actual cancelando cualquier fade en curso.
+// Anchor (setValueAtTime con valor actual) + linearRamp para evitar saltos audibles
+// y para garantizar que un setTargetAtTime previo deje de afectar el gain.
+private restoreMasterGain() {
+  if (!this.masterGain) return
+  const ctx = this.getCtx()
+  const now = ctx.currentTime
+  const current = this.masterGain.gain.value
+  this.masterGain.gain.cancelScheduledValues(now)
+  this.masterGain.gain.setValueAtTime(current, now)
+  this.masterGain.gain.linearRampToValueAtTime(this._volume, now + 0.05)
+}
+
+/**
+ * Desbloquea el AudioContext en navegadores móviles (iOS Safari, Chrome Android).
+ * DEBE invocarse desde un handler de evento de usuario (pointerdown, touchstart, click).
+ * Una vez desbloqueado, todo el audio (música y SFX) puede sonar libremente.
+ */
+unlock(): void {
+  const ctx = this.getCtx()
+  if (ctx.state === 'running') return
+  const buffer = ctx.createBuffer(1, 1, 22050)
+  const source = ctx.createBufferSource()
+  source.buffer = buffer
+  source.connect(ctx.destination)
+  source.start(0)
 }
 
   // Loop principal de la música: programa 8 compases de melodía, bajo, arpegio y percusión, y se auto-reprograma

@@ -488,52 +488,103 @@ Confirm dialogs (Borrar / Eliminar) don't use `<ModalSubmit>` — they use a `.t
 
 The handler uses `getBoundingClientRect()` (returns viewport coords like `clientX`, so no scroll/transform math), clamps to `[0,1]`, and snaps to 5% steps (`Math.round(clamped * 20) / 20`) to match the original `<input type="range" step={0.05}>` precision. `setPointerCapture` keeps the drag active even when the cursor leaves the track — this is why the clamp is non-optional.
 
-### Sidebar vertical padding (desktop) — asymmetric, deliberately
+### Sidebar vertical padding — `15 / 90` desktop, `0 / 0` portrait mobile, `0 / 0` landscape mobile
 
-In `App.tsx` `GameScreen`, the sidebar wrapper uses **`paddingTop: 15, paddingBottom: 26`** — *not* symmetric. Three things are encoded in this asymmetry:
-
-1. **Top = 15 px**: gives the navy HUD header a small breath from the top edge of the white rounded card. Going to 0 makes the header touch the card's rounded corner ugly-ly; going above 20 wastes vertical space.
-2. **Bottom = 26 px**: visually trims the white card from below by 20 px relative to a symmetric baseline. The `.rounded-3xl` inner card has `flex: 1`, so it stretches to fill available height — in short levels (level 1, only 3 commands and a tiny queue), the content is much shorter than the available height and the card was leaving a visible empty white strip at the bottom. A larger `paddingBottom` on the sidebar wrapper effectively shortens the inner card by that delta. The card is now closer to the height the content actually needs.
-3. **Mobile overrides both to 0** (already in the media query) — phone real estate is too precious for any padding here.
-
-Watch out for the side-effect: the 26 px below the card now shows the world background image (or the `<main>`'s gradient if the bg image fails to load). That's intentional — it reads as "card floating above the level theme" rather than "card filling all the white space".
-
-If you ever change this, use `paddingBottom = 6 + N` where N is the desired card-height reduction. Don't go below 6 (the card touches the action buttons too tightly) and don't go above ~40 (the card looks orphaned).
-
-### Inter-section spacing — `panel-vstack` / `panel-btn-row` (10 px desktop, 20 px before action buttons)
-
-The `InstructionPanel` (both regular DnD mode and TextModePanel) and the EJECUTAR/RESETEAR row use **dedicated classes** instead of Tailwind's `gap-3`:
+**Critical**: the padding values live in a **CSS class** inside the GameScreen `<style>` block, NOT in the inline `style={...}` of `<div className="gs-sidebar">`. Past iterations had them inline and the media query `!important` overrides were unreliable in HMR/dev — the user observed that "changing the inline value applies in mobile too". Moving to CSS classes makes the cascade fully deterministic (later rule with same specificity wins, period).
 
 ```css
-.panel-vstack { display: flex; flex-direction: column; gap: 10px; }
-.panel-btn-row {
-  display: flex;
-  gap: 10px;
-  /* +10 px on top of the parent .panel-vstack gap (10) ⇒ 20 px visual
-     between the last card (queue or textarea) and the action buttons. */
-  margin-top: 10px;
+/* Desktop base — in App.tsx GameScreen <style> block */
+.gs-sidebar {
+  padding-top: 15px;
+  padding-bottom: 90px;
 }
+
+/* Mobile portrait */
 @media (max-width: 768px) {
-  .panel-vstack { gap: 4px !important; }
-  .panel-btn-row { gap: 6px !important; margin-top: 0 !important; }
+  .gs-sidebar { padding-top: 0 !important; padding-bottom: 0 !important; }
+}
+
+/* Mobile landscape — width is >768 (so the desktop row layout stays active),
+   but the height is small enough that the 90 px bottom padding becomes a
+   visible world-bg gap below the card. */
+@media (max-height: 500px) {
+  .gs-sidebar { padding-top: 0 !important; padding-bottom: 0 !important; }
 }
 ```
 
-#### Why 20 px specifically before the action buttons
+#### Why 15 / 90 (asymmetric) on desktop
 
-The user explicitly wants the EJECUTAR/RESETEAR row to feel like a separate "commit area", not just another card in the stack. 10 px (the regular gap) reads as "next item in a list"; 20 px reads as "I've finished setting up my program, now I'm about to execute". The chunky 3D buttons benefit from the breathing room — pressed too close to the queue card, they look cramped against the dashed slot grid.
+1. **Top = 15 px**: gives the navy HUD header a small breath from the top edge of the white rounded card. Going to 0 makes the header touch the card's rounded corner; above 20 wastes vertical space.
+2. **Bottom = 90 px**: this is the lever that controls the gap between the queue and the action buttons. The `.rounded-3xl` inner card has `flex: 1` and the action buttons use `mt-auto` to pin to the card bottom — so the card height = `sidebar height - 105`, and the empty space between queue and buttons = `card height - content height`. Increasing `paddingBottom` shortens the card and shrinks that empty space proportionally. The user iterated this value: started at 26, then 40, then 70, finally 90. Each bump trimmed ~30 px from the visual gap. Below the card, world-bg (the level theme image) shows — this is intentional and reads as "card floating above the level".
+3. **Mobile overrides both to 0**: phone real estate is too precious for any padding here, AND in mobile the layout flips to column anyway, so the asymmetry has no purpose.
 
-#### Why `margin-top: 10` + parent `gap: 10` instead of just `gap: 20`
+#### Why TWO media queries (max-width AND max-height)
 
-In flexbox, **gap and margin compound**: `gap: 10 + margin-top: 10 = 20` of total visual spacing for that item only. This lets you keep a uniform 10 px between palette ↔ queue while putting 20 px between queue ↔ buttons, without needing CSS sibling selectors or `:last-child` tricks.
+A phone in portrait (e.g. iPhone 14 Pro: 393 × 852) is caught by `max-width: 768px`. The same phone in landscape (852 × 393) has width 852 — *exceeds* the breakpoint and falls through to the desktop rules. The desktop layout (canvas left, sidebar right) is actually fine in landscape, but the 90 px `paddingBottom` becomes a giant green strip below the card. `max-height: 500px` catches landscape phones (their height is small in this orientation) without affecting laptops (whose minimum height is rarely below 600 px in any practical use).
 
-The mobile override sets `margin-top: 0 !important` so the 4 px parent gap is the only spacing — the entire sidebar must be as tight as possible there.
+This is one of the rare cases where you need **two media queries for "mobile"** — `max-width` for portrait, `max-height` for landscape. Don't try to merge them into `(max-width OR max-height)` on a single rule block: the two cases need different overrides (portrait flips to column, landscape stays row), so keep them separate and override only what's specific to each.
 
-#### Important: TextModePanel uses the SAME classes
+#### If you change the desktop value
 
-`TextModePanel` was previously `<div className="flex flex-col gap-3 h-full">` with `<div className="flex gap-3 mt-auto">` for the buttons. The `mt-auto` would push the buttons to the bottom of the panel via flex auto-margin — which made them stick to the very bottom of the white card, far away from the textarea, with a huge empty strip between them. **Don't use `mt-auto` on the action button row** — instead, switch to `panel-vstack` + `panel-btn-row` so the spacing rules above apply uniformly.
+The formula is: `paddingBottom = (desired pixels of empty world-bg below the card) + (desired card-height reduction below the symmetric baseline)`. So `90` reads as ~75 px of card trim + ~15 px of world-bg below. To halve the gap between queue and buttons in short levels, bump it by ~30. To make the card look orphaned (lots of world-bg visible), drop it below 30.
 
-The `h-full` Tailwind class on TextModePanel's root is preserved because it lets the panel still fill the available height for the empty area below the buttons (which is part of the deliberate design — the card has a fixed-bottom edge from the sidebar's `paddingBottom: 26`, not a content-fit).
+### Inter-section spacing — `panel-vstack` + `panel-btn-row mt-auto mb-2.5`
+
+Both `InstructionPanel` modes (regular DnD and TextModePanel) use the same wrapper class + the same action button row class. **Action buttons go at the bottom of the card** (via `mt-auto`) with **10 px breathing room from the bottom edge** (via `mb-2.5`).
+
+```css
+.panel-vstack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;          /* fill the .rounded-3xl height so mt-auto on .panel-btn-row works */
+  min-height: 0;           /* allow flex shrink past content size if level has many commands */
+}
+.panel-btn-row {
+  display: flex;
+  gap: 10px;
+  /* DO NOT add margin-top here. See "the cascade gotcha" below. */
+}
+@media (max-width: 768px) {
+  .panel-vstack { gap: 4px !important; }
+  .panel-btn-row { gap: 6px !important; }
+}
+```
+
+```jsx
+<div className="panel-btn-row mt-auto mb-2.5">
+  <button className="action-btn action-btn--run">EJECUTAR</button>
+  <button className="action-btn action-btn--reset">RESETEAR</button>
+</div>
+```
+
+The two Tailwind utilities on the JSX:
+
+- **`mt-auto`** = `margin-top: auto`. In a flex column with available height, this absorbs all leftover space and pushes the buttons to the bottom of the parent. Works in both desktop (sidebar height is generous) and mobile portrait (where `.hud-card--queue` absorbs most of the leftover instead — see section 11 — so `mt-auto` ends up being a no-op on mobile, which is fine).
+- **`mb-2.5`** = `margin-bottom: 0.625rem` = 10 px. Gives the buttons 10 px of breathing room from the bottom edge of the card. Tailwind's spacing scale steps are `0.25rem` (4 px), so `2.5` exists specifically as the "off-grid" 10 px value when the design wants multiples of 5 instead of multiples of 4.
+
+#### THE CASCADE GOTCHA — don't define `margin-top` on `.panel-btn-row`
+
+Earlier iterations had `.panel-btn-row { margin-top: 10px }` in CSS, expecting it to compound with the parent `.panel-vstack` gap to give 20 px of visual spacing between queue and buttons. This **broke `mt-auto`**: `<style>` blocks inside React components are injected into the DOM *after* the Tailwind utilities stylesheet (which lives in the main bundle CSS, loaded via `<link>` in `<head>`). Same specificity (0,1,0), later in cascade wins → my custom rule clobbered Tailwind's `.mt-auto` everywhere, including mobile, *despite* my media query thinking it was overriding "the right thing".
+
+**Symptom**: user reports "buttons are not at the bottom" or "nothing changed when I removed the margin override". DevTools shows `margin-top: 10px` from `.panel-btn-row` winning, with `.mt-auto` struck-through.
+
+**Fix**: simply *don't define* `margin-top` on `.panel-btn-row` at all. Tailwind's `mt-auto` then applies cleanly — no specificity fight, no `!important` arms race.
+
+**General rule**: in components that mix Tailwind utility classes with custom `<style>` blocks, **never define a property in custom CSS that you also want to be controllable via a Tailwind utility**. Cascade order will always favor your custom rule. Limit `<style>` blocks to properties Tailwind doesn't have (gradients, `@media`, pseudo-elements, `@keyframes`).
+
+#### TextModePanel uses the SAME classes
+
+```jsx
+<div className="panel-vstack h-full">
+  ... (cards) ...
+  <div className="panel-btn-row mt-auto mb-2.5">
+    EJECUTAR / RESETEAR
+  </div>
+</div>
+```
+
+Don't revert this to `flex flex-col gap-3 h-full` + `flex gap-3 mt-auto` (the pre-refactor structure). The unification of regular and text mode under `panel-vstack` is what makes the 10 px gap, the auto-bottom buttons, and the responsive overrides all work consistently across both modes. The `h-full` Tailwind class is preserved on TextModePanel's root only — it's redundant with `flex: 1 1 auto` from `.panel-vstack`, but harmless, and removing it would risk breaking text mode's layout in some edge case (so leave it).
 
 ### 11) Mobile responsive layout — column flip + compact HUD/palette/queue
 
@@ -560,7 +611,7 @@ Each block reuses the same `@media (max-width: 768px)` selector. Don't centraliz
   .gs-main {
     flex-direction: column !important;
     align-items: center !important;
-    padding: 3px !important; gap: 3px !important;
+    padding: 0 !important; gap: 0 !important;       /* edge-to-edge — no chrome */
   }
   .gs-canvas-wrap {
     max-width: 100% !important; width: auto !important;
@@ -572,20 +623,47 @@ Each block reuses the same `@media (max-width: 768px)` selector. Don't centraliz
     padding-top: 0 !important; padding-bottom: 0 !important;
     flex: 1 1 auto !important; min-height: 0 !important;
   }
-  .gs-sidebar > div {                    /* the rounded-3xl inner card */
-    padding: 6px !important; gap: 6px !important;
-    border-width: 3px !important;
+  /* Inner card .rounded-3xl — strips ALL chrome on mobile so the cyan card
+     spans edge to edge of the viewport. The card keeps flex: 1 (from inline)
+     so it fills the sidebar height vertically. */
+  .gs-sidebar > div {
+    padding: 0 !important;
+    gap: 6px !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
   }
+  /* Queue card grows vertically to absorb the leftover space inside the card.
+     This is the key trick that prevents the "empty cyan blob" between the
+     queue and the action buttons (which mt-auto on the buttons would otherwise
+     create when content is much shorter than the sidebar height). The empty
+     space ends up *inside the queue area*, where it reads as "lots of room
+     for commands" — semantically valid, not a layout bug. */
+  .hud-card--queue { flex: 1 1 auto !important; }
+  .hud-card--queue .queue-area { flex: 1 1 auto !important; }
+  /* Reduce Tailwind gap-3/gap-2 utilities used elsewhere in the sidebar */
   .gs-sidebar .gap-3 { gap: 6px !important; }
   .gs-sidebar .gap-2 { gap: 4px !important; }
 }
 ```
 
-Three points worth flagging:
+Four points worth flagging:
 
 1. **`36dvh` for the canvas, not `45dvh`**. Android Chrome's retractable URL bar adds 56-64 px of variance. Reserving more vertical space for the sidebar (≈64dvh) means the bar's appearance/disappearance reflows the *canvas* (which has aspect-ratio + bgPos: 'center' so it scales gracefully), not the palette grid. Always favor giving extra room to the **interactive UI**, not the visual area.
 2. **`width: auto !important` overriding `width: 100%`**. The sidebar's inline style sets `width: 100%`. In column mode we want the canvas sized purely by `height: 36dvh + aspect-ratio` (so its width adapts naturally). Forcing `width: auto` lets aspect-ratio drive both axes.
 3. **`> div` selector to beat Tailwind**. The inner card is `<div className="rounded-3xl">`. Targeting it as `.gs-sidebar .rounded-3xl` ties (0,1,1) with Tailwind's own `.rounded-3xl` rule, but Tailwind loads later in the cascade and wins. Going `.gs-sidebar > div` gives the same (0,1,1) specificity but uses a structural selector that doesn't collide. For the *properties* that Tailwind owns (`border-width` → `border-3`/`border-4`, `gap-3` → `gap`), you still need `!important`.
+4. **Queue absorbs leftover space, not `mt-auto`**. On mobile portrait the column layout often leaves the sidebar with way more height than its content needs (especially level 1 with maxCommands = 3). The naive fix — let `mt-auto` on `.panel-btn-row` push buttons to the bottom — creates a giant cyan empty blob between the queue and the buttons (the user complained about this exact symptom). The right fix is to make `.hud-card--queue` and its inner `.queue-area` both `flex: 1 1 auto` so the queue is the section that grows. The dashed empty cells stay top-aligned (`align-content: flex-start`) and the extra space below them blends into the queue-area's slightly-darker cyan, reading as "spacious work area" rather than "broken layout". Without this rule, mobile looks broken on every short level.
+
+#### Landscape mobile — separate media query
+
+A phone in landscape (e.g., iPhone 14 Pro: 852 × 393) has width 852 — *exceeds* the 768 px breakpoint and falls through to the desktop rules. The desktop row layout (canvas left, sidebar right) is fine in landscape, but the `.gs-sidebar { padding-bottom: 90px }` desktop default leaves a giant world-bg strip below the card. Add a separate query to nullify just that:
+
+```css
+@media (max-height: 500px) {
+  .gs-sidebar { padding-top: 0 !important; padding-bottom: 0 !important; }
+}
+```
+
+Don't merge this with the `max-width: 768px` query into a single `OR` block — landscape phones need *only* the padding fix; the layout flip to column would actively hurt landscape (where horizontal space is plenty). Two separate, narrowly-scoped media queries is correct here.
 
 #### HUD compression (`LevelHUD.tsx`)
 
@@ -672,7 +750,9 @@ Anytime you change a fixed dimension on a sidebar element (palette button size, 
 - **Image sizes are large** (backgrounds ≈600×340, player frames ≈260×280). Scale down with `setDisplaySize()` or `setScale()` to fit the 680×560 canvas / cell sizes.
 - **All UI text remains Spanish.** Replacing procedural text with badge images does not change the language requirement for any new text added.
 - **In-game platform shapes are restricted to 1, 2 and 4** (shape 3 is HUD-only). See "In-game level platform" above for the picker rules. Shape 3 (`floor-3-X`) stays loaded for badges/icons but must never be returned by `GameScene.pickFloorShape`.
-- **Mobile responsive (`@media (max-width: 768px)`) lives in three places**: `App.tsx` GameScreen `<style>`, `LevelHUD.tsx` `<style>`, `InstructionPanel.tsx` `<style>`. Any change to a sidebar dimension on desktop must also update the mobile counterpart. See section 11 for the full rule set and the inline-style override technique. **`!important` is reserved for that media query only** — use it for overriding inline `width`/`height` on palette and chip images, not as a general escape hatch.
+- **Mobile responsive lives in three files and uses TWO media queries**: `App.tsx` GameScreen `<style>`, `LevelHUD.tsx` `<style>`, `InstructionPanel.tsx` `<style>`. The two queries are `@media (max-width: 768px)` (portrait phones — flips to column + full compaction) and `@media (max-height: 500px)` (landscape phones — only nullifies sidebar padding to keep the row layout from showing world-bg below the card). Any change to a sidebar dimension on desktop must also update the mobile counterpart. See section 11 for the full rule set. **`!important` is reserved for these media queries** — use it for overriding inline `width`/`height` on palette and chip images and for sidebar padding overrides, not as a general escape hatch.
+- **Sidebar paddings are CSS-class, NOT inline**: in `App.tsx` GameScreen's `<style>` block, `.gs-sidebar { padding-top: 15px; padding-bottom: 90px }` lives as a class rule, NOT in the inline `style={{...}}` of `<div className="gs-sidebar">`. Past iterations kept it inline and the `!important` overrides in the media query were unreliable in HMR/dev (the user observed "changing the inline value applied in mobile too"). Moving to CSS classes makes the cascade fully deterministic. **Rule of thumb**: any property you also want to override in a media query MUST live in a CSS class, never inline.
+- **`<style>` blocks in React components load AFTER Tailwind CSS — beware cascade**: Tailwind's utility classes are in the main bundle CSS (loaded via `<link>` in `<head>`); React component `<style>` blocks are injected dynamically *after*. With same specificity (0,1,0), the component `<style>` rule wins. **Never define a CSS property in a component `<style>` block when you also want to use a Tailwind utility for that property**. The classic bug: defining `.panel-btn-row { margin-top: 10px }` clobbered Tailwind's `.mt-auto` → buttons never went to the bottom. Fix: don't define `margin-top` in custom CSS at all, let `mt-auto` apply naturally.
 
 ## Additional Resources
 

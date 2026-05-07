@@ -38,6 +38,17 @@ function PanelStyles() {
         flex-direction: column;
         gap: 6px;
       }
+      /* Variante de la paleta — ~20 px más baja que la cola: menos padding
+         vertical, gap apretado y pill de título compacto. */
+      .hud-card--commands {
+        padding-top: 3px;
+        padding-bottom: 3px;
+        gap: 2px;
+      }
+      .hud-card--commands .hud-card-title {
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
       /* Pill de título: mismo turquesa pero un poco más claro, texto navy */
       .hud-card-title {
         background: #00ccff;
@@ -64,12 +75,55 @@ function PanelStyles() {
       .palette-tile:active:not(:disabled) { transform: translateY(1px); }
       .palette-tile:disabled { opacity: 0.4; cursor: not-allowed; }
       .palette-tile img { filter: drop-shadow(0 3px 0 rgba(0,0,0,0.18)); }
+      /* Stack vertical del panel (paleta → cola → botones) y row de botones.
+         En desktop el gap es 10 px (lo que da la separación entre la cola
+         y los botones EJECUTAR/RESETEAR). En móvil se aprieta más vía
+         media query (sección "Compactación móvil" abajo). */
+      .panel-vstack {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        /* Rellena el alto del .rounded-3xl restante tras el LevelHUD para
+           que mt-auto en el .panel-btn-row pueda empujar los botones al
+           fondo. min-height: 0 evita que el contenido fuerce overflow. */
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+      .panel-btn-row {
+        display: flex;
+        gap: 10px;
+        /* No fijamos margin-top aquí: Tailwind aplica mt-auto desde el JSX
+           para empujar los botones al fondo del .panel-vstack. Si pusiéramos
+           margin-top: 10px aquí, ganaría por cascada (este <style> se inyecta
+           después del bundle de Tailwind) y mt-auto NO funcionaría — fue
+           exactamente el bug que se vio en móvil. Dejar la propiedad sin
+           definir permite que mt-auto del JSX prevalezca sin conflictos. */
+      }
       /* Forzar todos los comandos en una sola fila — sin wrap aunque queden ajustados */
       .palette-grid {
         display: flex;
         flex-wrap: nowrap;
         justify-content: center;
         gap: 4px;
+      }
+      /* En móvil portrait, la sidebar ocupa todo el ancho del viewport.
+         Compactar tarjetas, paleta, cola y botones para que todo quepa
+         con el mínimo scroll posible.
+         !important sobreescribe los styles inline (width/height en imgs). */
+      @media (max-width: 768px) {
+        .panel-vstack { gap: 4px !important; }
+        /* En móvil dejamos que mt-auto funcione: los botones se pegan al fondo
+           del card en vez de quedarse junto a la cola con un hueco vacío
+           debajo. Sólo el gap horizontal entre EJECUTAR y RESETEAR baja a 6. */
+        .panel-btn-row { gap: 6px !important; }
+        .palette-grid { flex-wrap: wrap; gap: 3px; }
+        .palette-tile img { width: 44px !important; height: 44px !important; }
+        .hud-card { padding: 4px !important; gap: 3px !important; border-radius: 10px !important; }
+        .hud-card-title { padding: 2px 7px !important; font-size: 8px !important; letter-spacing: 0.1em !important; }
+        .queue-area { min-height: 44px !important; padding: 4px !important; gap: 3px !important; border-radius: 10px !important; }
+        .queue-area img { width: 38px !important; height: 38px !important; }
+        .queue-empty-cell { width: 38px !important; height: 38px !important; border-radius: 8px !important; }
+        .action-btn { padding: 7px 0 !important; font-size: 11px !important; border-radius: 10px !important; letter-spacing: 0.1em !important; }
       }
       .queue-area {
         background: #d4f1ff;
@@ -312,7 +366,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
   ]
 
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="panel-vstack h-full">
       <div className="rounded-2xl px-3 py-3 hud-card">
         <p className="hud-card-title">Comandos Disponibles</p>
         <div className="grid grid-cols-2 gap-x-3 gap-y-2">
@@ -360,7 +414,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
         </div>
       )}
 
-      <div className="flex gap-3 mt-auto">
+      <div className="panel-btn-row mt-auto mb-2.5">
         <button disabled={isRunning || isGameOver} onClick={handleRun} className="action-btn action-btn--run">
           EJECUTAR
         </button>
@@ -535,7 +589,7 @@ export function InstructionPanel({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <PanelStyles />
-      <div className="flex flex-col gap-3">
+      <div className="panel-vstack">
         <CommandPalette />
 
         <QueueArea
@@ -552,7 +606,7 @@ export function InstructionPanel({
           </div>
         )}
 
-        <div className="flex gap-3">
+        <div className="panel-btn-row mt-auto mb-2.5">
           <button
             disabled={queue.length === 0 || isRunning || showNextLevel}
             onClick={handleRun}

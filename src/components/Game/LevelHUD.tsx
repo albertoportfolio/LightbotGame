@@ -128,6 +128,22 @@ export function LevelHUD({ bridge }: LevelHUDProps) {
         .stat-card--danger .stat-card__label,
         .stat-card--danger .stat-card__value,
         .stat-card--danger .stat-card__inline-suffix { color: #7f1d1d; }
+
+        /* Compactación en móvil: el HUD se comprime al máximo manteniendo
+           legibilidad. Objetivo: ~95px → ~65px de altura total. */
+        @media (max-width: 768px) {
+          .hud-header { padding: 3px 8px !important; gap: 5px !important; border-radius: 10px !important; }
+          .hud-header__pill { padding: 2px 7px !important; font-size: 8px !important; }
+          .hud-header__name { font-size: 9px !important; letter-spacing: 0.1em !important; }
+          .hud-info-card { padding: 4px !important; gap: 3px !important; border-radius: 10px !important; }
+          .hud-objective-pill { padding: 2px 8px !important; font-size: 8px !important; letter-spacing: 0.1em !important; }
+          .stat-row { gap: 4px !important; }
+          .stat-card { padding: 3px 5px !important; gap: 0 !important; border-radius: 8px !important; }
+          .stat-card__label { font-size: 7px !important; letter-spacing: 0.08em !important; }
+          .stat-card__value { font-size: 14px !important; }
+          .stat-card__suffix { font-size: 10px !important; }
+          .stat-card__inline-suffix { font-size: 7px !important; letter-spacing: 0.08em !important; }
+        }
       `}</style>
 
       <div className="hud-header">

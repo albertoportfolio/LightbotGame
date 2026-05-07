@@ -488,6 +488,181 @@ Confirm dialogs (Borrar / Eliminar) don't use `<ModalSubmit>` — they use a `.t
 
 The handler uses `getBoundingClientRect()` (returns viewport coords like `clientX`, so no scroll/transform math), clamps to `[0,1]`, and snaps to 5% steps (`Math.round(clamped * 20) / 20`) to match the original `<input type="range" step={0.05}>` precision. `setPointerCapture` keeps the drag active even when the cursor leaves the track — this is why the clamp is non-optional.
 
+### Sidebar vertical padding (desktop) — asymmetric, deliberately
+
+In `App.tsx` `GameScreen`, the sidebar wrapper uses **`paddingTop: 15, paddingBottom: 26`** — *not* symmetric. Three things are encoded in this asymmetry:
+
+1. **Top = 15 px**: gives the navy HUD header a small breath from the top edge of the white rounded card. Going to 0 makes the header touch the card's rounded corner ugly-ly; going above 20 wastes vertical space.
+2. **Bottom = 26 px**: visually trims the white card from below by 20 px relative to a symmetric baseline. The `.rounded-3xl` inner card has `flex: 1`, so it stretches to fill available height — in short levels (level 1, only 3 commands and a tiny queue), the content is much shorter than the available height and the card was leaving a visible empty white strip at the bottom. A larger `paddingBottom` on the sidebar wrapper effectively shortens the inner card by that delta. The card is now closer to the height the content actually needs.
+3. **Mobile overrides both to 0** (already in the media query) — phone real estate is too precious for any padding here.
+
+Watch out for the side-effect: the 26 px below the card now shows the world background image (or the `<main>`'s gradient if the bg image fails to load). That's intentional — it reads as "card floating above the level theme" rather than "card filling all the white space".
+
+If you ever change this, use `paddingBottom = 6 + N` where N is the desired card-height reduction. Don't go below 6 (the card touches the action buttons too tightly) and don't go above ~40 (the card looks orphaned).
+
+### Inter-section spacing — `panel-vstack` / `panel-btn-row` (10 px desktop, 20 px before action buttons)
+
+The `InstructionPanel` (both regular DnD mode and TextModePanel) and the EJECUTAR/RESETEAR row use **dedicated classes** instead of Tailwind's `gap-3`:
+
+```css
+.panel-vstack { display: flex; flex-direction: column; gap: 10px; }
+.panel-btn-row {
+  display: flex;
+  gap: 10px;
+  /* +10 px on top of the parent .panel-vstack gap (10) ⇒ 20 px visual
+     between the last card (queue or textarea) and the action buttons. */
+  margin-top: 10px;
+}
+@media (max-width: 768px) {
+  .panel-vstack { gap: 4px !important; }
+  .panel-btn-row { gap: 6px !important; margin-top: 0 !important; }
+}
+```
+
+#### Why 20 px specifically before the action buttons
+
+The user explicitly wants the EJECUTAR/RESETEAR row to feel like a separate "commit area", not just another card in the stack. 10 px (the regular gap) reads as "next item in a list"; 20 px reads as "I've finished setting up my program, now I'm about to execute". The chunky 3D buttons benefit from the breathing room — pressed too close to the queue card, they look cramped against the dashed slot grid.
+
+#### Why `margin-top: 10` + parent `gap: 10` instead of just `gap: 20`
+
+In flexbox, **gap and margin compound**: `gap: 10 + margin-top: 10 = 20` of total visual spacing for that item only. This lets you keep a uniform 10 px between palette ↔ queue while putting 20 px between queue ↔ buttons, without needing CSS sibling selectors or `:last-child` tricks.
+
+The mobile override sets `margin-top: 0 !important` so the 4 px parent gap is the only spacing — the entire sidebar must be as tight as possible there.
+
+#### Important: TextModePanel uses the SAME classes
+
+`TextModePanel` was previously `<div className="flex flex-col gap-3 h-full">` with `<div className="flex gap-3 mt-auto">` for the buttons. The `mt-auto` would push the buttons to the bottom of the panel via flex auto-margin — which made them stick to the very bottom of the white card, far away from the textarea, with a huge empty strip between them. **Don't use `mt-auto` on the action button row** — instead, switch to `panel-vstack` + `panel-btn-row` so the spacing rules above apply uniformly.
+
+The `h-full` Tailwind class on TextModePanel's root is preserved because it lets the panel still fill the available height for the empty area below the buttons (which is part of the deliberate design — the card has a fixed-bottom edge from the sidebar's `paddingBottom: 26`, not a content-fit).
+
+### 11) Mobile responsive layout — column flip + compact HUD/palette/queue
+
+The default `GameScreen` layout puts the Phaser canvas and the sidebar **side by side** (`<main style="flex-direction: row">`). On phones in portrait the canvas dominates and the sidebar is squeezed to ~150 px wide — the palette buttons (58 px each × 6) cannot fit in one row and the user has to scroll horizontally + vertically. The fix is a single `@media (max-width: 768px)` block that flips the layout to column and compresses every fixed dimension in the sidebar so the whole UI fits a typical Android viewport (~700 px after Chrome's address bar) **without scrolling**.
+
+The breakpoint **must be 768 px**: below that we are on phone portrait or narrow tablets where the side-by-side layout breaks; at/above it both axes have enough room for the desktop design. Don't pick smaller breakpoints (480/640 px) — modern Android phones in landscape go beyond those and would still get the wrong layout.
+
+#### Where the rules live
+
+The mobile rules are split across three `<style>` blocks because each component owns its own visual:
+
+| Block | File | Owns |
+|---|---|---|
+| Layout | `App.tsx` `GameScreen` | `<main>` flex direction, canvas height cap, sidebar padding, inner card padding |
+| HUD | `LevelHUD.tsx` | `.hud-header`, `.hud-info-card`, `.hud-objective-pill`, `.stat-card*` |
+| Palette/queue | `InstructionPanel.tsx` | `.palette-grid`, `.palette-tile img`, `.hud-card`, `.queue-area`, `.queue-empty-cell`, `.action-btn` |
+
+Each block reuses the same `@media (max-width: 768px)` selector. Don't centralize the rules into a single CSS file — keeping them next to the desktop styles makes it obvious which rule overrides which when reading the component.
+
+#### Layout flip (`App.tsx`)
+
+```css
+@media (max-width: 768px) {
+  .gs-main {
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 3px !important; gap: 3px !important;
+  }
+  .gs-canvas-wrap {
+    max-width: 100% !important; width: auto !important;
+    height: 36dvh !important;            /* fixed cross-axis → aspect-ratio drives width */
+    align-self: center !important;
+  }
+  .gs-sidebar {
+    max-width: 100% !important; width: 100% !important;
+    padding-top: 0 !important; padding-bottom: 0 !important;
+    flex: 1 1 auto !important; min-height: 0 !important;
+  }
+  .gs-sidebar > div {                    /* the rounded-3xl inner card */
+    padding: 6px !important; gap: 6px !important;
+    border-width: 3px !important;
+  }
+  .gs-sidebar .gap-3 { gap: 6px !important; }
+  .gs-sidebar .gap-2 { gap: 4px !important; }
+}
+```
+
+Three points worth flagging:
+
+1. **`36dvh` for the canvas, not `45dvh`**. Android Chrome's retractable URL bar adds 56-64 px of variance. Reserving more vertical space for the sidebar (≈64dvh) means the bar's appearance/disappearance reflows the *canvas* (which has aspect-ratio + bgPos: 'center' so it scales gracefully), not the palette grid. Always favor giving extra room to the **interactive UI**, not the visual area.
+2. **`width: auto !important` overriding `width: 100%`**. The sidebar's inline style sets `width: 100%`. In column mode we want the canvas sized purely by `height: 36dvh + aspect-ratio` (so its width adapts naturally). Forcing `width: auto` lets aspect-ratio drive both axes.
+3. **`> div` selector to beat Tailwind**. The inner card is `<div className="rounded-3xl">`. Targeting it as `.gs-sidebar .rounded-3xl` ties (0,1,1) with Tailwind's own `.rounded-3xl` rule, but Tailwind loads later in the cascade and wins. Going `.gs-sidebar > div` gives the same (0,1,1) specificity but uses a structural selector that doesn't collide. For the *properties* that Tailwind owns (`border-width` → `border-3`/`border-4`, `gap-3` → `gap`), you still need `!important`.
+
+#### HUD compression (`LevelHUD.tsx`)
+
+Targets: header bar from ~30 px → ~22 px, info card from ~94 px → ~65 px. Total HUD: ~132 px → ~95 px.
+
+```css
+@media (max-width: 768px) {
+  .hud-header        { padding: 3px 8px !important; gap: 5px !important; border-radius: 10px !important; }
+  .hud-header__pill  { padding: 2px 7px !important; font-size: 8px !important; }
+  .hud-header__name  { font-size: 9px !important; letter-spacing: 0.1em !important; }
+  .hud-info-card     { padding: 4px !important; gap: 3px !important; border-radius: 10px !important; }
+  .hud-objective-pill{ padding: 2px 8px !important; font-size: 8px !important; }
+  .stat-row          { gap: 4px !important; }
+  .stat-card         { padding: 3px 5px !important; gap: 0 !important; border-radius: 8px !important; }
+  .stat-card__label  { font-size: 7px !important; }
+  .stat-card__value  { font-size: 14px !important; }   /* was 22 px on desktop */
+  .stat-card__suffix { font-size: 10px !important; }
+  .stat-card__inline-suffix { font-size: 7px !important; }
+}
+```
+
+Don't go below `font-size: 7px` for the labels or below 14 px for the value — kids on small phones must still parse the COMANDOS/INTENTOS counts at a glance.
+
+#### Palette / queue / buttons (`InstructionPanel.tsx`)
+
+Two structural changes plus dimensional compression:
+
+```css
+@media (max-width: 768px) {
+  /* 1) palette wraps so 6-command levels don't overflow horizontally */
+  .palette-grid { flex-wrap: wrap; gap: 3px; }
+  /* 2) palette images shrink: 58 → 44 px (the inline width/height on <img> is overridden) */
+  .palette-tile img { width: 44px !important; height: 44px !important; }
+
+  .hud-card        { padding: 4px !important; gap: 3px !important; border-radius: 10px !important; }
+  .hud-card-title  { padding: 2px 7px !important; font-size: 8px !important; }
+  .queue-area      { min-height: 44px !important; padding: 4px !important; gap: 3px !important; }
+  .queue-area img  { width: 38px !important; height: 38px !important; }   /* CommandChip inline w/h */
+  .queue-empty-cell{ width: 38px !important; height: 38px !important; border-radius: 8px !important; }
+  .action-btn      { padding: 7px 0 !important; font-size: 11px !important; border-radius: 10px !important; }
+}
+```
+
+Why these specific numbers:
+
+- **Palette 44 px / queue 38 px**: the queue chips need to be slightly smaller than the palette so the visual hierarchy ("source = bigger, instances = smaller") still reads. The 6-px gap matches the desktop-to-mobile ratio of 58/54 ≈ 44/41 ≈ 1.07.
+- **Empty queue cell 38 px = chip image size**, NOT chip image + padding. The cell is purely a slot indicator; matching the *image* size keeps the dashed grid clean as chips fill in.
+- **`min-height: 44px` on `.queue-area`**: matches one row of 38-px chips + 4-px padding × 2 + 1-px slack. Don't go lower or the dashed rectangle disappears when empty.
+
+#### Inline-style override technique
+
+Both palette images (`<img style={{ width: 58 }}>`) and queue chip images (`<img style={{ width: 54 }}>`) are sized via inline styles. Inline beats class-based CSS at specificity (1000 vs ≤100), so a normal `.palette-tile img { width: 44px }` rule **does nothing**. The only way to override is `!important`, which jumps the specificity to "important user agent / important author" tier and beats inline.
+
+This is the **only place in the codebase** where `!important` is the correct tool — using it elsewhere is usually a smell that means you have a specificity fight you should resolve structurally. But for inline-style overrides in a media query, there is literally no other option short of refactoring every `<img style="...">` into a CSS class, which would be invasive across many files.
+
+#### Vertical budget — Android portrait reference
+
+For an Android phone with ~700 px usable height (after URL bar + system gestures):
+
+| Slice | Height |
+|---|---|
+| Canvas (36dvh of ~700) | ~252 px |
+| Inner card padding (top+bottom) | 12 px |
+| LevelHUD | ~95 px |
+| Gap between HUD and InstructionPanel | 6 px |
+| Palette card (1 row of 44-px buttons + title pill + padding) | ~70 px |
+| Queue card (44-px slots + title + padding) | ~65 px |
+| Action buttons row | ~30 px |
+| Outer paddings, gaps | ~20 px |
+| **Total** | **~550 px** |
+
+That leaves ~150 px of slack for landscape orientation, larger phones, or 6-command levels (where palette wraps to 2 rows = +50 px). On the smallest devices (iPhone SE 1st-gen, Android Go phones at 320×568), expect a tiny vertical scroll — that's an acceptable degradation, not a layout bug.
+
+#### When to update these rules
+
+Anytime you change a fixed dimension on a sidebar element (palette button size, queue empty-cell size, stat-card padding), check whether the mobile media query needs a parallel update. The rule of thumb: if a desktop dimension is `X px`, the mobile equivalent is roughly `X * 0.75` rounded to a clean number, plus reduced paddings/gaps by 30-50 %.
+
 ## Important Gotchas
 
 - **Do not delete** `src/types/game.types.ts` types — only rendering changes.
@@ -497,6 +672,7 @@ The handler uses `getBoundingClientRect()` (returns viewport coords like `client
 - **Image sizes are large** (backgrounds ≈600×340, player frames ≈260×280). Scale down with `setDisplaySize()` or `setScale()` to fit the 680×560 canvas / cell sizes.
 - **All UI text remains Spanish.** Replacing procedural text with badge images does not change the language requirement for any new text added.
 - **In-game platform shapes are restricted to 1, 2 and 4** (shape 3 is HUD-only). See "In-game level platform" above for the picker rules. Shape 3 (`floor-3-X`) stays loaded for badges/icons but must never be returned by `GameScene.pickFloorShape`.
+- **Mobile responsive (`@media (max-width: 768px)`) lives in three places**: `App.tsx` GameScreen `<style>`, `LevelHUD.tsx` `<style>`, `InstructionPanel.tsx` `<style>`. Any change to a sidebar dimension on desktop must also update the mobile counterpart. See section 11 for the full rule set and the inline-style override technique. **`!important` is reserved for that media query only** — use it for overriding inline `width`/`height` on palette and chip images, not as a general escape hatch.
 
 ## Additional Resources
 

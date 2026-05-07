@@ -549,13 +549,53 @@ function GameScreen({
           <img src="/assets/buttons/icon/Propiedad%201=settings_btn.png" alt="" className="w-11 h-11 select-none" />
         </button>
       </div>
-      <main style={{
+      <style>{`
+        /* Móvil portrait / tablet estrecho: layout en columna para que la paleta
+           tenga el ancho completo y todo quepa con el mínimo scroll posible. */
+        @media (max-width: 768px) {
+          .gs-main {
+            flex-direction: column !important;
+            align-items: center !important;
+            /* Sin padding ni gap — paleta y canvas pegados a los bordes */
+            padding: 0 !important;
+            gap: 0 !important;
+          }
+          .gs-canvas-wrap {
+            max-width: 100% !important;
+            width: auto !important;
+            height: 36dvh !important;
+            align-self: center !important;
+          }
+          .gs-sidebar {
+            max-width: 100% !important;
+            width: 100% !important;
+            /* 2 px sólo arriba y abajo — el resto del card pega borde a borde */
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+          }
+          /* Tarjeta interna (.rounded-3xl) — sin padding, sin borde, sin
+             border-radius en móvil para que la paleta llegue de borde a borde
+             del viewport y no se pierda ancho con chrome decorativo. */
+          .gs-sidebar > div {
+            padding: 0 !important;
+            gap: 6px !important;
+            border-width: 0 !important;
+            border-radius: 0 !important;
+          }
+          /* Reducir gap-3 de Tailwind dentro de la sidebar (panel y botones) */
+          .gs-sidebar .gap-3 { gap: 6px !important; }
+          .gs-sidebar .gap-2 { gap: 4px !important; }
+        }
+      `}</style>
+      <main className="gs-main" style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'flex', flexDirection: 'row',
         padding: '8px', gap: '8px', alignItems: 'stretch',
       }}>
         {/* GameWrapper — izquierda: ocupa la altura completa del main, ancho por aspect-ratio */}
-        <div style={{
+        <div className="gs-canvas-wrap" style={{
           flexShrink: 0,
           alignSelf: 'stretch',
           aspectRatio: `${GAME_CONFIG.WIDTH} / ${GAME_CONFIG.HEIGHT}`,
@@ -568,13 +608,13 @@ function GameScreen({
         {/* Paleta de comandos: cap 395 (ancho), padding 30px arriba/abajo
            para que la card resulte 60px más baja que el main. Las margenes auto
            a izquierda+derecha la centran en el hueco que queda tras el canvas. */}
-        <div style={{
+        <div className="gs-sidebar" style={{
           flex: '0 1 auto', minWidth: 0,
           width: '100%', maxWidth: 485,
           alignSelf: 'stretch',
           display: 'flex', flexDirection: 'column', gap: '5px',
           overflow: 'hidden',
-          paddingTop: 30, paddingBottom: 30,
+          paddingTop: 15, paddingBottom: 40,
           marginLeft: 'auto', marginRight: 'auto',
         }}>
           <div

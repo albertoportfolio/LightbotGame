@@ -210,7 +210,7 @@ function DraggablePaletteButton({ command, isFull, onAdd }: PaletteButtonProps) 
         alt={meta.label}
         draggable={false}
         className="block select-none pointer-events-none"
-        style={{ width: 48, height: 48, objectFit: 'contain' }}
+        style={{ width: 58, height: 58, objectFit: 'contain' }}
       />
     </button>
   )

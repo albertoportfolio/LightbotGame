@@ -217,12 +217,13 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
 
   return (
     <div
-      className="relative flex flex-col items-center overflow-y-auto py-8 px-4"
+      className="fixed inset-0 overflow-y-auto overflow-x-hidden"
       style={{
-        minHeight: '100dvh',
         background: 'linear-gradient(160deg, #1a1a5e 0%, #0d2137 50%, #0a0a2e 100%)',
+        WebkitOverflowScrolling: 'touch',
       }}
     >
+      <div className="relative min-h-full flex flex-col items-center py-8 px-4">
       {/* Background stars */}
       {[...Array(20)].map((_, i) => (
         <div
@@ -295,7 +296,6 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
           background: #f3f5f9; border-radius: 18px; padding: 10px;
           display: flex; flex-direction: column; gap: 8px;
           box-shadow: inset 0 -2px 0 rgba(0,0,0,0.04);
-          max-height: 60vh; overflow-y: auto;
         }
         .tut-empty { color: #6b7280; font-size: 13px; text-align: center; padding: 14px 0; }
         .tut-user-row {
@@ -626,6 +626,7 @@ export function TutorProfileScreen({ onBack, onLogout }: Props) {
           </div>
         </ModalOverlay>
       )}
+      </div>
     </div>
   )
 }

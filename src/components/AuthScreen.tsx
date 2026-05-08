@@ -80,7 +80,7 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
 
   return (
     <div
-      className={`auth-outer auth-outer--${view} fixed inset-0 overflow-y-auto overflow-x-hidden`}
+      className={`auth-outer auth-outer--${view} fixed inset-0 overflow-hidden`}
       style={{
         backgroundImage: "url('/assets/backgrounds/menu/sky 1.png')",
         backgroundSize: 'cover',
@@ -221,10 +221,12 @@ export function AuthScreen({ onAuthSuccess, onSignupSuccess }: Props) {
           }
           /* Anula el gap-3 del form — así fields-box y botón quedan juntos */
           .login-form { gap: 0 !important; }
-          /* Sin scroll SOLO en login (cabe siempre). Registrarse mantiene el overflow-y-auto
-             porque su formulario + checkboxes de consentimiento puede exceder el viewport. */
-          .auth-outer--login { overflow-y: hidden !important; }
-          .auth-inner--login { overflow-y: visible !important; }
+          /* En móvil/landscape corto, registrarse SÍ necesita scroll porque el formulario
+             + checkboxes de consentimiento puede exceder el viewport. Login cabe siempre.
+             Por defecto el outer está oculto (sin scroll en web), aquí lo reactivamos solo
+             para registrarse en móvil. */
+          .auth-outer--register { overflow-y: auto !important; }
+          .auth-inner { overflow-y: visible !important; }
         }
       `}</style>
 

@@ -11,6 +11,9 @@ export class SoundManager {
   private _volume = 0.8
   // Bandera: música solicitada pero el AudioContext está suspendido (móvil sin gesto aún)
   private pendingMusic = false
+  // Caché de buffers de ruido blanco por duración (en ms). El loop de música genera
+  // ~96 ruidos por iteración; sin caché eso eran ~370k floats/16s asignados al GC.
+  private noiseBuffers = new Map<number, AudioBuffer>()
 
   // ─── Contexto y nodo maestro ──────────────────────────────────────────────
 
@@ -80,13 +83,28 @@ export class SoundManager {
     osc.stop(ctx.currentTime + delay + duration + 0.05)
   }
 
+  // Devuelve un buffer de ruido blanco cacheado por duración (clave en ms).
+  // Si no existe, lo crea una vez y lo reutiliza para todas las invocaciones futuras
+  // con la misma duración — clave para el rendimiento del loop de música en móvil.
+  private getNoiseBuffer(duration: number): AudioBuffer {
+    const key = Math.round(duration * 1000)
+    let buf = this.noiseBuffers.get(key)
+    if (!buf) {
+      const ctx = this.getCtx()
+      const samples = Math.max(1, Math.round(ctx.sampleRate * duration))
+      buf = ctx.createBuffer(1, samples, ctx.sampleRate)
+      const data = buf.getChannelData(0)
+      for (let i = 0; i < samples; i++) data[i] = Math.random() * 2 - 1
+      this.noiseBuffers.set(key, buf)
+    }
+    return buf
+  }
+
   // Genera ruido blanco filtrado (bandpass) — usado para efectos percusivos
   private playNoise(duration: number, vol = 0.1, delay = 0) {
     if (this.muted) return
     const ctx    = this.getCtx()
-    const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate)
-    const data   = buffer.getChannelData(0)
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+    const buffer = this.getNoiseBuffer(duration)
     const source = ctx.createBufferSource()
     const gain   = ctx.createGain()
     const filter = ctx.createBiquadFilter()
@@ -125,9 +143,7 @@ export class SoundManager {
   private scheduleNoise(duration: number, vol: number, startTime: number) {
     if (this.muted) return
     const ctx    = this.getCtx()
-    const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate)
-    const data   = buffer.getChannelData(0)
-    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+    const buffer = this.getNoiseBuffer(duration)
     const source = ctx.createBufferSource()
     const gain   = ctx.createGain()
     const filter = ctx.createBiquadFilter()

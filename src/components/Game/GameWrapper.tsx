@@ -15,7 +15,7 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const gameRef = useRef<Phaser.Game | null>(null)
   const { setMaxCommands, setCurrentLevel, setLevelName, setMaxAttempts, setInstructions, setAllowedCommands, setTextMode } = useGameStore()
-  
+
 
   useEffect(() => {
     if (!containerRef.current || gameRef.current) return
@@ -26,9 +26,9 @@ export function GameWrapper({ bridge }: GameWrapperProps) {
       setMaxCommands(data.maxCommands)
       setAllowedCommands(data.allowedCommands ?? null)
       setCurrentLevel(data.levelId - 1)
-      setLevelName(data.name) 
+      setLevelName(data.name)
       setMaxAttempts(data.maxAttempts)
-      setInstructions(data.instructions ?? '') 
+      setInstructions(data.instructions ?? '')
       setTextMode(data.textMode ?? false)
     }
 

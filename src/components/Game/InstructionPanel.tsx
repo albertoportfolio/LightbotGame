@@ -159,7 +159,7 @@ function PanelStyles() {
         text-transform: uppercase;
       }
       .action-btn:active:not(:disabled) { transform: translateY(2px); }
-      .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+      .action-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.7); }
       .action-btn--run {
         background: linear-gradient(180deg, #8ee36f 0%, #5fbf3f 100%);
         box-shadow: 0 4px 0 #2f7a1c;
@@ -408,7 +408,7 @@ function TextModePanel({ onRun, onReset }: { onRun: (cmds: Command[]) => void, o
         )}
       </div>
 
-      {isGameOver && (
+      {isGameOver && !isRunning && (
         <div className="w-full py-3 rounded-xl text-center font-black text-white bg-rose-600">
           💀 GAME OVER — Pulsa Resetear
         </div>
@@ -600,7 +600,7 @@ export function InstructionPanel({
           onRemove={removeCommand}
         />
 
-        {isGameOver && (
+        {isGameOver && !isRunning && (
           <div className="w-full py-3 rounded-xl text-center font-black text-white bg-red-700">
             💀 GAME OVER — Pulsa Resetear
           </div>
@@ -608,7 +608,7 @@ export function InstructionPanel({
 
         <div className="panel-btn-row mt-auto mb-2.5">
           <button
-            disabled={queue.length === 0 || isRunning || showNextLevel}
+            disabled={queue.length === 0 || isRunning || isGameOver || showNextLevel}
             onClick={handleRun}
             className="action-btn action-btn--run"
           >

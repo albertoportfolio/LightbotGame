@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { GAME_CONFIG } from './game/constants/gameConfig'
 import { GameWrapper } from './components/Game/GameWrapper'
 import { InstructionPanel } from './components/Game/InstructionPanel'
@@ -423,6 +423,9 @@ function GameScreen({
   const [levelComplete, setLevelComplete] = useState(false)
   const [hasNext, setHasNext] = useState(false)
   const [nextLevelIndex, setNextLevelIndex] = useState(0)
+  // isLoading=true mientras Phaser está cargando un nivel. Empieza en true porque
+  // hasta que GameScene emite el primer 'level-loaded' nada está realmente listo.
+  const [isLoading, setIsLoading] = useState(true)
   const isTransitioning = useRef(false)
   const prevActive = useRef(false)
   const initialLevelLoaded = useRef(false)
@@ -435,15 +438,31 @@ function GameScreen({
     }
   }, [isActive])
 
-  // Recargar si cambia el nivel seleccionado (usuario vuelve a levels y elige otro)
-  useEffect(() => {
+  // Recargar si cambia el nivel seleccionado (usuario vuelve a levels y elige otro).
+  // useLayoutEffect en lugar de useEffect: el setIsLoading(true) se procesa ANTES del
+  // primer paint del nuevo render, así no hay flash de un frame con el nivel anterior.
+  useLayoutEffect(() => {
     if (initialLevelLoaded.current) {
+      setIsLoading(true)
       setLevelComplete(false)
       resetAttempts()
       clearQueue()
       loadLevel(initialLevel)
     }
   }, [initialLevel])
+
+  // Sincronizar isLoading con los eventos del bridge — esto cubre también
+  // el botón "SIGUIENTE" del modal, que llama loadLevel() sin cambiar initialLevel.
+  useEffect(() => {
+    const handleLoadStart = () => setIsLoading(true)
+    const handleLoadEnd = () => setIsLoading(false)
+    emitter.on('load-level', handleLoadStart)
+    emitter.on('level-loaded', handleLoadEnd)
+    return () => {
+      emitter.off('load-level', handleLoadStart)
+      emitter.off('level-loaded', handleLoadEnd)
+    }
+  }, [emitter])
 
   useEffect(() => {
     if (isActive && !prevActive.current && !muted) {
@@ -686,6 +705,68 @@ function GameScreen({
           onReplay={handleReset}
           onLevels={handleBackToLevels}
         />
+      )}
+      {isLoading && (
+        <div
+          aria-busy="true"
+          aria-label="Cargando nivel"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(180deg, #c9eafc 0%, #b6e3fb 100%)',
+          }}
+        >
+          <style>{`
+            @keyframes gsLoaderBob {
+              0%, 100% { transform: translateY(0) scale(1); }
+              50%      { transform: translateY(-12px) scale(1.05); }
+            }
+            @keyframes gsLoaderDots {
+              0%   { content: ''; }
+              25%  { content: '.'; }
+              50%  { content: '..'; }
+              75%  { content: '...'; }
+              100% { content: ''; }
+            }
+            .gs-loader-text::after {
+              content: '';
+              animation: gsLoaderDots 1.4s steps(1, end) infinite;
+            }
+          `}</style>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+            <img
+              src="/assets/player/front.png"
+              alt=""
+              aria-hidden="true"
+              draggable={false}
+              style={{
+                width: 128,
+                height: 128,
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 8px 0 rgba(31,58,138,0.25))',
+                animation: 'gsLoaderBob 1.1s ease-in-out infinite',
+              }}
+            />
+            <span
+              className="gs-loader-text"
+              style={{
+                fontFamily: 'Nunito, sans-serif',
+                fontWeight: 900,
+                fontSize: 20,
+                letterSpacing: '0.18em',
+                color: '#1f3a8a',
+                textShadow: '0 2px 0 rgba(255,255,255,0.5)',
+                textTransform: 'uppercase',
+              }}
+            >
+              Cargando
+            </span>
+          </div>
+        </div>
       )}
     </div>
   )

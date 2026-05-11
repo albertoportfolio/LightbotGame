@@ -65,16 +65,5 @@ router
       .as('notifications')
       .use(middleware.auth())
 
-    // Grupo /payments — procesamiento de donaciones con Stripe (requiere auth)
-    router
-      .group(() => {
-        router.post('checkout', [controllers.Payments, 'checkout'])
-      })
-      .prefix('payments')
-      .as('payments')
-      .use(middleware.auth())
-
-    // Webhook de Stripe — público, sin auth, verifica firma criptográfica
-    router.post('/payments/webhook', [controllers.Payments, 'webhook'])
   })
   .prefix('/api/v1')

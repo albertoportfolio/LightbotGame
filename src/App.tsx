@@ -17,8 +17,6 @@ import { useAuth } from './context/AuthContext'
 import { updateUser, setOnUnauthorized, registerPushToken } from './services/service'
 import { PrivacyPolicyScreen } from './components/PrivacyPolicyScreen'
 import { TermsScreen } from './components/TermsScreen'
-import { DonateScreen } from './components/DonateScreen'
-import { DonationSuccessScreen } from './components/DonationSuccessScreen'
 
 // Metadatos de cada nivel para la pantalla de selección: nombre, icono y descripción
 export const LEVEL_INFO = [
@@ -71,7 +69,7 @@ export const LEVEL_INFO = [
 const TOTAL_LEVELS = 40
 
 // Pantallas posibles de la app — el estado 'screen' controla cuál se renderiza
-type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy' | 'terms' | 'donate' | 'donation-success'
+type Screen = 'start' | 'auth' | 'verify-email' | 'email-verified' | 'user-select' | 'levels' | 'game' | 'settings' | 'profile' | 'privacy' | 'terms'
 
 
 // Pantalla de inicio: navbar MAESTRO BOT + logo + botón JUGAR + footer legal
@@ -865,11 +863,6 @@ export default function App() {
       setScreen('email-verified')
       window.history.replaceState({}, '', window.location.pathname)
     }
-    // Detect ?donation=success redirect from Stripe Checkout
-    if (params.get('donation') === 'success') {
-      setScreen('donation-success')
-      window.history.replaceState({}, '', '/')
-    }
   }, [])
 
   //Para desbloquear todos los niveles y probarlos cambiar el codigo de abajo por este
@@ -991,7 +984,6 @@ export default function App() {
           onToggleMute={handleToggleMute}
           onOpenSettings={() => { setPrevScreen('levels'); setScreen('settings') }}
           onOpenProfile={() => setScreen('profile')}
-          onDonate={() => setScreen('donate')}
           levelInfo={LEVEL_INFO}
         />
       )}
@@ -1028,18 +1020,6 @@ export default function App() {
             onBack={() => setScreen(prevScreen)}
           />
         </div>
-      )}
-
-      {screen === 'donate' && (
-        <DonateScreen
-          onBack={() => setScreen('levels')}
-        />
-      )}
-
-      {screen === 'donation-success' && (
-        <DonationSuccessScreen
-          onGoHome={() => setScreen('start')}
-        />
       )}
     </>
   )

@@ -14,7 +14,6 @@ interface LevelSelectScreenProps {
   onToggleMute: () => void
   onOpenSettings: () => void
   onOpenProfile: () => void
-  onDonate: () => void
   levelInfo: LevelInfo[]
 }
 
@@ -665,7 +664,6 @@ export function LevelSelectScreen({
   onToggleMute,
   onOpenSettings,
   onOpenProfile,
-  onDonate,
   levelInfo,
 }: LevelSelectScreenProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -886,11 +884,6 @@ export function LevelSelectScreen({
             className="w-10 h-10 flex items-center justify-center transition-all hover:scale-110 active:scale-95"
             style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer' }}>
             <img src="/assets/buttons/icon/Propiedad%201=user_btn.png" alt="" className="w-10 h-10 select-none" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }} />
-          </button>
-          <button onClick={onDonate} aria-label="Donar"
-            className="w-10 h-10 flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
-            style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
-            💙
           </button>
         </div>
       </header>

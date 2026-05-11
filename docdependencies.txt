@@ -123,7 +123,7 @@ incluye ninguna librería de testing ni linter (no están configurados).
 
   Propósito:
     Librería de UI declarativa. Toda la interfaz fuera del canvas (pantalla
-    de inicio, selección de niveles, ajustes, donaciones, HUD, panel de
+    de inicio, selección de niveles, ajustes, HUD, panel de
     instrucciones) está construida con componentes React.
 
   Dónde se usa:
@@ -291,25 +291,7 @@ incluye ninguna librería de testing ni linter (no están configurados).
 
 
 ────────────────────────────────────────────────────────────────────────────────
-  5. DEPENDENCIA RECIENTEMENTE ELIMINADA
-────────────────────────────────────────────────────────────────────────────────
-
-  @stripe/stripe-js  (eliminada el 2026-04-27)
-
-  Estaba listada en package.json pero nunca se importaba en src/. El flujo
-  de donaciones (DonateScreen.tsx) llama al backend con createCheckoutSession
-  y luego redirige a la URL devuelta:
-      window.location.href = response.checkoutUrl
-
-  Como el checkout está alojado por Stripe (Hosted Checkout), el SDK
-  cliente no es necesario. Si en el futuro se quisiera usar Stripe Elements
-  o Embedded Checkout para integrar el formulario de pago en la propia
-  página, habrá que reinstalarla:
-      npm install @stripe/stripe-js
-
-
-────────────────────────────────────────────────────────────────────────────────
-  6. NOTAS TRANSVERSALES
+  5. NOTAS TRANSVERSALES
 ────────────────────────────────────────────────────────────────────────────────
 
   - Versionado: todas las dependencias usan ^ (caret), por lo que `npm install`

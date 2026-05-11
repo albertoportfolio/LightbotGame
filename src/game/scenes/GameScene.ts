@@ -89,6 +89,12 @@ private varValueLabels:  Phaser.GameObjects.Text[] = []
   // Inicializa la escena: obtiene el bridge, crea gráficos, carga nivel 0 y registra listeners de eventos
   create() {
     this.bridge = this.registry.get('bridge') as Phaser.Events.EventEmitter
+    // HiDPI: el canvas tiene (WIDTH*DPR) × (HEIGHT*DPR) píxeles físicos.
+    // Compensamos con zoom = DPR centrado en el medio del mundo lógico, así
+    // los renders ocupan TODO el backing buffer pero las coords del juego siguen siendo 680×560.
+    const dpr = (this.registry.get('dpr') as number) ?? 1
+    this.cameras.main.setZoom(dpr)
+    this.cameras.main.centerOn(GAME_CONFIG.WIDTH / 2, GAME_CONFIG.HEIGHT / 2)
     this.gridGraphics = this.add.graphics()
     this.executor = new CommandExecutor(this, this.bridge)
     this.loadLevel(0) // Carga el nivel 5 (índice 4) para pruebas rápidas
